@@ -55,77 +55,164 @@ const CITIES = [
 
 const INITIAL_PLACES = [
   // — Ереван —
-  { id: 1,  cityId: "yerevan", category: "Кафе и рестораны", name: "Jazzve Coffee",
-    shortDesc: "Армянская кофейня с традиционным кофе в джезве. Деревянный интерьер, тихая атмосфера.",
-    description: "Армянская кофейня с традиционным кофе в джезве. Деревянный интерьер, тихая атмосфера и лучшая турка в центре Еревана. Обязательно попробуй кофе с кардамоном — это местная классика.", photos: ["","",""] },
-  { id: 2,  cityId: "yerevan", category: "Кафе и рестораны", name: "Aperitivo",
-    shortDesc: "Итальянско-армянская кухня с открытой террасой. Отличная паста, живая музыка по выходным.",
-    description: "Итальянско-армянская кухня с открытой террасой. Отличная паста, живая музыка по выходным и бокал вина с видом на город. Один из лучших ресторанов для вечера на свежем воздухе.", photos: ["","",""] },
-  { id: 3,  cityId: "yerevan", category: "Кафе и рестораны", name: "Dolmama",
-    shortDesc: "Один из лучших ресторанов армянской кухни в городе. Классические блюда в современной подаче.",
-    description: "Один из лучших ресторанов армянской кухни в городе. Классические блюда в современной подаче, уютный дворик. Шеф-повар переосмыслил традиционные рецепты — результат впечатляет.", photos: ["","",""] },
-  { id: 4,  cityId: "yerevan", category: "Кафе и рестораны", name: "Lavash",
-    shortDesc: "Ресторан традиционной армянской кухни. Фирменные хачапури, кюфта и домашние вина.",
-    description: "Ресторан традиционной армянской кухни. Фирменные хачапури, кюфта и домашние вина. Место где едят местные — без туристических наценок и с настоящей атмосферой.", photos: ["","",""] },
-  { id: 5,  cityId: "yerevan", category: "Бары",             name: "Wine Republic",
-    shortDesc: "Винный бар с огромной картой армянских и грузинских вин. Тёплая атмосфера, живая музыка.",
-    description: "Винный бар с огромной картой армянских и грузинских вин. Тёплая атмосфера, живая музыка и отличные сырные тарелки. Идеально для вечера с друзьями или романтического ужина.", photos: ["","",""] },
-  { id: 6,  cityId: "yerevan", category: "Бары",             name: "Churchill Bar",
-    shortDesc: "Классический английский паб с армянским характером. Хороший выбор виски и дартс.",
-    description: "Классический английский паб с армянским характером. Хороший выбор виски, дартс и футбол на большом экране. Лучшее место в Ереване чтобы посмотреть матч в хорошей компании.", photos: ["","",""] },
-  { id: 7,  cityId: "yerevan", category: "Достопримечательности", name: "Каскад",
-    shortDesc: "Монументальная лестница с видом на Арарат. Внутри — галерея современного искусства.",
-    description: "Монументальная лестница с видом на Арарат. Внутри — галерея современного искусства, снаружи — лучший закат в Ереване. Подъём занимает 20 минут, но вид того стоит.", photos: ["","",""] },
-  { id: 8,  cityId: "yerevan", category: "Достопримечательности", name: "Матенадаран",
-    shortDesc: "Хранилище древнеармянских рукописей — одно из крупнейших в мире.",
-    description: "Хранилище древнеармянских рукописей — одно из крупнейших в мире. Здание само по себе архитектурный шедевр. Экскурсия с гидом открывает совершенно другой взгляд на армянскую историю.", photos: ["","",""] },
-  { id: 9,  cityId: "yerevan", category: "Природа",          name: "Озеро Севан",
-    shortDesc: "Высокогорное озеро в часе езды от Еревана. Монастырь Севанаванк на полуострове.",
-    description: "Высокогорное озеро в часе езды от Еревана. Монастырь Севанаванк на полуострове, форель прямо с лодок, потрясающий воздух. Лучший однодневный выезд из города.", photos: ["","",""] },
-  { id: 10, cityId: "yerevan", category: "Шопинг",           name: "Вернисаж",
-    shortDesc: "Главный блошиный рынок Еревана. Ковры, серебро, советские значки и настоящие сувениры.",
-    description: "Главный блошиный рынок Еревана. Ковры, серебро, советские значки, картины и настоящие армянские сувениры без туристических наценок. По выходным — особенно богатый выбор.", photos: ["","",""] },
+  { id: 1, cityId: "yerevan", category: "Кафе и рестораны", name: "Jazzve Coffee",
+    tags: "☕ кофе · джезва · уют",
+    badge: "❤️ личный фаворит", area: "Кентрон · 5 мин",
+    schedule: "09:00–22:00", openFrom: 9, openTo: 22,
+    description: "Армянская кофейня с традиционным кофе в джезве. Деревянный интерьер, тихая атмосфера и лучшая турка в центре Еревана. Обязательно попробуй кофе с кардамоном — это местная классика.",
+    photos: ["","",""] },
+
+  { id: 2, cityId: "yerevan", category: "Кафе и рестораны", name: "Aperitivo",
+    tags: "🍝 паста · терраса · вино",
+    badge: "🌅 за атмосферу", area: "Кентрон · 7 мин",
+    schedule: "12:00–23:00", openFrom: 12, openTo: 23,
+    description: "Итальянско-армянская кухня с открытой террасой. Отличная паста, живая музыка по выходным и бокал вина с видом на город. Один из лучших ресторанов для вечера на свежем воздухе.",
+    photos: ["","",""] },
+
+  { id: 3, cityId: "yerevan", category: "Кафе и рестораны", name: "Dolmama",
+    tags: "🍽 армянская · дворик · авторская",
+    badge: "💎 скрытая жемчужина", area: "Кентрон · 8 мин",
+    schedule: "13:00–23:00", openFrom: 13, openTo: 23,
+    description: "Один из лучших ресторанов армянской кухни в городе. Классические блюда в современной подаче, уютный дворик. Шеф переосмыслил традиционные рецепты — результат впечатляет.",
+    photos: ["","",""] },
+
+  { id: 4, cityId: "yerevan", category: "Кафе и рестораны", name: "Lavash",
+    tags: "🫓 хачапури · кюфта · домашнее",
+    badge: "👁️ место для своих", area: "Кентрон · 10 мин",
+    schedule: "11:00–23:00", openFrom: 11, openTo: 23,
+    description: "Ресторан традиционной армянской кухни. Фирменные хачапури, кюфта и домашние вина. Место где едят местные — без туристических наценок и с настоящей атмосферой.",
+    photos: ["","",""] },
+
+  { id: 5, cityId: "yerevan", category: "Бары", name: "Wine Republic",
+    tags: "🍷 армянское · грузинское · сыр",
+    badge: "❤️ личный фаворит", area: "Кентрон · 6 мин",
+    schedule: "с 16:00", openFrom: 16, openTo: 1,
+    description: "Винный бар с огромной картой армянских и грузинских вин. Тёплая атмосфера, живая музыка и отличные сырные тарелки. Идеально для вечера с друзьями или романтического ужина.",
+    photos: ["","",""] },
+
+  { id: 6, cityId: "yerevan", category: "Бары", name: "Churchill Bar",
+    tags: "🥃 виски · паб · дартс",
+    badge: "🔥 всегда народ", area: "Кентрон · 5 мин",
+    schedule: "с 17:00", openFrom: 17, openTo: 2,
+    description: "Классический английский паб с армянским характером. Хороший выбор виски, дартс и футбол на большом экране. Лучшее место в Ереване чтобы посмотреть матч в хорошей компании.",
+    photos: ["","",""] },
+
+  { id: 7, cityId: "yerevan", category: "Достопримечательности", name: "Каскад",
+    tags: "🎨 искусство · закат · Арарат",
+    badge: "🌅 лучший вид в городе", area: "Кентрон · 10 мин",
+    schedule: "08:00–22:00", openFrom: 8, openTo: 22,
+    description: "Монументальная лестница с видом на Арарат. Внутри — галерея современного искусства, снаружи — лучший закат в Ереване. Подъём занимает 20 минут, но вид того стоит.",
+    photos: ["","",""] },
+
+  { id: 8, cityId: "yerevan", category: "Достопримечательности", name: "Матенадаран",
+    tags: "📜 рукописи · история · архитектура",
+    badge: "💎 обязательно", area: "Кентрон · 15 мин",
+    schedule: "10:00–17:00", openFrom: 10, openTo: 17,
+    description: "Хранилище древнеармянских рукописей — одно из крупнейших в мире. Здание само по себе архитектурный шедевр. Экскурсия с гидом открывает совершенно другой взгляд на армянскую историю.",
+    photos: ["","",""] },
+
+  { id: 9, cityId: "yerevan", category: "Природа", name: "Озеро Севан",
+    tags: "🏔 горное озеро · форель · монастырь",
+    badge: "🌿 лучший выезд", area: "1 час от Еревана",
+    schedule: "весь день",
+    description: "Высокогорное озеро в часе езды от Еревана. Монастырь Севанаванк на полуострове, форель прямо с лодок, потрясающий воздух. Лучший однодневный выезд из города.",
+    photos: ["","",""] },
+
+  { id: 10, cityId: "yerevan", category: "Шопинг", name: "Вернисаж",
+    tags: "🛍 антиквариат · серебро · ковры",
+    badge: "👁️ без турнаценок", area: "Кентрон · 3 мин",
+    schedule: "Сб–Вс 10:00–19:00", openFrom: 10, openTo: 19,
+    description: "Главный блошиный рынок Еревана. Ковры, серебро, советские значки, картины и настоящие армянские сувениры без туристических наценок. По выходным — особенно богатый выбор.",
+    photos: ["","",""] },
+
   // — Бангкок —
   { id: 11, cityId: "bangkok", category: "Кафе и рестораны", name: "Gaggan Anand",
-    shortDesc: "Прогрессивная индийская кухня — один из лучших ресторанов Азии по версии 50 Best.",
-    description: "Прогрессивная индийская кухня — один из лучших ресторанов Азии по версии 50 Best. Меню в виде эмодзи, 25 курсов. Бронировать нужно за несколько месяцев.", photos: ["","",""] },
+    tags: "🌶 индийская · 25 курсов · 50 Best",
+    badge: "🔥 бронь за месяц", area: "Lumphini · 20 мин",
+    schedule: "18:00–23:00", openFrom: 18, openTo: 23,
+    description: "Прогрессивная индийская кухня — один из лучших ресторанов Азии по версии 50 Best. Меню в виде эмодзи, 25 курсов. Бронировать нужно за несколько месяцев — того стоит.",
+    photos: ["","",""] },
+
   { id: 12, cityId: "bangkok", category: "Кафе и рестораны", name: "Nahm",
-    shortDesc: "Аутентичная тайская кухня в исполнении шеф-повара мирового уровня.",
-    description: "Аутентичная тайская кухня в исполнении шеф-повара мирового уровня. Рецепты из старинных книг, почти исчезнувшие блюда. Одно из лучших мест чтобы понять настоящую тайскую кухню.", photos: ["","",""] },
+    tags: "🫚 тайская · аутентично · шеф",
+    badge: "💎 исчезающая кухня", area: "Silom · 15 мин",
+    schedule: "18:00–22:30", openFrom: 18, openTo: 22,
+    description: "Аутентичная тайская кухня в исполнении шеф-повара мирового уровня. Рецепты из старинных книг, почти исчезнувшие блюда. Одно из лучших мест чтобы понять настоящую тайскую кухню.",
+    photos: ["","",""] },
+
   { id: 13, cityId: "bangkok", category: "Достопримечательности", name: "Wat Pho",
-    shortDesc: "Храм лежащего Будды — самый большой в Бангкоке. Фигура 46 метров длиной.",
-    description: "Храм лежащего Будды — самый большой в Бангкоке. Фигура Будды длиной 46 метров, перламутровая инкрустация на подошвах. Здесь также находится одна из лучших школ тайского массажа.", photos: ["","",""] },
-  { id: 14, cityId: "bangkok", category: "Шопинг",           name: "Chatuchak Market",
-    shortDesc: "Один из крупнейших рынков мира — 15 000 лотков. Антиквариат, одежда, растения, еда.",
-    description: "Один из крупнейших рынков мира — 15 000 лотков. Антиквариат, одежда, растения, еда, всё что угодно. Только по выходным. Приходи утром — днём очень жарко.", photos: ["","",""] },
+    tags: "🛕 храм · Будда 46м · массаж",
+    badge: "❤️ must see", area: "Ратанакосин · 5 мин",
+    schedule: "08:00–18:30", openFrom: 8, openTo: 18,
+    description: "Храм лежащего Будды — самый большой в Бангкоке. Фигура Будды длиной 46 метров, перламутровая инкрустация на подошвах. Здесь же — одна из лучших школ тайского массажа.",
+    photos: ["","",""] },
+
+  { id: 14, cityId: "bangkok", category: "Шопинг", name: "Chatuchak Market",
+    tags: "🛍 15 000 лотков · антиквариат · выходные",
+    badge: "👁️ крупнейший рынок", area: "Chatuchak · 30 мин",
+    schedule: "Сб–Вс 09:00–18:00", openFrom: 9, openTo: 18,
+    description: "Один из крупнейших рынков мира — 15 000 лотков. Антиквариат, одежда, растения, еда, всё что угодно. Только по выходным. Приходи утром — днём очень жарко.",
+    photos: ["","",""] },
+
   // — Самуи —
-  { id: 15, cityId: "samui",   category: "Пляжи",            name: "Chaweng Beach",
-    shortDesc: "Главный пляж острова — белый песок, бирюзовая вода, развитая инфраструктура.",
-    description: "Главный пляж острова — белый песок, бирюзовая вода, развитая инфраструктура. Лучший для первого знакомства с Самуи. Вечером здесь оживает стрит-фуд и бары.", photos: ["","",""] },
-  { id: 16, cityId: "samui",   category: "Кафе и рестораны", name: "The Larder",
-    shortDesc: "Европейский завтрак и бранч в тропиках. Яйца бенедикт, свежий хлеб, хороший кофе.",
-    description: "Европейский завтрак и бранч в тропиках. Яйца бенедикт, свежий хлеб, хороший кофе — лучшее место острова для утра. Небольшой уютный интерьер, приходи пораньше.", photos: ["","",""] },
+  { id: 15, cityId: "samui", category: "Пляжи", name: "Chaweng Beach",
+    tags: "🏖 белый песок · инфра · бары",
+    badge: "❤️ главный пляж", area: "Чавенг · 0 мин",
+    schedule: "весь день",
+    description: "Главный пляж острова — белый песок, бирюзовая вода, развитая инфраструктура. Лучший для первого знакомства с Самуи. Вечером здесь оживает стрит-фуд и бары.",
+    photos: ["","",""] },
+
+  { id: 16, cityId: "samui", category: "Кафе и рестораны", name: "The Larder",
+    tags: "🍳 бранч · яйца бенедикт · кофе",
+    badge: "❤️ лучшее утро", area: "Чавенг · 5 мин",
+    schedule: "07:30–15:00", openFrom: 7, openTo: 15,
+    description: "Европейский завтрак и бранч в тропиках. Яйца бенедикт, свежий хлеб, хороший кофе — лучшее место острова для утра. Небольшой уютный интерьер, приходи пораньше.",
+    photos: ["","",""] },
+
   // — Панган —
-  { id: 17, cityId: "phangan", category: "Пляжи",            name: "Haad Yao",
-    shortDesc: "Тихий залив с чистейшей водой вдали от полнолунных вечеринок.",
-    description: "Тихий залив с чистейшей водой вдали от полнолунных вечеринок. Длинный белый пляж, скалы, закат окрашивает всё в розовый. Одно из самых красивых мест острова.", photos: ["","",""] },
-  { id: 18, cityId: "phangan", category: "Природа",          name: "Than Sadet Waterfall",
-    shortDesc: "Каскадный водопад в джунглях — место, которое посещали тайские короли.",
-    description: "Каскадный водопад в джунглях — место, которое посещали тайские короли. Прохладные бассейны для купания, тишина и папоротники. Дорога занимает около 30 минут от центра.", photos: ["","",""] },
+  { id: 17, cityId: "phangan", category: "Пляжи", name: "Haad Yao",
+    tags: "🏖 тихий залив · кристальная вода · закат",
+    badge: "💎 без вечеринок", area: "Запад · 20 мин",
+    schedule: "весь день",
+    description: "Тихий залив с чистейшей водой вдали от полнолунных вечеринок. Длинный белый пляж, скалы, закат окрашивает всё в розовый. Одно из самых красивых мест острова.",
+    photos: ["","",""] },
+
+  { id: 18, cityId: "phangan", category: "Природа", name: "Than Sadet Waterfall",
+    tags: "🌊 водопад · джунгли · купание",
+    badge: "🌿 для природы", area: "Центр · 30 мин",
+    schedule: "08:00–17:00", openFrom: 8, openTo: 17,
+    description: "Каскадный водопад в джунглях — место, которое посещали тайские короли. Прохладные бассейны для купания, тишина и папоротники. Дорога занимает около 30 минут от центра.",
+    photos: ["","",""] },
+
   // — Хой Ан —
-  { id: 19, cityId: "hoian",   category: "Достопримечательности", name: "Ancient Town",
-    shortDesc: "Старый город под охраной ЮНЕСКО — фонари, каналы, жёлтые стены.",
-    description: "Старый город под охраной ЮНЕСКО — фонари, каналы, жёлтые стены. Вечером зажигают тысячи фонариков — это нужно видеть. Лучше гулять без карты — просто потеряться в переулках.", photos: ["","",""] },
-  { id: 20, cityId: "hoian",   category: "Кафе и рестораны", name: "Morning Glory",
-    shortDesc: "Самый известный ресторан вьетнамской уличной еды в Хой Ане.",
-    description: "Самый известный ресторан вьетнамской уличной еды в Хой Ане. Белая роза, cao lầu, жареные вонтоны — всё здесь лучшее. Основательница ресторана лично встречает гостей.", photos: ["","",""] },
+  { id: 19, cityId: "hoian", category: "Достопримечательности", name: "Ancient Town",
+    tags: "🏮 ЮНЕСКО · фонари · каналы",
+    badge: "❤️ must see вечером", area: "Старый город · 0 мин",
+    schedule: "весь день (вечером лучше)",
+    description: "Старый город под охраной ЮНЕСКО — фонари, каналы, жёлтые стены. Вечером зажигают тысячи фонариков — это нужно видеть. Лучше гулять без карты — просто потеряться в переулках.",
+    photos: ["","",""] },
+
+  { id: 20, cityId: "hoian", category: "Кафе и рестораны", name: "Morning Glory",
+    tags: "🍜 cao lau · белая роза · легенда",
+    badge: "🔥 всегда очередь", area: "Старый город · 2 мин",
+    schedule: "11:00–21:30", openFrom: 11, openTo: 21,
+    description: "Самый известный ресторан вьетнамской уличной еды в Хой Ане. Белая роза, cao lầu, жареные вонтоны — всё здесь лучшее. Основательница ресторана лично встречает гостей.",
+    photos: ["","",""] },
+
   // — Бали —
-  { id: 21, cityId: "bali",    category: "Природа",          name: "Tegallalang Rice Terraces",
-    shortDesc: "Знаменитые рисовые террасы к северу от Убуда. Изумрудные ступени уходят вниз в долину.",
-    description: "Знаменитые рисовые террасы к северу от Убуда. Изумрудные ступени уходят вниз в долину — один из символов острова. Лучший свет для фото — раннее утро или за час до заката.", photos: ["","",""] },
-  { id: 22, cityId: "bali",    category: "Кафе и рестораны", name: "Locavore",
-    shortDesc: "Один из лучших ресторанов Азии в Убуде. Вся еда — с местных ферм и рынков.",
-    description: "Один из лучших ресторанов Азии в Убуде. Вся еда — с местных ферм и рынков. Дегустационное меню с историей каждого ингредиента. Столик нужно бронировать заранее.", photos: ["","",""] },
+  { id: 21, cityId: "bali", category: "Природа", name: "Tegallalang Rice Terraces",
+    tags: "🌿 террасы · рассвет · фото",
+    badge: "🌅 на рассвете", area: "Убуд · 20 мин",
+    schedule: "весь день",
+    description: "Знаменитые рисовые террасы к северу от Убуда. Изумрудные ступени уходят вниз в долину — один из символов острова. Лучший свет для фото — раннее утро или за час до заката.",
+    photos: ["","",""] },
+
+  { id: 22, cityId: "bali", category: "Кафе и рестораны", name: "Locavore",
+    tags: "🍃 farm-to-table · Убуд · 50 Best",
+    badge: "💎 лучший в Азии", area: "Убуд · 5 мин",
+    schedule: "12:00–22:00", openFrom: 12, openTo: 22,
+    description: "Один из лучших ресторанов Азии в Убуде. Вся еда — с местных ферм и рынков. Дегустационное меню с историей каждого ингредиента. Столик нужно бронировать заранее.",
+    photos: ["","",""] },
 ].map(p => ({ ...p, saved: false }));
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -134,48 +221,76 @@ const gMapsUrl = (name, city) =>
 const yMapsUrl = (name, city) =>
   `https://yandex.ru/maps/?text=${encodeURIComponent(name + " " + city)}`;
 
-// Subtle gradient variations for 3 photo placeholders
-const THUMB_BG = [
-  "linear-gradient(145deg, #E8E3DC, #D4CEC6)",
-  "linear-gradient(145deg, #E2DDD6, #CECAC0)",
-  "linear-gradient(145deg, #DDD8D0, #C8C3BA)",
+const PHOTO_BG = [
+  "linear-gradient(145deg, #E8E3DC, #CFC9C0)",
+  "linear-gradient(145deg, #E0DBD3, #C8C2B8)",
+  "linear-gradient(145deg, #D8D3CB, #C0BAB0)",
 ];
 
-// ── Place card with accordion ──────────────────────────────────────────────
+function getOpenStatus(openFrom, openTo) {
+  if (!openFrom && !openTo) return null;
+  const h = new Date().getHours();
+  const open = openTo > openFrom
+    ? h >= openFrom && h < openTo
+    : h >= openFrom || h < openTo;
+  if (open) return { open: true, label: `Открыто · до ${String(openTo).padStart(2,"0")}:00` };
+  return { open: false, label: `Закрыто · с ${String(openFrom).padStart(2,"0")}:00` };
+}
+
+// ── Place Card ─────────────────────────────────────────────────────────────
 function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved }) {
+  const status = getOpenStatus(place.openFrom, place.openTo);
+
   return (
     <div style={s.placeCard}>
-      {/* ── Collapsed card ── */}
-      <div style={s.placeCardBody} onClick={onToggle}>
+      {/* ── Info block ── */}
+      <div style={s.placeInfo} onClick={onToggle}>
 
-        {/* Top: number + name + bookmark */}
-        <div style={s.placeCardTop}>
+        <div style={s.placeTop}>
           <span style={s.placeIdx}>{String(index + 1).padStart(2, "0")}</span>
           <span style={s.placeName}>{place.name}</span>
           <button style={{ ...s.saveBtn, color: isSaved ? "#2C2520" : "#C5BEB7" }}
-            onClick={(e) => { e.stopPropagation(); onSave(); }}>
+            onClick={e => { e.stopPropagation(); onSave(); }}>
             {isSaved ? Icons.bookmarkFilled : Icons.bookmarkEmpty}
           </button>
         </div>
 
-        {/* Short description — полностью */}
-        <p style={s.placeShortDesc}>{place.shortDesc}</p>
+        <div style={s.placeMeta}>
+          {place.badge && <span style={s.badge}>{place.badge}</span>}
+          {place.area && <span style={s.area}>{place.area}</span>}
+        </div>
 
-        {/* 3 photo previews */}
-        <div style={s.thumbRow}>
-          {[0, 1, 2].map(i => (
-            <div key={i} style={{ ...s.thumbLarge, background: THUMB_BG[i] }}>
-              {place.photos?.[i]
-                ? <img src={place.photos[i]} alt={place.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <span style={s.thumbLargeInitial}>{place.name[0]}</span>
-              }
-            </div>
-          ))}
+        {place.tags && <div style={s.tags}>{place.tags}</div>}
+
+        <div style={s.statusRow}>
+          {status ? (
+            <>
+              <span style={{ ...s.dot, background: status.open ? "#7BAE7F" : "#C5BEB7" }} />
+              <span style={{ fontSize: 11, color: status.open ? "#4A7A4E" : "#8A7F78", letterSpacing: "0.03em" }}>
+                {status.label}
+              </span>
+              {place.schedule && <span style={s.scheduleText}> · {place.schedule}</span>}
+            </>
+          ) : place.schedule ? (
+            <span style={s.scheduleText}>{place.schedule}</span>
+          ) : null}
         </div>
       </div>
 
-      {/* ── Accordion ── */}
-      <div style={{ ...s.accordion, maxHeight: isOpen ? 300 : 0 }}>
+      {/* ── Full-width photo strip ── */}
+      <div style={s.photoStrip} onClick={onToggle}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{ ...s.photoCell, background: PHOTO_BG[i] }}>
+            {place.photos?.[i]
+              ? <img src={place.photos[i]} alt={place.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <span style={s.photoInitial}>{place.name[0]}</span>
+            }
+          </div>
+        ))}
+      </div>
+
+      {/* ── Accordion (description + links) ── */}
+      <div style={{ ...s.accordion, maxHeight: isOpen ? 280 : 0 }}>
         <div style={s.accordionInner}>
           <p style={s.expandedDesc}>{place.description}</p>
           <div style={s.mapLinks}>
@@ -189,6 +304,8 @@ function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved }) {
           <button style={s.collapseBtn} onClick={onToggle}>свернуть ↑</button>
         </div>
       </div>
+
+      <div style={{ height: 14 }} />
     </div>
   );
 }
@@ -217,10 +334,9 @@ export default function App() {
   const savedPlaces   = places.filter(p => p.saved);
   const cityFor       = (cityId) => CITIES.find(c => c.id === cityId);
 
-  const goCity = (city) => { setSelectedCity(city); setExpandedId(null); setScreen("city"); };
-  const goCat  = (cat)  => { setSelectedCat(cat);   setExpandedId(null); setScreen("places"); };
-
-  const goBack = () => {
+  const goCity  = (city) => { setSelectedCity(city); setExpandedId(null); setScreen("city"); };
+  const goCat   = (cat)  => { setSelectedCat(cat);   setExpandedId(null); setScreen("places"); };
+  const goBack  = () => {
     setExpandedId(null);
     if (screen === "places") return setScreen("city");
     if (screen === "city")   return setScreen("home");
@@ -231,7 +347,6 @@ export default function App() {
     <div style={s.root}>
       {toast && <div style={s.toast}>{toast}</div>}
 
-      {/* ── HEADER ── */}
       <header style={s.header}>
         <span style={s.logo} onClick={() => { setScreen("home"); setExpandedId(null); }}>LOCALLENS</span>
         {["city","places"].includes(screen) && (
@@ -288,7 +403,7 @@ export default function App() {
           </>
         )}
 
-        {/* ── PLACES LIST ── */}
+        {/* ── PLACES ── */}
         {screen === "places" && selectedCity && selectedCat && (
           <>
             <div style={s.pageHero}>
@@ -298,16 +413,11 @@ export default function App() {
               {placesFor(selectedCity.id, selectedCat).map((place, i) => {
                 const live = places.find(p => p.id === place.id);
                 return (
-                  <PlaceCard
-                    key={place.id}
-                    place={live}
-                    index={i}
-                    city={selectedCity}
+                  <PlaceCard key={place.id} place={live} index={i} city={selectedCity}
                     isOpen={expandedId === place.id}
                     onToggle={() => toggleExpand(place.id)}
                     onSave={() => toggleSave(place.id)}
-                    isSaved={live.saved}
-                  />
+                    isSaved={live.saved} />
                 );
               })}
             </div>
@@ -326,19 +436,13 @@ export default function App() {
             ) : (
               <div style={s.list}>
                 {savedPlaces.map((place, i) => {
-                  const city = cityFor(place.cityId);
                   const live = places.find(p => p.id === place.id);
                   return (
-                    <PlaceCard
-                      key={place.id}
-                      place={live}
-                      index={i}
-                      city={city}
+                    <PlaceCard key={place.id} place={live} index={i} city={cityFor(place.cityId)}
                       isOpen={expandedId === place.id}
                       onToggle={() => toggleExpand(place.id)}
                       onSave={() => toggleSave(place.id)}
-                      isSaved={live.saved}
-                    />
+                      isSaved={live.saved} />
                   );
                 })}
               </div>
@@ -348,12 +452,9 @@ export default function App() {
 
       </main>
 
-      {/* ── BOTTOM NAV ── */}
       <nav style={s.bottomNav}>
-        {[["home", "Города"], ["saved", "Сохранено"]].map(([sc, label]) => {
-          const active = sc === "home"
-            ? ["home","city","places"].includes(screen)
-            : screen === sc;
+        {[["home","Города"],["saved","Сохранено"]].map(([sc, label]) => {
+          const active = sc === "home" ? ["home","city","places"].includes(screen) : screen === sc;
           return (
             <button key={sc} onClick={() => { setScreen(sc); setExpandedId(null); }}
               style={{ ...s.navBtn, ...(active ? s.navActive : {}) }}>
@@ -369,18 +470,16 @@ export default function App() {
 // ── Styles ─────────────────────────────────────────────────────────────────
 const s = {
   root: { fontFamily: "'DM Sans', -apple-system, sans-serif", background: "#F0EDE8", minHeight: "100vh", color: "#2C2520", paddingBottom: 72 },
-
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 24px", background: "#F0EDE8", borderBottom: "1px solid #DED9D3", position: "sticky", top: 0, zIndex: 100 },
   logo: { fontSize: 13, fontWeight: 700, letterSpacing: "0.18em", color: "#2C2520", cursor: "pointer" },
   backBtn: { background: "none", border: "none", color: "#8A7F78", cursor: "pointer", fontSize: 13, letterSpacing: "0.05em", fontFamily: "inherit" },
   main: { maxWidth: 640, margin: "0 auto", padding: "0 24px" },
 
   hero: { padding: "52px 0 40px", borderBottom: "1px solid #DED9D3", marginBottom: 8 },
-  heroTitle: { fontSize: 52, fontWeight: 800, lineHeight: 1.0, letterSpacing: "-0.025em", margin: "20px 0 18px", color: "#2C2520" },
+  heroTitle: { fontSize: 52, fontWeight: 800, lineHeight: 1.0, letterSpacing: "-0.025em", margin: "20px 0 18px" },
   heroSub: { fontSize: 14, color: "#8A7F78", lineHeight: 1.65, maxWidth: 300 },
-
-  pageHero: { padding: "40px 0 28px", borderBottom: "1px solid #DED9D3", marginBottom: 8 },
-  pageTitle: { fontSize: 44, fontWeight: 800, lineHeight: 1.0, letterSpacing: "-0.025em", color: "#2C2520", margin: "14px 0 0" },
+  pageHero: { padding: "36px 0 24px", borderBottom: "1px solid #DED9D3", marginBottom: 8 },
+  pageTitle: { fontSize: 44, fontWeight: 800, lineHeight: 1.0, letterSpacing: "-0.025em", margin: "14px 0 0" },
   label: { fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: "#8A7F78", margin: 0 },
   list: { display: "flex", flexDirection: "column" },
 
@@ -390,41 +489,46 @@ const s = {
   cityName: { fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em" },
   cityCountry: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.1em", textTransform: "uppercase" },
   arrow: { color: "#C5BEB7", fontSize: 18, flexShrink: 0 },
-
   savedBanner: { marginTop: 32, width: "100%", padding: "16px 20px", background: "#2C2520", color: "#F0EDE8", border: "none", borderRadius: 3, fontSize: 12, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" },
 
   catRow: { display: "flex", alignItems: "center", gap: 14, padding: "18px 0", background: "none", border: "none", borderBottom: "1px solid #DED9D3", cursor: "pointer", width: "100%", fontFamily: "inherit", color: "#2C2520" },
-  catIcon: { flexShrink: 0, display: "flex", alignItems: "center", color: "#2C2520" },
+  catIcon: { flexShrink: 0, display: "flex", alignItems: "center" },
   catName: { fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em", flex: 1, textAlign: "left" },
   catMeta: { fontSize: 12, color: "#8A7F78", letterSpacing: "0.05em", flexShrink: 0 },
 
   // Place card
   placeCard: { borderBottom: "1px solid #DED9D3" },
-  placeCardBody: { padding: "18px 0 16px", cursor: "pointer" },
-  placeCardTop: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 },
-  placeIdx: { fontSize: 11, color: "#C5BEB7", letterSpacing: "0.05em", minWidth: 22, flexShrink: 0, fontWeight: 500 },
-  placeName: { fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em", flex: 1 },
-  saveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, color: "#8A7F78", flexShrink: 0, padding: "2px 2px", fontFamily: "inherit", lineHeight: 1 },
-  placeShortDesc: { fontSize: 13, color: "#6A6058", lineHeight: 1.55, margin: "0 0 12px", paddingLeft: 32 },
+  placeInfo: { padding: "16px 0 12px", cursor: "pointer" },
+  placeTop: { display: "flex", alignItems: "center", gap: 10, marginBottom: 7 },
+  placeIdx: { fontSize: 11, color: "#C5BEB7", minWidth: 22, flexShrink: 0, fontWeight: 500, letterSpacing: "0.05em" },
+  placeName: { fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", flex: 1, lineHeight: 1.2 },
+  saveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, flexShrink: 0, padding: "2px", fontFamily: "inherit", lineHeight: 1 },
 
-  // 3 thumbnails row
-  thumbRow: { display: "flex", gap: 6 },
-  thumbLarge: { flex: 1, height: 88, borderRadius: 8, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
-  thumbLargeInitial: { fontSize: 26, fontWeight: 800, color: "#B8B2A8" },
+  placeMeta: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingLeft: 32 },
+  badge: { fontSize: 11, fontWeight: 600, color: "#2C2520", letterSpacing: "0.02em" },
+  area: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.03em", "&::before": { content: "'·'" } },
+  tags: { fontSize: 12, color: "#6A6058", letterSpacing: "0.02em", marginBottom: 6, paddingLeft: 32, lineHeight: 1.4 },
+
+  statusRow: { display: "flex", alignItems: "center", gap: 5, paddingLeft: 32, marginBottom: 10 },
+  dot: { width: 6, height: 6, borderRadius: "50%", flexShrink: 0 },
+  scheduleText: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.03em" },
+
+  // Photo strip — full width
+  photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 100, cursor: "pointer" },
+  photoCell: { flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
+  photoInitial: { fontSize: 28, fontWeight: 800, color: "#B8B2A8" },
 
   // Accordion
   accordion: { overflow: "hidden", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)" },
-  accordionInner: { paddingBottom: 20 },
-
-  expandedDesc: { fontSize: 14, color: "#5A5048", lineHeight: 1.75, margin: "0 0 20px" },
-  mapLinks: { display: "flex", gap: 10, marginBottom: 14 },
+  accordionInner: { paddingTop: 14, paddingBottom: 4 },
+  expandedDesc: { fontSize: 14, color: "#5A5048", lineHeight: 1.75, margin: "0 0 18px" },
+  mapLinks: { display: "flex", gap: 10, marginBottom: 12 },
   mapBtn: { flex: 1, padding: "12px 0", background: "none", border: "1px solid #DED9D3", borderRadius: 3, textAlign: "center", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", color: "#2C2520", textDecoration: "none", display: "block" },
   collapseBtn: { background: "none", border: "none", color: "#8A7F78", fontSize: 11, letterSpacing: "0.1em", cursor: "pointer", fontFamily: "inherit", padding: "4px 0" },
 
   bottomNav: { position: "fixed", bottom: 0, left: 0, right: 0, background: "#F0EDE8", borderTop: "1px solid #DED9D3", display: "flex", zIndex: 100 },
   navBtn: { flex: 1, padding: "16px 0", background: "none", border: "none", color: "#8A7F78", cursor: "pointer", fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "inherit" },
   navActive: { color: "#2C2520" },
-
   toast: { position: "fixed", bottom: 88, left: "50%", transform: "translateX(-50%)", background: "#2C2520", color: "#F0EDE8", padding: "10px 22px", borderRadius: 3, fontSize: 12, fontWeight: 500, letterSpacing: "0.08em", zIndex: 200, whiteSpace: "nowrap" },
   empty: { textAlign: "center", color: "#8A7F78", padding: "64px 0", fontSize: 14, lineHeight: 1.7 },
 };
