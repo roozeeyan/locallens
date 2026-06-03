@@ -56,54 +56,76 @@ const CITIES = [
 const INITIAL_PLACES = [
   // — Ереван —
   { id: 1,  cityId: "yerevan", category: "Кафе и рестораны", name: "Jazzve Coffee",
-    description: "Армянская кофейня с традиционным кофе в джезве. Деревянный интерьер, тихая атмосфера и лучшая турка в центре Еревана.", photo: "" },
+    shortDesc: "Армянская кофейня с традиционным кофе в джезве. Деревянный интерьер, тихая атмосфера.",
+    description: "Армянская кофейня с традиционным кофе в джезве. Деревянный интерьер, тихая атмосфера и лучшая турка в центре Еревана. Обязательно попробуй кофе с кардамоном — это местная классика.", photos: ["","",""] },
   { id: 2,  cityId: "yerevan", category: "Кафе и рестораны", name: "Aperitivo",
-    description: "Итальянско-армянская кухня с открытой террасой. Отличная паста, живая музыка по выходным и бокал вина с видом на город.", photo: "" },
+    shortDesc: "Итальянско-армянская кухня с открытой террасой. Отличная паста, живая музыка по выходным.",
+    description: "Итальянско-армянская кухня с открытой террасой. Отличная паста, живая музыка по выходным и бокал вина с видом на город. Один из лучших ресторанов для вечера на свежем воздухе.", photos: ["","",""] },
   { id: 3,  cityId: "yerevan", category: "Кафе и рестораны", name: "Dolmama",
-    description: "Один из лучших ресторанов армянской кухни в городе. Классические блюда в современной подаче, уютный дворик.", photo: "" },
+    shortDesc: "Один из лучших ресторанов армянской кухни в городе. Классические блюда в современной подаче.",
+    description: "Один из лучших ресторанов армянской кухни в городе. Классические блюда в современной подаче, уютный дворик. Шеф-повар переосмыслил традиционные рецепты — результат впечатляет.", photos: ["","",""] },
   { id: 4,  cityId: "yerevan", category: "Кафе и рестораны", name: "Lavash",
-    description: "Ресторан традиционной армянской кухни. Фирменные хачапури, кюфта и домашние вина. Место где едят местные.", photo: "" },
+    shortDesc: "Ресторан традиционной армянской кухни. Фирменные хачапури, кюфта и домашние вина.",
+    description: "Ресторан традиционной армянской кухни. Фирменные хачапури, кюфта и домашние вина. Место где едят местные — без туристических наценок и с настоящей атмосферой.", photos: ["","",""] },
   { id: 5,  cityId: "yerevan", category: "Бары",             name: "Wine Republic",
-    description: "Винный бар с огромной картой армянских и грузинских вин. Тёплая атмосфера, живая музыка и отличные сырные тарелки.", photo: "" },
+    shortDesc: "Винный бар с огромной картой армянских и грузинских вин. Тёплая атмосфера, живая музыка.",
+    description: "Винный бар с огромной картой армянских и грузинских вин. Тёплая атмосфера, живая музыка и отличные сырные тарелки. Идеально для вечера с друзьями или романтического ужина.", photos: ["","",""] },
   { id: 6,  cityId: "yerevan", category: "Бары",             name: "Churchill Bar",
-    description: "Классический английский паб с армянским характером. Хороший выбор виски, дартс и футбол на большом экране.", photo: "" },
+    shortDesc: "Классический английский паб с армянским характером. Хороший выбор виски и дартс.",
+    description: "Классический английский паб с армянским характером. Хороший выбор виски, дартс и футбол на большом экране. Лучшее место в Ереване чтобы посмотреть матч в хорошей компании.", photos: ["","",""] },
   { id: 7,  cityId: "yerevan", category: "Достопримечательности", name: "Каскад",
-    description: "Монументальная лестница с видом на Арарат. Внутри — галерея современного искусства, снаружи — лучший закат в Ереване.", photo: "" },
+    shortDesc: "Монументальная лестница с видом на Арарат. Внутри — галерея современного искусства.",
+    description: "Монументальная лестница с видом на Арарат. Внутри — галерея современного искусства, снаружи — лучший закат в Ереване. Подъём занимает 20 минут, но вид того стоит.", photos: ["","",""] },
   { id: 8,  cityId: "yerevan", category: "Достопримечательности", name: "Матенадаран",
-    description: "Хранилище древнеармянских рукописей — одно из крупнейших в мире. Здание само по себе архитектурный шедевр.", photo: "" },
+    shortDesc: "Хранилище древнеармянских рукописей — одно из крупнейших в мире.",
+    description: "Хранилище древнеармянских рукописей — одно из крупнейших в мире. Здание само по себе архитектурный шедевр. Экскурсия с гидом открывает совершенно другой взгляд на армянскую историю.", photos: ["","",""] },
   { id: 9,  cityId: "yerevan", category: "Природа",          name: "Озеро Севан",
-    description: "Высокогорное озеро в часе езды от Еревана. Монастырь Севанаванк на полуострове, форель прямо с лодок, потрясающий воздух.", photo: "" },
+    shortDesc: "Высокогорное озеро в часе езды от Еревана. Монастырь Севанаванк на полуострове.",
+    description: "Высокогорное озеро в часе езды от Еревана. Монастырь Севанаванк на полуострове, форель прямо с лодок, потрясающий воздух. Лучший однодневный выезд из города.", photos: ["","",""] },
   { id: 10, cityId: "yerevan", category: "Шопинг",           name: "Вернисаж",
-    description: "Главный блошиный рынок Еревана. Ковры, серебро, советские значки, картины и настоящие армянские сувениры без туристических наценок.", photo: "" },
+    shortDesc: "Главный блошиный рынок Еревана. Ковры, серебро, советские значки и настоящие сувениры.",
+    description: "Главный блошиный рынок Еревана. Ковры, серебро, советские значки, картины и настоящие армянские сувениры без туристических наценок. По выходным — особенно богатый выбор.", photos: ["","",""] },
   // — Бангкок —
   { id: 11, cityId: "bangkok", category: "Кафе и рестораны", name: "Gaggan Anand",
-    description: "Прогрессивная индийская кухня — один из лучших ресторанов Азии по версии 50 Best. Меню в виде эмодзи, 25 курсов.", photo: "" },
+    shortDesc: "Прогрессивная индийская кухня — один из лучших ресторанов Азии по версии 50 Best.",
+    description: "Прогрессивная индийская кухня — один из лучших ресторанов Азии по версии 50 Best. Меню в виде эмодзи, 25 курсов. Бронировать нужно за несколько месяцев.", photos: ["","",""] },
   { id: 12, cityId: "bangkok", category: "Кафе и рестораны", name: "Nahm",
-    description: "Аутентичная тайская кухня в исполнении шеф-повара мирового уровня. Рецепты из старинных книг, почти исчезнувшие блюда.", photo: "" },
+    shortDesc: "Аутентичная тайская кухня в исполнении шеф-повара мирового уровня.",
+    description: "Аутентичная тайская кухня в исполнении шеф-повара мирового уровня. Рецепты из старинных книг, почти исчезнувшие блюда. Одно из лучших мест чтобы понять настоящую тайскую кухню.", photos: ["","",""] },
   { id: 13, cityId: "bangkok", category: "Достопримечательности", name: "Wat Pho",
-    description: "Храм лежащего Будды — самый большой в Бангкоке. Фигура Будды длиной 46 метров, перламутровая инкрустация на подошвах.", photo: "" },
+    shortDesc: "Храм лежащего Будды — самый большой в Бангкоке. Фигура 46 метров длиной.",
+    description: "Храм лежащего Будды — самый большой в Бангкоке. Фигура Будды длиной 46 метров, перламутровая инкрустация на подошвах. Здесь также находится одна из лучших школ тайского массажа.", photos: ["","",""] },
   { id: 14, cityId: "bangkok", category: "Шопинг",           name: "Chatuchak Market",
-    description: "Один из крупнейших рынков мира — 15 000 лотков. Антиквариат, одежда, растения, еда, всё что угодно. Только по выходным.", photo: "" },
+    shortDesc: "Один из крупнейших рынков мира — 15 000 лотков. Антиквариат, одежда, растения, еда.",
+    description: "Один из крупнейших рынков мира — 15 000 лотков. Антиквариат, одежда, растения, еда, всё что угодно. Только по выходным. Приходи утром — днём очень жарко.", photos: ["","",""] },
   // — Самуи —
   { id: 15, cityId: "samui",   category: "Пляжи",            name: "Chaweng Beach",
-    description: "Главный пляж острова — белый песок, бирюзовая вода, развитая инфраструктура. Лучший для первого знакомства с Самуи.", photo: "" },
+    shortDesc: "Главный пляж острова — белый песок, бирюзовая вода, развитая инфраструктура.",
+    description: "Главный пляж острова — белый песок, бирюзовая вода, развитая инфраструктура. Лучший для первого знакомства с Самуи. Вечером здесь оживает стрит-фуд и бары.", photos: ["","",""] },
   { id: 16, cityId: "samui",   category: "Кафе и рестораны", name: "The Larder",
-    description: "Европейский завтрак и бранч в тропиках. Яйца бенедикт, свежий хлеб, хороший кофе — лучшее место острова для утра.", photo: "" },
+    shortDesc: "Европейский завтрак и бранч в тропиках. Яйца бенедикт, свежий хлеб, хороший кофе.",
+    description: "Европейский завтрак и бранч в тропиках. Яйца бенедикт, свежий хлеб, хороший кофе — лучшее место острова для утра. Небольшой уютный интерьер, приходи пораньше.", photos: ["","",""] },
   // — Панган —
   { id: 17, cityId: "phangan", category: "Пляжи",            name: "Haad Yao",
-    description: "Тихий залив с чистейшей водой вдали от полнолунных вечеринок. Длинный белый пляж, скалы, закат окрашивает всё в розовый.", photo: "" },
+    shortDesc: "Тихий залив с чистейшей водой вдали от полнолунных вечеринок.",
+    description: "Тихий залив с чистейшей водой вдали от полнолунных вечеринок. Длинный белый пляж, скалы, закат окрашивает всё в розовый. Одно из самых красивых мест острова.", photos: ["","",""] },
   { id: 18, cityId: "phangan", category: "Природа",          name: "Than Sadet Waterfall",
-    description: "Каскадный водопад в джунглях — место, которое посещали тайские короли. Прохладные бассейны для купания, тишина и папоротники.", photo: "" },
+    shortDesc: "Каскадный водопад в джунглях — место, которое посещали тайские короли.",
+    description: "Каскадный водопад в джунглях — место, которое посещали тайские короли. Прохладные бассейны для купания, тишина и папоротники. Дорога занимает около 30 минут от центра.", photos: ["","",""] },
   // — Хой Ан —
   { id: 19, cityId: "hoian",   category: "Достопримечательности", name: "Ancient Town",
-    description: "Старый город под охраной ЮНЕСКО — фонари, каналы, жёлтые стены. Вечером зажигают тысячи фонариков — это нужно видеть.", photo: "" },
+    shortDesc: "Старый город под охраной ЮНЕСКО — фонари, каналы, жёлтые стены.",
+    description: "Старый город под охраной ЮНЕСКО — фонари, каналы, жёлтые стены. Вечером зажигают тысячи фонариков — это нужно видеть. Лучше гулять без карты — просто потеряться в переулках.", photos: ["","",""] },
   { id: 20, cityId: "hoian",   category: "Кафе и рестораны", name: "Morning Glory",
-    description: "Самый известный ресторан вьетнамской уличной еды в Хой Ане. Белая роза, cao lầu, жареные вонтоны — всё здесь лучшее.", photo: "" },
+    shortDesc: "Самый известный ресторан вьетнамской уличной еды в Хой Ане.",
+    description: "Самый известный ресторан вьетнамской уличной еды в Хой Ане. Белая роза, cao lầu, жареные вонтоны — всё здесь лучшее. Основательница ресторана лично встречает гостей.", photos: ["","",""] },
   // — Бали —
   { id: 21, cityId: "bali",    category: "Природа",          name: "Tegallalang Rice Terraces",
-    description: "Знаменитые рисовые террасы к северу от Убуда. Изумрудные ступени уходят вниз в долину — один из символов острова.", photo: "" },
+    shortDesc: "Знаменитые рисовые террасы к северу от Убуда. Изумрудные ступени уходят вниз в долину.",
+    description: "Знаменитые рисовые террасы к северу от Убуда. Изумрудные ступени уходят вниз в долину — один из символов острова. Лучший свет для фото — раннее утро или за час до заката.", photos: ["","",""] },
   { id: 22, cityId: "bali",    category: "Кафе и рестораны", name: "Locavore",
-    description: "Один из лучших ресторанов Азии в Убуде. Вся еда — с местных ферм и рынков. Дегустационное меню с историей каждого ингредиента.", photo: "" },
+    shortDesc: "Один из лучших ресторанов Азии в Убуде. Вся еда — с местных ферм и рынков.",
+    description: "Один из лучших ресторанов Азии в Убуде. Вся еда — с местных ферм и рынков. Дегустационное меню с историей каждого ингредиента. Столик нужно бронировать заранее.", photos: ["","",""] },
 ].map(p => ({ ...p, saved: false }));
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -112,50 +134,50 @@ const gMapsUrl = (name, city) =>
 const yMapsUrl = (name, city) =>
   `https://yandex.ru/maps/?text=${encodeURIComponent(name + " " + city)}`;
 
+// Subtle gradient variations for 3 photo placeholders
+const THUMB_BG = [
+  "linear-gradient(145deg, #E8E3DC, #D4CEC6)",
+  "linear-gradient(145deg, #E2DDD6, #CECAC0)",
+  "linear-gradient(145deg, #DDD8D0, #C8C3BA)",
+];
+
 // ── Place card with accordion ──────────────────────────────────────────────
 function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved }) {
   return (
     <div style={s.placeCard}>
-      {/* ── Collapsed row ── */}
-      <div style={s.placeRow} onClick={onToggle}>
-        <span style={s.placeIdx}>{String(index + 1).padStart(2, "0")}</span>
+      {/* ── Collapsed card ── */}
+      <div style={s.placeCardBody} onClick={onToggle}>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={s.placeName}>{place.name}</div>
-          <div style={s.placeSnippet}>{place.description.slice(0, 55)}…</div>
+        {/* Top: number + name + bookmark */}
+        <div style={s.placeCardTop}>
+          <span style={s.placeIdx}>{String(index + 1).padStart(2, "0")}</span>
+          <span style={s.placeName}>{place.name}</span>
+          <button style={{ ...s.saveBtn, color: isSaved ? "#2C2520" : "#C5BEB7" }}
+            onClick={(e) => { e.stopPropagation(); onSave(); }}>
+            {isSaved ? Icons.bookmarkFilled : Icons.bookmarkEmpty}
+          </button>
         </div>
 
-        {/* Thumbnail */}
-        <div style={s.thumb}>
-          {place.photo
-            ? <img src={place.photo} alt={place.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            : <span style={s.thumbInitial}>{place.name[0]}</span>
-          }
-        </div>
+        {/* Short description — полностью */}
+        <p style={s.placeShortDesc}>{place.shortDesc}</p>
 
-        <button style={{ ...s.saveBtn, color: isSaved ? "#2C2520" : "#C5BEB7" }}
-          onClick={(e) => { e.stopPropagation(); onSave(); }}>
-          {isSaved ? Icons.bookmarkFilled : Icons.bookmarkEmpty}
-        </button>
+        {/* 3 photo previews */}
+        <div style={s.thumbRow}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{ ...s.thumbLarge, background: THUMB_BG[i] }}>
+              {place.photos?.[i]
+                ? <img src={place.photos[i]} alt={place.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <span style={s.thumbLargeInitial}>{place.name[0]}</span>
+              }
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* ── Accordion body ── */}
-      <div style={{ ...s.accordion, maxHeight: isOpen ? 520 : 0 }}>
+      {/* ── Accordion ── */}
+      <div style={{ ...s.accordion, maxHeight: isOpen ? 300 : 0 }}>
         <div style={s.accordionInner}>
-          {/* Big photo */}
-          <div style={s.expandedPhoto}>
-            {place.photo
-              ? <img src={place.photo} alt={place.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <div style={s.expandedPlaceholder}>
-                  <span style={s.expandedInitial}>{place.name[0]}</span>
-                </div>
-            }
-          </div>
-
-          {/* Description */}
           <p style={s.expandedDesc}>{place.description}</p>
-
-          {/* Map links */}
           <div style={s.mapLinks}>
             <a href={gMapsUrl(place.name, city?.name)} target="_blank" rel="noreferrer" style={s.mapBtn}>
               Google Maps ↗
@@ -164,8 +186,6 @@ function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved }) {
               Яндекс Карты ↗
             </a>
           </div>
-
-          {/* Collapse hint */}
           <button style={s.collapseBtn} onClick={onToggle}>свернуть ↑</button>
         </div>
       </div>
@@ -380,24 +400,21 @@ const s = {
 
   // Place card
   placeCard: { borderBottom: "1px solid #DED9D3" },
-  placeRow: { display: "flex", alignItems: "center", gap: 12, padding: "14px 0", cursor: "pointer" },
+  placeCardBody: { padding: "18px 0 16px", cursor: "pointer" },
+  placeCardTop: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 },
   placeIdx: { fontSize: 11, color: "#C5BEB7", letterSpacing: "0.05em", minWidth: 22, flexShrink: 0, fontWeight: 500 },
-  placeName: { fontSize: 16, fontWeight: 500, letterSpacing: "-0.01em", marginBottom: 3 },
-  placeSnippet: { fontSize: 12, color: "#8A7F78", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" },
-  saveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, color: "#8A7F78", flexShrink: 0, padding: "4px 4px", fontFamily: "inherit", lineHeight: 1 },
+  placeName: { fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em", flex: 1 },
+  saveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, color: "#8A7F78", flexShrink: 0, padding: "2px 2px", fontFamily: "inherit", lineHeight: 1 },
+  placeShortDesc: { fontSize: 13, color: "#6A6058", lineHeight: 1.55, margin: "0 0 12px", paddingLeft: 32 },
 
-  // Thumbnail in collapsed row
-  thumb: { width: 56, height: 56, borderRadius: 6, overflow: "hidden", flexShrink: 0, background: "#E5E0D8", display: "flex", alignItems: "center", justifyContent: "center" },
-  thumbInitial: { fontSize: 22, fontWeight: 800, color: "#C5BEB7" },
+  // 3 thumbnails row
+  thumbRow: { display: "flex", gap: 6 },
+  thumbLarge: { flex: 1, height: 88, borderRadius: 8, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
+  thumbLargeInitial: { fontSize: 26, fontWeight: 800, color: "#B8B2A8" },
 
   // Accordion
   accordion: { overflow: "hidden", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)" },
   accordionInner: { paddingBottom: 20 },
-
-  // Expanded photo
-  expandedPhoto: { width: "calc(100% + 48px)", marginLeft: -24, height: 220, background: "#E5E0D8", overflow: "hidden", marginBottom: 18 },
-  expandedPlaceholder: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #E5E0D8, #D0C9BE)" },
-  expandedInitial: { fontSize: 72, fontWeight: 800, color: "#C5BEB7" },
 
   expandedDesc: { fontSize: 14, color: "#5A5048", lineHeight: 1.75, margin: "0 0 20px" },
   mapLinks: { display: "flex", gap: 10, marginBottom: 14 },
