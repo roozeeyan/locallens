@@ -21,14 +21,14 @@ const Icons = {
 };
 
 const CATEGORY_ICONS = {
-  "Кафе и рестораны":    Icons.coffee,
-  "Бары":                Icons.wine,
+  "Кафе и рестораны":      Icons.coffee,
+  "Бары":                  Icons.wine,
   "Достопримечательности": Icons.column,
-  "Природа":             Icons.leaf,
-  "Шопинг":              Icons.bag,
-  "Пляжи":               Icons.wave,
-  "Велнес и spa":        Icons.spa,
-  "Жильё":               Icons.bed,
+  "Природа":               Icons.leaf,
+  "Шопинг":                Icons.bag,
+  "Пляжи":                 Icons.wave,
+  "Велнес и spa":          Icons.spa,
+  "Жильё":                 Icons.bed,
 };
 
 // ── Data ───────────────────────────────────────────────────────────────────
@@ -100,35 +100,95 @@ const gMapsUrl = (name, city) =>
 const yMapsUrl = (name, city) =>
   `https://yandex.ru/maps/?text=${encodeURIComponent(name + " " + city)}`;
 
+// ── Place card with accordion ──────────────────────────────────────────────
+function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved }) {
+  return (
+    <div style={s.placeCard}>
+      {/* ── Collapsed row ── */}
+      <div style={s.placeRow} onClick={onToggle}>
+        <span style={s.placeIdx}>{String(index + 1).padStart(2, "0")}</span>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={s.placeName}>{place.name}</div>
+          <div style={s.placeSnippet}>{place.description.slice(0, 55)}…</div>
+        </div>
+
+        {/* Thumbnail */}
+        <div style={s.thumb}>
+          {place.photo
+            ? <img src={place.photo} alt={place.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            : <span style={s.thumbInitial}>{place.name[0]}</span>
+          }
+        </div>
+
+        <button style={s.saveBtn} onClick={(e) => { e.stopPropagation(); onSave(); }}>
+          {isSaved ? "◆" : "◇"}
+        </button>
+      </div>
+
+      {/* ── Accordion body ── */}
+      <div style={{ ...s.accordion, maxHeight: isOpen ? 520 : 0 }}>
+        <div style={s.accordionInner}>
+          {/* Big photo */}
+          <div style={s.expandedPhoto}>
+            {place.photo
+              ? <img src={place.photo} alt={place.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              : <div style={s.expandedPlaceholder}>
+                  <span style={s.expandedInitial}>{place.name[0]}</span>
+                </div>
+            }
+          </div>
+
+          {/* Description */}
+          <p style={s.expandedDesc}>{place.description}</p>
+
+          {/* Map links */}
+          <div style={s.mapLinks}>
+            <a href={gMapsUrl(place.name, city?.name)} target="_blank" rel="noreferrer" style={s.mapBtn}>
+              Google Maps ↗
+            </a>
+            <a href={yMapsUrl(place.name, city?.name)} target="_blank" rel="noreferrer" style={s.mapBtn}>
+              Яндекс Карты ↗
+            </a>
+          </div>
+
+          {/* Collapse hint */}
+          <button style={s.collapseBtn} onClick={onToggle}>свернуть ↑</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── App ────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [screen, setScreen]               = useState("home");
-  const [selectedCity, setSelectedCity]   = useState(null);
-  const [selectedCat, setSelectedCat]     = useState(null);
-  const [selectedPlace, setSelectedPlace] = useState(null);
-  const [places, setPlaces]               = useState(INITIAL_PLACES);
-  const [toast, setToast]                 = useState(null);
+  const [screen, setScreen]             = useState("home");
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [selectedCat, setSelectedCat]   = useState(null);
+  const [places, setPlaces]             = useState(INITIAL_PLACES);
+  const [expandedId, setExpandedId]     = useState(null);
+  const [toast, setToast]               = useState(null);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2000); };
 
-  const toggleSave = (id, e) => {
-    e?.stopPropagation();
+  const toggleSave = (id) => {
     const p = places.find(p => p.id === id);
     setPlaces(prev => prev.map(pl => pl.id === id ? { ...pl, saved: !pl.saved } : pl));
     showToast(p?.saved ? "Удалено из сохранённых" : "Сохранено");
   };
+
+  const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
 
   const categoriesFor = (cityId) => [...new Set(places.filter(p => p.cityId === cityId).map(p => p.category))];
   const placesFor     = (cityId, cat) => places.filter(p => p.cityId === cityId && p.category === cat);
   const savedPlaces   = places.filter(p => p.saved);
   const cityFor       = (cityId) => CITIES.find(c => c.id === cityId);
 
-  const goCity  = (city)  => { setSelectedCity(city); setScreen("city"); };
-  const goCat   = (cat)   => { setSelectedCat(cat);   setScreen("places"); };
-  const goPlace = (place) => { setSelectedPlace(place); setScreen("place"); };
+  const goCity = (city) => { setSelectedCity(city); setExpandedId(null); setScreen("city"); };
+  const goCat  = (cat)  => { setSelectedCat(cat);   setExpandedId(null); setScreen("places"); };
 
   const goBack = () => {
-    if (screen === "place")  return setScreen("places");
+    setExpandedId(null);
     if (screen === "places") return setScreen("city");
     if (screen === "city")   return setScreen("home");
     setScreen("home");
@@ -140,8 +200,8 @@ export default function App() {
 
       {/* ── HEADER ── */}
       <header style={s.header}>
-        <span style={s.logo} onClick={() => setScreen("home")}>LOCALLENS</span>
-        {["city","places","place"].includes(screen) && (
+        <span style={s.logo} onClick={() => { setScreen("home"); setExpandedId(null); }}>LOCALLENS</span>
+        {["city","places"].includes(screen) && (
           <button style={s.backBtn} onClick={goBack}>← назад</button>
         )}
       </header>
@@ -205,57 +265,21 @@ export default function App() {
               {placesFor(selectedCity.id, selectedCat).map((place, i) => {
                 const live = places.find(p => p.id === place.id);
                 return (
-                  <div key={place.id} style={s.placeRow} onClick={() => goPlace(live)}>
-                    <span style={s.placeIdx}>{String(i + 1).padStart(2, "0")}</span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={s.placeName}>{place.name}</div>
-                      <div style={s.placeSnippet}>{place.description.slice(0, 62)}…</div>
-                    </div>
-                    <button style={s.saveBtn} onClick={(e) => toggleSave(live.id, e)}>
-                      {live.saved ? "◆" : "◇"}
-                    </button>
-                  </div>
+                  <PlaceCard
+                    key={place.id}
+                    place={live}
+                    index={i}
+                    city={selectedCity}
+                    isOpen={expandedId === place.id}
+                    onToggle={() => toggleExpand(place.id)}
+                    onSave={() => toggleSave(place.id)}
+                    isSaved={live.saved}
+                  />
                 );
               })}
             </div>
           </>
         )}
-
-        {/* ── PLACE DETAIL ── */}
-        {screen === "place" && selectedPlace && (() => {
-          const live = places.find(p => p.id === selectedPlace.id);
-          const city = cityFor(live.cityId);
-          return (
-            <>
-              <div style={s.placePhoto}>
-                {live.photo
-                  ? <img src={live.photo} alt={live.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : <div style={s.photoPlaceholder}>
-                      <span style={s.photoInitial}>{live.name[0]}</span>
-                    </div>
-                }
-              </div>
-              <div style={s.detailBody}>
-                <p style={s.label}>{city?.name} · {live.category}</p>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                  <h1 style={s.detailTitle}>{live.name}</h1>
-                  <button style={{ ...s.saveBtn, fontSize: 20, paddingTop: 8, flexShrink: 0 }} onClick={(e) => toggleSave(live.id, e)}>
-                    {live.saved ? "◆" : "◇"}
-                  </button>
-                </div>
-                <p style={s.detailDesc}>{live.description}</p>
-                <div style={s.mapLinks}>
-                  <a href={gMapsUrl(live.name, city?.name)} target="_blank" rel="noreferrer" style={s.mapBtn}>
-                    Google Maps ↗
-                  </a>
-                  <a href={yMapsUrl(live.name, city?.name)} target="_blank" rel="noreferrer" style={s.mapBtn}>
-                    Яндекс Карты ↗
-                  </a>
-                </div>
-              </div>
-            </>
-          );
-        })()}
 
         {/* ── SAVED ── */}
         {screen === "saved" && (
@@ -268,17 +292,20 @@ export default function App() {
               <p style={s.empty}>Пока пусто — сохраняй места которые понравились</p>
             ) : (
               <div style={s.list}>
-                {savedPlaces.map(place => {
+                {savedPlaces.map((place, i) => {
                   const city = cityFor(place.cityId);
+                  const live = places.find(p => p.id === place.id);
                   return (
-                    <div key={place.id} style={s.placeRow} onClick={() => goPlace(place)}>
-                      <span style={s.placeIdx}>{city?.emoji}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={s.placeName}>{place.name}</div>
-                        <div style={s.placeSnippet}>{city?.name} · {place.category}</div>
-                      </div>
-                      <button style={s.saveBtn} onClick={(e) => toggleSave(place.id, e)}>◆</button>
-                    </div>
+                    <PlaceCard
+                      key={place.id}
+                      place={live}
+                      index={i}
+                      city={city}
+                      isOpen={expandedId === place.id}
+                      onToggle={() => toggleExpand(place.id)}
+                      onSave={() => toggleSave(place.id)}
+                      isSaved={live.saved}
+                    />
                   );
                 })}
               </div>
@@ -292,10 +319,10 @@ export default function App() {
       <nav style={s.bottomNav}>
         {[["home", "Города"], ["saved", "Сохранено"]].map(([sc, label]) => {
           const active = sc === "home"
-            ? ["home","city","places","place"].includes(screen)
+            ? ["home","city","places"].includes(screen)
             : screen === sc;
           return (
-            <button key={sc} onClick={() => setScreen(sc)}
+            <button key={sc} onClick={() => { setScreen(sc); setExpandedId(null); }}
               style={{ ...s.navBtn, ...(active ? s.navActive : {}) }}>
               {label}
             </button>
@@ -313,7 +340,6 @@ const s = {
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 24px", background: "#F0EDE8", borderBottom: "1px solid #DED9D3", position: "sticky", top: 0, zIndex: 100 },
   logo: { fontSize: 13, fontWeight: 700, letterSpacing: "0.18em", color: "#2C2520", cursor: "pointer" },
   backBtn: { background: "none", border: "none", color: "#8A7F78", cursor: "pointer", fontSize: 13, letterSpacing: "0.05em", fontFamily: "inherit" },
-
   main: { maxWidth: 640, margin: "0 auto", padding: "0 24px" },
 
   hero: { padding: "52px 0 40px", borderBottom: "1px solid #DED9D3", marginBottom: 8 },
@@ -322,7 +348,6 @@ const s = {
 
   pageHero: { padding: "40px 0 28px", borderBottom: "1px solid #DED9D3", marginBottom: 8 },
   pageTitle: { fontSize: 44, fontWeight: 800, lineHeight: 1.0, letterSpacing: "-0.025em", color: "#2C2520", margin: "14px 0 0" },
-
   label: { fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: "#8A7F78", margin: 0 },
   list: { display: "flex", flexDirection: "column" },
 
@@ -340,20 +365,31 @@ const s = {
   catName: { fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em", flex: 1, textAlign: "left" },
   catMeta: { fontSize: 12, color: "#8A7F78", letterSpacing: "0.05em", flexShrink: 0 },
 
-  placeRow: { display: "flex", alignItems: "center", gap: 16, padding: "16px 0", borderBottom: "1px solid #DED9D3", cursor: "pointer" },
-  placeIdx: { fontSize: 11, color: "#C5BEB7", letterSpacing: "0.05em", minWidth: 24, flexShrink: 0, fontWeight: 500 },
+  // Place card
+  placeCard: { borderBottom: "1px solid #DED9D3" },
+  placeRow: { display: "flex", alignItems: "center", gap: 12, padding: "14px 0", cursor: "pointer" },
+  placeIdx: { fontSize: 11, color: "#C5BEB7", letterSpacing: "0.05em", minWidth: 22, flexShrink: 0, fontWeight: 500 },
   placeName: { fontSize: 16, fontWeight: 500, letterSpacing: "-0.01em", marginBottom: 3 },
-  placeSnippet: { fontSize: 12, color: "#8A7F78", lineHeight: 1.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  saveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, color: "#8A7F78", flexShrink: 0, padding: "4px 0", fontFamily: "inherit", lineHeight: 1 },
+  placeSnippet: { fontSize: 12, color: "#8A7F78", lineHeight: 1.4, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" },
+  saveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, color: "#8A7F78", flexShrink: 0, padding: "4px 4px", fontFamily: "inherit", lineHeight: 1 },
 
-  placePhoto: { width: "calc(100% + 48px)", marginLeft: -24, height: 260, background: "#E5E0D8", overflow: "hidden" },
-  photoPlaceholder: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #E5E0D8, #D8D2C8)" },
-  photoInitial: { fontSize: 80, fontWeight: 800, color: "#C5BEB7", letterSpacing: "-0.05em" },
-  detailBody: { padding: "28px 0 0" },
-  detailTitle: { fontSize: 32, fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.1, margin: "10px 0 16px", flex: 1 },
-  detailDesc: { fontSize: 15, color: "#5A5048", lineHeight: 1.75, margin: "0 0 28px" },
-  mapLinks: { display: "flex", gap: 10, marginBottom: 32 },
-  mapBtn: { flex: 1, padding: "13px 0", background: "none", border: "1px solid #DED9D3", borderRadius: 3, textAlign: "center", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", color: "#2C2520", textDecoration: "none", display: "block" },
+  // Thumbnail in collapsed row
+  thumb: { width: 56, height: 56, borderRadius: 6, overflow: "hidden", flexShrink: 0, background: "#E5E0D8", display: "flex", alignItems: "center", justifyContent: "center" },
+  thumbInitial: { fontSize: 22, fontWeight: 800, color: "#C5BEB7" },
+
+  // Accordion
+  accordion: { overflow: "hidden", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)" },
+  accordionInner: { paddingBottom: 20 },
+
+  // Expanded photo
+  expandedPhoto: { width: "calc(100% + 48px)", marginLeft: -24, height: 220, background: "#E5E0D8", overflow: "hidden", marginBottom: 18 },
+  expandedPlaceholder: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #E5E0D8, #D0C9BE)" },
+  expandedInitial: { fontSize: 72, fontWeight: 800, color: "#C5BEB7" },
+
+  expandedDesc: { fontSize: 14, color: "#5A5048", lineHeight: 1.75, margin: "0 0 20px" },
+  mapLinks: { display: "flex", gap: 10, marginBottom: 14 },
+  mapBtn: { flex: 1, padding: "12px 0", background: "none", border: "1px solid #DED9D3", borderRadius: 3, textAlign: "center", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", color: "#2C2520", textDecoration: "none", display: "block" },
+  collapseBtn: { background: "none", border: "none", color: "#8A7F78", fontSize: 11, letterSpacing: "0.1em", cursor: "pointer", fontFamily: "inherit", padding: "4px 0" },
 
   bottomNav: { position: "fixed", bottom: 0, left: 0, right: 0, background: "#F0EDE8", borderTop: "1px solid #DED9D3", display: "flex", zIndex: 100 },
   navBtn: { flex: 1, padding: "16px 0", background: "none", border: "none", color: "#8A7F78", cursor: "pointer", fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "inherit" },
