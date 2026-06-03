@@ -18,6 +18,18 @@ const Icons = {
   spa:    <Icon><path d="M12 22V12"/><path d="M5 12C5 6.5 8.5 2 12 2s7 4.5 7 10"/><path d="M5 12c2.8 0 5-2.2 5-5"/><path d="M19 12c-2.8 0-5-2.2-5-5"/></Icon>,
   bed:    <Icon><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></Icon>,
   pin:    <Icon><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></Icon>,
+  bookmarkEmpty: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+    </svg>
+  ),
+  bookmarkFilled: (
+    <svg width="18" height="18" viewBox="0 0 24 24"
+      fill="currentColor" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+    </svg>
+  ),
 };
 
 const CATEGORY_ICONS = {
@@ -121,8 +133,9 @@ function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved }) {
           }
         </div>
 
-        <button style={s.saveBtn} onClick={(e) => { e.stopPropagation(); onSave(); }}>
-          {isSaved ? "◆" : "◇"}
+        <button style={{ ...s.saveBtn, color: isSaved ? "#2C2520" : "#C5BEB7" }}
+          onClick={(e) => { e.stopPropagation(); onSave(); }}>
+          {isSaved ? Icons.bookmarkFilled : Icons.bookmarkEmpty}
         </button>
       </div>
 
