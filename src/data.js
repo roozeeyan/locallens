@@ -1,3 +1,5 @@
+import PHOTOS from "./photos.json";
+
 const WM = "https://upload.wikimedia.org/wikipedia/commons/thumb";
 const TA = "https://media-cdn.tripadvisor.com/media/photo-f";
 
@@ -996,4 +998,4 @@ export const INITIAL_PLACES = [
   { id: 1034, cityId: "yerevan", category: "Шопинг", name: "Gnuni", lat: 40.1872, lng: 44.5152, mapsUrl: "https://www.google.com/maps/place/Gnuni/data=!4m2!3m1!1s0x406abcf38cefb67f:0xf0036a32d3b33ba" },
   { id: 1035, cityId: "yerevan", category: "Шопинг", name: "Avalon Textile House", lat: 40.1872, lng: 44.5152, mapsUrl: "https://www.google.com/maps/place/Avalon+Textile+House/data=!4m2!3m1!1s0x406abcf3d01a1641:0xbd6a69c5ed69c527" },
   { id: 1036, cityId: "yerevan", category: "Шопинг", name: "Mtextile", lat: 40.1872, lng: 44.5152, mapsUrl: "https://www.google.com/maps/place/Mtextile/data=!4m2!3m1!1s0x406abd3f7e6dd1cb:0x14b3a3b8aba6ca13" },
-].map(p => ({ ...p, saved: false }));
+].map(p => ({ ...p, saved: false, photos: p.photos || PHOTOS[p.id] || [] }));

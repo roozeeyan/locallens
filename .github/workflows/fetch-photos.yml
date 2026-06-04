@@ -1,0 +1,59 @@
+name: Fetch Place Photos
+
+on:
+  workflow_dispatch:
+    inputs:
+      batch_size:
+        description: 'Places per run (default 936 = all)'
+        required: false
+        default: '936'
+      skip_ids:
+        description: 'Comma-separated IDs to skip (already done)'
+        required: false
+        default: ''
+
+jobs:
+  fetch-photos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch photos via Serper
+        env:
+          SERPER_KEY: ${{ secrets.SERPER_KEY }}
+        run: |
+          python scripts/fetch_photos.py \
+            --batch "${{ inputs.batch_size }}" \
+            --skip "${{ inputs.skip_ids }}"
+
+      - name: Print stats
+        run: |
+          python -c "
+          import json
+          with open('src/photos.json') as f:
+              d = json.load(f)
+          filled = sum(1 for v in d.values() if v)
+          print(f'Places with photos: {filled}/{len(d)}')
+          "
+
+      - name: Commit and push
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add src/photos.json
+          git diff --staged --quiet && echo "Nothing to commit" && exit 0
+          git commit -m "Add place photos via Serper API ($(python -c "import json; d=json.load(open('src/photos.json')); print(sum(1 for v in d.values() if v))")  places)"
+          git push origin HEAD
