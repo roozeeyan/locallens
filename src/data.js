@@ -64,7 +64,6 @@ export const CITIES = [
   { id: "hoian", name: "Хой Ан", country: "Вьетнам", emoji: "🇻🇳" },
   { id: "bali", name: "Бали", country: "Индонезия", emoji: "🇮🇩" },
   { id: "danang", name: "Дананг", country: "Вьетнам", emoji: "🇻🇳" },
-  { id: "nusapenida", name: "Нуса Пенида", country: "Индонезия", emoji: "🇮🇩" },
   { id: "singapore", name: "Сингапур", country: "Сингапур", emoji: "🇸🇬" },
 ];
 
@@ -678,15 +677,6 @@ export const INITIAL_PLACES = [
   { id: 706, cityId: "yerevan", category: "Велнес и spa", name: "MedGen", lat: 40.1872, lng: 44.5152, mapsUrl: "https://www.google.com/maps/place/MedGen/data=!4m2!3m1!1s0x406abde177279e19:0xaf3bcad94a2b99e0" },
   { id: 707, cityId: "yerevan", category: "Велнес и spa", name: "ДНК-тест в Ереване DNA Diagnostics Center", lat: 40.1872, lng: 44.5152, mapsUrl: "https://www.google.com/maps/place/%D0%94%D0%9D%D0%9A-%D1%82%D0%B5%D1%81%D1%82+%D0%B2+%D0%95%D1%80%D0%B5%D0%B2%D0%B0%D0%BD%D0%B5+DNA+Diagnostics+Center/data=!4m2!3m1!1s0x406abdcf2162b3bd:0x7d01606404428c8" },
   { id: 708, cityId: "yerevan", category: "Велнес и spa", name: "Բժշկական գենետիկայի և առողջության առաջնային պահպանման կենտրոն", lat: 40.1872, lng: 44.5152, mapsUrl: "https://www.google.com/maps/place/%D4%B2%D5%AA%D5%B7%D5%AF%D5%A1%D5%AF%D5%A1%D5%B6+%D5%A3%D5%A5%D5%B6%D5%A5%D5%BF%D5%AB%D5%AF%D5%A1%D5%B5%D5%AB+%D6%87+%D5%A1%D5%BC%D5%B8%D5%B2%D5%BB%D5%B8%D6%82%D5%A9%D5%B5%D5%A1%D5%B6+%D5%A1%D5%BC%D5%A1%D5%BB%D5%B6%D5%A1%D5%B5%D5%AB%D5%B6+%D5%BA%D5%A1%D5%B0%D5%BA%D5%A1%D5%B6%D5%B4%D5%A1%D5%B6+%D5%AF%D5%A5%D5%B6%D5%BF%D6%80%D5%B8%D5%B6/data=!4m2!3m1!1s0x406abcf7673447ab:0x52556cc21ca137ad" },
-  { id: 709, cityId: "nusapenida", category: "Природа", name: "Diamond Beach", lat: -8.7289, lng: 115.5447, mapsUrl: "https://www.google.com/maps/place/Diamond+Beach/data=!4m2!3m1!1s0x2dd277161f77ae31:0xdad8747b0363d8d" },
-  { id: 710, cityId: "nusapenida", category: "Достопримечательности", name: "Сауэхен Бич", lat: -8.7289, lng: 115.5447, mapsUrl: "https://www.google.com/maps/place/%D0%A1%D0%B0%D1%83%D1%8D%D1%85%D0%B5%D0%BD+%D0%91%D0%B8%D1%87/data=!4m2!3m1!1s0x2dd279cfc7815793:0x2062f9f84602e8f5" },
-  { id: 711, cityId: "nusapenida", category: "Достопримечательности", name: "Келингкинг Бич", lat: -8.7289, lng: 115.5447, mapsUrl: "https://www.google.com/maps/place/%D0%9A%D0%B5%D0%BB%D0%B8%D0%BD%D0%B3%D0%BA%D0%B8%D0%BD%D0%B3+%D0%91%D0%B8%D1%87/data=!4m2!3m1!1s0x2dd26e2a9d0779cb:0xb390835442eced6e" },
-  { id: 712, cityId: "nusapenida", category: "Достопримечательности", name: "Manta Point", lat: -8.7289, lng: 115.5447, mapsUrl: "https://www.google.com/maps/place/Manta+Point/data=!4m2!3m1!1s0x2dd27a79360f65f5:0x601f003277685a06" },
-  { id: 713, cityId: "nusapenida", category: "Достопримечательности", name: "Banah Cliff Point", lat: -8.7289, lng: 115.5447, mapsUrl: "https://www.google.com/maps/place/Banah+Cliff+Point/data=!4m2!3m1!1s0x2dd2703c9e92668b:0xebfda3dd934d2028" },
-  { id: 714, cityId: "nusapenida", category: "Природа", name: "Tembeling Beach and Forest", lat: -8.7289, lng: 115.5447, mapsUrl: "https://www.google.com/maps/place/Tembeling+Beach+and+Forest/data=!4m2!3m1!1s0x2dd27a78c4f85747:0x5a24fa6829eb4397" },
-  { id: 715, cityId: "nusapenida", category: "Достопримечательности", name: "Кристал Бэй Наса Пенида", lat: -8.7289, lng: 115.5447, mapsUrl: "https://www.google.com/maps/place/%D0%9A%D1%80%D0%B8%D1%81%D1%82%D0%B0%D0%BB+%D0%91%D1%8D%D0%B9+%D0%9D%D0%B0%D1%81%D0%B0+%D0%9F%D0%B5%D0%BD%D0%B8%D0%B4%D0%B0/data=!4m2!3m1!1s0x2dd26e084c2a5fe3:0x4d4e5b852751c763" },
-  { id: 716, cityId: "nusapenida", category: "Природа", name: "Broken Beach", lat: -8.7289, lng: 115.5447, mapsUrl: "https://www.google.com/maps/place/Broken+Beach/data=!4m2!3m1!1s0x2dd26fdf21a72dcb:0x2fdb3f30123947a5" },
-  { id: 717, cityId: "nusapenida", category: "Достопримечательности", name: "Angel's Billabong", lat: -8.7289, lng: 115.5447, mapsUrl: "https://www.google.com/maps/place/Angel's+Billabong/data=!4m2!3m1!1s0x2dd26f817e9cb20b:0x168ba6d3daf31579" },
   { id: 718, cityId: "phangan", category: "Велнес и spa", name: "Lavella Spa", lat: 9.74, lng: 100.0565, mapsUrl: "https://www.google.com/maps/place/Lavella+Spa/data=!4m2!3m1!1s0x3054fd8c8d662b91:0xe4e61f0334a5db69" },
   { id: 719, cityId: "phangan", category: "Велнес и spa", name: "Pharaoh Spa", lat: 9.74, lng: 100.0565, mapsUrl: "https://www.google.com/maps/place/Pharaoh+Spa/data=!4m2!3m1!1s0x3054fc32135fbb03:0x60cc3b853a41f86b" },
   { id: 720, cityId: "phangan", category: "Кафе и рестораны", name: "Dar Mansour - Morocco's kitchen", lat: 9.74, lng: 100.0565, mapsUrl: "https://www.google.com/maps/place/Dar+Mansour+-+Morocco's+kitchen/data=!4m2!3m1!1s0x3054ff0bea5ba945:0x5d15746f356fcbd9" },
