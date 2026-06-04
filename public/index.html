@@ -15,6 +15,20 @@
     </style>
   </head>
   <body>
+    <script>
+(function(){
+  var p = localStorage.getItem('ll_access');
+  if(p !== '919526'){
+    var input = prompt('Введи код доступа:');
+    if(input !== '919526'){
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#666">Доступ закрыт</div>';
+      throw new Error('Access denied');
+    }
+    localStorage.setItem('ll_access', input);
+  }
+})();
+</script>
+
     <noscript>Включи JavaScript.</noscript>
     <div id="root"></div>
   </body>
