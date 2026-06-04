@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const Icon = ({ children }) => (
@@ -335,39 +335,69 @@ function Chips({ options, active, onSelect }) {
   );
 }
 
-// ── Photo carousel (in accordion) ─────────────────────────────────────────
-function PhotoCarousel({ photos, name }) {
+// ── Card photo carousel (top of card, swipeable, tap to zoom) ─────────────
+function CardPhotos({ photos, name, onZoom, onToggle }) {
+  const [idx, setIdx] = useState(0);
+  const ref = useRef(null);
   const valid = (photos || []).filter(u => u);
-  if (valid.length === 0) return null;
 
-  return (
-    <div style={s.carousel}>
-      {valid.map((url, i) => (
-        <div key={i} style={s.carouselSlide}>
-          <img
-            src={url}
-            alt={`${name} — фото ${i + 1}`}
-            style={s.carouselImg}
-            onError={e => {
-              e.currentTarget.style.display = "none";
-              const ph = e.currentTarget.nextSibling;
-              if (ph) ph.style.display = "flex";
-            }}
-          />
-          <div style={{ ...s.carouselPlaceholder, background: PHOTO_BG[i % 3] }}>
+  const onScroll = () => {
+    if (!ref.current) return;
+    const w = ref.current.offsetWidth;
+    if (w) setIdx(Math.round(ref.current.scrollLeft / w));
+  };
+
+  // No photos — show 3 gradient placeholder cells, tap opens accordion
+  if (valid.length === 0) {
+    return (
+      <div style={s.photoStrip} onClick={onToggle}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{ ...s.photoCell, background: PHOTO_BG[i] }}>
             <span style={s.photoInitial}>{name[0]}</span>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: "relative" }}>
+      <div ref={ref} style={s.cardCarousel} onScroll={onScroll}>
+        {valid.map((url, i) => (
+          <div key={i} style={s.cardSlide} onClick={() => onZoom && onZoom(url)}>
+            <img
+              src={url}
+              alt={`${name} ${i + 1}`}
+              style={s.cardSlideImg}
+              onError={e => {
+                e.currentTarget.style.display = "none";
+                const fb = e.currentTarget.nextSibling;
+                if (fb) fb.style.display = "flex";
+              }}
+            />
+            <div style={{ ...s.cardSlidePlaceholder, background: PHOTO_BG[i % 3] }}>
+              <span style={s.photoInitial}>{name[0]}</span>
+            </div>
+          </div>
+        ))}
+      </div>
       {valid.length > 1 && (
-        <div style={s.carouselHint}>← свайп →</div>
+        <div style={s.cardDots}>
+          {valid.map((_, i) => (
+            <span key={i} style={{
+              ...s.cardDot,
+              background: i === idx ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)",
+              width: i === idx ? 14 : 5,
+            }} />
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
 // ── Place Card ─────────────────────────────────────────────────────────────
-function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, distanceKm }) {
+function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, distanceKm, onPhotoZoom }) {
   const status = getOpenStatus(place.openFrom, place.openTo);
 
   const areaText = [
@@ -411,35 +441,12 @@ function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, dist
         </div>
       </div>
 
-      {/* ── Full-width photo strip (top 3 preview) ── */}
-      <div style={s.photoStrip} onClick={onToggle}>
-        {[0, 1, 2].map(i => (
-          <div key={i} style={{ ...s.photoCell, background: PHOTO_BG[i] }}>
-            {place.photos?.[i] ? (
-              <>
-                <img
-                  src={place.photos[i]}
-                  alt={place.name}
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  onError={e => {
-                    e.currentTarget.style.display = "none";
-                    const fb = e.currentTarget.nextSibling;
-                    if (fb) fb.style.display = "flex";
-                  }}
-                />
-                <span style={{ ...s.photoInitial, display: "none" }}>{place.name[0]}</span>
-              </>
-            ) : (
-              <span style={s.photoInitial}>{place.name[0]}</span>
-            )}
-          </div>
-        ))}
-      </div>
+      {/* ── Photo carousel (swipe + tap to zoom, no accordion toggle) ── */}
+      <CardPhotos photos={place.photos} name={place.name} onZoom={onPhotoZoom} onToggle={onToggle} />
 
       {/* ── Accordion: carousel + description + map links ── */}
-      <div style={{ ...s.accordion, maxHeight: isOpen ? 700 : 0 }}>
+      <div style={{ ...s.accordion, maxHeight: isOpen ? 320 : 0 }}>
         <div style={s.accordionInner}>
-          <PhotoCarousel photos={place.photos} name={place.name} />
           <p style={s.expandedDesc}>{place.description}</p>
           <div style={s.mapLinks}>
             <a href={gMapsUrl(place.name, city?.name)} target="_blank" rel="noreferrer" style={s.mapBtn}>
@@ -466,6 +473,9 @@ export default function App() {
   const [places, setPlaces]             = useState(INITIAL_PLACES);
   const [expandedId, setExpandedId]     = useState(null);
   const [toast, setToast]               = useState(null);
+
+  // Lightbox
+  const [lightboxUrl, setLightboxUrl] = useState(null);
 
   // Location & filters
   const [userLoc, setUserLoc]               = useState(null);
@@ -542,6 +552,14 @@ export default function App() {
   return (
     <div style={s.root}>
       {toast && <div style={s.toast}>{toast}</div>}
+
+      {/* ── Lightbox ── */}
+      {lightboxUrl && (
+        <div style={s.lightbox} onClick={() => setLightboxUrl(null)}>
+          <img src={lightboxUrl} alt="" style={s.lightboxImg} />
+          <button style={s.lightboxClose} onClick={() => setLightboxUrl(null)}>✕</button>
+        </div>
+      )}
 
       <header style={s.header}>
         <span style={s.logo} onClick={() => { setScreen("home"); setExpandedId(null); }}>LOCALLENS</span>
@@ -632,7 +650,8 @@ export default function App() {
                       onToggle={() => toggleExpand(place.id)}
                       onSave={() => toggleSave(place.id)}
                       isSaved={live.saved}
-                      distanceKm={place.distanceKm} />
+                      distanceKm={place.distanceKm}
+                      onPhotoZoom={setLightboxUrl} />
                   );
                 })
               )}
@@ -661,7 +680,8 @@ export default function App() {
                       onToggle={() => toggleExpand(place.id)}
                       onSave={() => toggleSave(place.id)}
                       isSaved={live.saved}
-                      distanceKm={distanceKm} />
+                      distanceKm={distanceKm}
+                      onPhotoZoom={setLightboxUrl} />
                   );
                 })}
               </div>
@@ -739,13 +759,13 @@ const s = {
   dot: { width: 6, height: 6, borderRadius: "50%", flexShrink: 0 },
   scheduleText: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.03em" },
 
-  // Photo strip (top preview — 3 cells)
-  photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 100, cursor: "pointer" },
+  // Photo strip — placeholder (no photos case)
+  photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 110, cursor: "pointer" },
   photoCell: { flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
   photoInitial: { fontSize: 28, fontWeight: 800, color: "#B8B2A8" },
 
-  // Photo carousel (inside accordion)
-  carousel: {
+  // Card photo carousel (when real photos exist)
+  cardCarousel: {
     display: "flex",
     overflowX: "auto",
     scrollSnapType: "x mandatory",
@@ -753,30 +773,52 @@ const s = {
     WebkitOverflowScrolling: "touch",
     marginLeft: -24,
     width: "calc(100% + 48px)",
-    height: 220,
-    marginBottom: 18,
-    position: "relative",
+    height: 200,
+    cursor: "zoom-in",
   },
-  carouselSlide: {
+  cardSlide: {
     minWidth: "100%",
     height: "100%",
     scrollSnapAlign: "start",
     flexShrink: 0,
     position: "relative",
+    overflow: "hidden",
   },
-  carouselImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
-  carouselPlaceholder: {
+  cardSlideImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+  cardSlidePlaceholder: {
     position: "absolute", inset: 0,
     display: "none",
     alignItems: "center", justifyContent: "center",
   },
-  carouselHint: {
+  cardDots: {
     position: "absolute",
-    bottom: 8, right: 12,
-    fontSize: 10, color: "rgba(255,255,255,0.7)",
-    letterSpacing: "0.08em",
+    bottom: 8, left: 0, right: 0,
+    display: "flex", justifyContent: "center", gap: 5,
     pointerEvents: "none",
-    textShadow: "0 1px 3px rgba(0,0,0,0.4)",
+  },
+  cardDot: {
+    height: 5, borderRadius: 3,
+    transition: "width 0.2s, background 0.2s",
+  },
+
+  // Lightbox
+  lightbox: {
+    position: "fixed", inset: 0, zIndex: 999,
+    background: "rgba(0,0,0,0.93)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    cursor: "zoom-out",
+  },
+  lightboxImg: {
+    maxWidth: "100%",
+    maxHeight: "calc(100vh - 80px)",
+    objectFit: "contain",
+  },
+  lightboxClose: {
+    position: "absolute", top: 20, right: 20,
+    background: "rgba(255,255,255,0.15)", border: "none", color: "white",
+    width: 38, height: 38, borderRadius: "50%", fontSize: 18, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontFamily: "inherit", lineHeight: 1,
   },
 
   // Accordion
