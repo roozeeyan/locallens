@@ -44,6 +44,51 @@ const CATEGORY_ICONS = {
   "Жильё":                 Icons.bed,
 };
 
+// ── Photo helpers ──────────────────────────────────────────────────────────
+// All photo URLs are from Wikimedia Commons (CC-licensed, free to use)
+const WM = "https://upload.wikimedia.org/wikipedia/commons/thumb";
+
+const P = {
+  // Каскад Ереван
+  CASCADE_1: `${WM}/6/6e/Cascade_of_Yerevan.JPG/800px-Cascade_of_Yerevan.JPG`,
+  CASCADE_2: `${WM}/f/fc/Night_View_of_the_Cascade.jpg/800px-Night_View_of_the_Cascade.jpg`,
+  CASCADE_3: `${WM}/e/e8/View_of_Yerevan_and_Mount_Ararat_from_Cafesjian_Museum_of_Art.JPG/800px-View_of_Yerevan_and_Mount_Ararat_from_Cafesjian_Museum_of_Art.JPG`,
+  // Матенадаран
+  MAT_1: `${WM}/1/17/Matenadaran_(29).JPG/800px-Matenadaran_(29).JPG`,
+  MAT_2: `${WM}/0/06/Matenadaran_2009.jpg/800px-Matenadaran_2009.jpg`,
+  // Озеро Севан
+  SEVAN_1: `${WM}/8/89/375_Le_lac_Sevan.JPG/800px-375_Le_lac_Sevan.JPG`,
+  SEVAN_2: `${WM}/5/5e/Sevanavank_(Sevan_Monastery).JPG/800px-Sevanavank_(Sevan_Monastery).JPG`,
+  SEVAN_3: `${WM}/5/51/Young_Women_at_Sevan_Monastery_-_Lake_Sevan_-_Armenia_(19479384679).jpg/800px-Young_Women_at_Sevan_Monastery_-_Lake_Sevan_-_Armenia_(19479384679).jpg`,
+  // Вернисаж
+  VERN_1: `${WM}/1/14/Vernissage_market_Yerevan.jpg/800px-Vernissage_market_Yerevan.jpg`,
+  VERN_2: `${WM}/6/66/Vernissage_Yerevan.jpg/800px-Vernissage_Yerevan.jpg`,
+  // Wat Pho
+  WATPHO_1: `${WM}/8/8d/Bangkok_Wat_Pho_reclining_Buddha.jpg/800px-Bangkok_Wat_Pho_reclining_Buddha.jpg`,
+  WATPHO_2: `${WM}/0/07/Wat_Pho_01.jpg/800px-Wat_Pho_01.jpg`,
+  // Chatuchak
+  CHAUCH_1: `${WM}/3/3c/Chatuchak_Weekend_Market.jpg/800px-Chatuchak_Weekend_Market.jpg`,
+  // Chaweng Beach
+  CHAW_1: `${WM}/8/8b/Thailand,_Koh-Samui,_Chaweng_beach_-_Monkey_bay,_2011_-_panoramio.jpg/800px-Thailand,_Koh-Samui,_Chaweng_beach_-_Monkey_bay,_2011_-_panoramio.jpg`,
+  CHAW_2: `${WM}/a/af/Koh_Samui_Bang_Kao_Beach.JPG/800px-Koh_Samui_Bang_Kao_Beach.JPG`,
+  CHAW_3: `${WM}/6/6b/Ko_Samui_Sunset.JPG/800px-Ko_Samui_Sunset.JPG`,
+  // Haad Yao
+  HAAD_1: `${WM}/a/af/Haad_Yao,_Ko_Phangan_in_2023_1.jpg/800px-Haad_Yao,_Ko_Phangan_in_2023_1.jpg`,
+  HAAD_2: `${WM}/8/80/Haad_Yao,_Ko_Phangan_in_2023_2.jpg/800px-Haad_Yao,_Ko_Phangan_in_2023_2.jpg`,
+  HAAD_3: `${WM}/8/86/Haad_Yao_Sunset.jpg/800px-Haad_Yao_Sunset.jpg`,
+  // Than Sadet
+  THAN_1: `${WM}/5/58/Than_sadet_koh_phangan.jpg/800px-Than_sadet_koh_phangan.jpg`,
+  THAN_2: `${WM}/2/2d/Than_Sadet_Rama_V_statue.jpg/800px-Than_Sadet_Rama_V_statue.jpg`,
+  // Hoi An
+  HOIAN_1: `${WM}/7/79/Den_long_Hoi_An_3.JPG/800px-Den_long_Hoi_An_3.JPG`,
+  HOIAN_2: `${WM}/c/c2/Hoi_An_street.jpg/800px-Hoi_An_street.jpg`,
+  HOIAN_3: `${WM}/d/d8/Hoian.jpg/800px-Hoian.jpg`,
+  // Tegallalang
+  TEGAL_1: `${WM}/c/cf/Tegallalang_Rice_Terrace.jpg/800px-Tegallalang_Rice_Terrace.jpg`,
+  TEGAL_2: `${WM}/8/80/Tegallalang_Rice_Terraces_Bali_1.jpg/800px-Tegallalang_Rice_Terraces_Bali_1.jpg`,
+  TEGAL_3: `${WM}/0/0f/Bali_Rice_Terrace.JPG/800px-Bali_Rice_Terrace.JPG`,
+};
+
 // ── Data ───────────────────────────────────────────────────────────────────
 const CITIES = [
   { id: "yerevan",  name: "Ереван",  country: "Армения",   emoji: "🇦🇲" },
@@ -110,7 +155,7 @@ const INITIAL_PLACES = [
     district: "Кентрон", lat: 40.1857, lng: 44.5100,
     schedule: "08:00–22:00", openFrom: 8, openTo: 22,
     description: "Монументальная лестница с видом на Арарат. Внутри — галерея современного искусства, снаружи — лучший закат в Ереване. Подъём занимает 20 минут, но вид того стоит.",
-    photos: ["","",""] },
+    photos: [P.CASCADE_1, P.CASCADE_2, P.CASCADE_3] },
 
   { id: 8, cityId: "yerevan", category: "Достопримечательности", name: "Матенадаран",
     tags: "📜 рукописи · история · архитектура",
@@ -118,7 +163,7 @@ const INITIAL_PLACES = [
     district: "Арабкир", lat: 40.1886, lng: 44.5047,
     schedule: "10:00–17:00", openFrom: 10, openTo: 17,
     description: "Хранилище древнеармянских рукописей — одно из крупнейших в мире. Здание само по себе архитектурный шедевр. Экскурсия с гидом открывает совершенно другой взгляд на армянскую историю.",
-    photos: ["","",""] },
+    photos: [P.MAT_1, P.MAT_2, ""] },
 
   { id: 9, cityId: "yerevan", category: "Природа", name: "Озеро Севан",
     tags: "🏔 горное озеро · форель · монастырь",
@@ -126,7 +171,7 @@ const INITIAL_PLACES = [
     district: "Загородный маршрут", lat: 40.3566, lng: 45.0295,
     schedule: "весь день",
     description: "Высокогорное озеро в часе езды от Еревана. Монастырь Севанаванк на полуострове, форель прямо с лодок, потрясающий воздух. Лучший однодневный выезд из города.",
-    photos: ["","",""] },
+    photos: [P.SEVAN_1, P.SEVAN_2, P.SEVAN_3] },
 
   { id: 10, cityId: "yerevan", category: "Шопинг", name: "Вернисаж",
     tags: "🛍 антиквариат · серебро · ковры",
@@ -134,7 +179,7 @@ const INITIAL_PLACES = [
     district: "Кентрон", lat: 40.1778, lng: 44.5152,
     schedule: "Сб–Вс 10:00–19:00", openFrom: 10, openTo: 19,
     description: "Главный блошиный рынок Еревана. Ковры, серебро, советские значки, картины и настоящие армянские сувениры без туристических наценок. По выходным — особенно богатый выбор.",
-    photos: ["","",""] },
+    photos: [P.VERN_1, P.VERN_2, ""] },
 
   // — Бангкок —
   { id: 11, cityId: "bangkok", category: "Кафе и рестораны", name: "Gaggan Anand",
@@ -159,7 +204,7 @@ const INITIAL_PLACES = [
     district: "Ратанакосин", lat: 13.7465, lng: 100.4930,
     schedule: "08:00–18:30", openFrom: 8, openTo: 18,
     description: "Храм лежащего Будды — самый большой в Бангкоке. Фигура Будды длиной 46 метров, перламутровая инкрустация на подошвах. Здесь же — одна из лучших школ тайского массажа.",
-    photos: ["","",""] },
+    photos: [P.WATPHO_1, P.WATPHO_2, ""] },
 
   { id: 14, cityId: "bangkok", category: "Шопинг", name: "Chatuchak Market",
     tags: "🛍 15 000 лотков · антиквариат · выходные",
@@ -167,7 +212,7 @@ const INITIAL_PLACES = [
     district: "Chatuchak", lat: 13.7998, lng: 100.5519,
     schedule: "Сб–Вс 09:00–18:00", openFrom: 9, openTo: 18,
     description: "Один из крупнейших рынков мира — 15 000 лотков. Антиквариат, одежда, растения, еда, всё что угодно. Только по выходным. Приходи утром — днём очень жарко.",
-    photos: ["","",""] },
+    photos: [P.CHAUCH_1, "", ""] },
 
   // — Самуи —
   { id: 15, cityId: "samui", category: "Пляжи", name: "Chaweng Beach",
@@ -176,7 +221,7 @@ const INITIAL_PLACES = [
     district: "Чавенг", lat: 9.5255, lng: 100.0607,
     schedule: "весь день",
     description: "Главный пляж острова — белый песок, бирюзовая вода, развитая инфраструктура. Лучший для первого знакомства с Самуи. Вечером здесь оживает стрит-фуд и бары.",
-    photos: ["","",""] },
+    photos: [P.CHAW_1, P.CHAW_2, P.CHAW_3] },
 
   { id: 16, cityId: "samui", category: "Кафе и рестораны", name: "The Larder",
     tags: "🍳 бранч · яйца бенедикт · кофе",
@@ -193,7 +238,7 @@ const INITIAL_PLACES = [
     district: "Запад", lat: 9.7565, lng: 100.0006,
     schedule: "весь день",
     description: "Тихий залив с чистейшей водой вдали от полнолунных вечеринок. Длинный белый пляж, скалы, закат окрашивает всё в розовый. Одно из самых красивых мест острова.",
-    photos: ["","",""] },
+    photos: [P.HAAD_1, P.HAAD_2, P.HAAD_3] },
 
   { id: 18, cityId: "phangan", category: "Природа", name: "Than Sadet Waterfall",
     tags: "🌊 водопад · джунгли · купание",
@@ -201,7 +246,7 @@ const INITIAL_PLACES = [
     district: "Центр", lat: 9.7750, lng: 100.0600,
     schedule: "08:00–17:00", openFrom: 8, openTo: 17,
     description: "Каскадный водопад в джунглях — место, которое посещали тайские короли. Прохладные бассейны для купания, тишина и папоротники. Дорога занимает около 30 минут от центра.",
-    photos: ["","",""] },
+    photos: [P.THAN_1, P.THAN_2, ""] },
 
   // — Хой Ан —
   { id: 19, cityId: "hoian", category: "Достопримечательности", name: "Ancient Town",
@@ -210,7 +255,7 @@ const INITIAL_PLACES = [
     district: "Старый город", lat: 15.8799, lng: 108.3350,
     schedule: "весь день (вечером лучше)",
     description: "Старый город под охраной ЮНЕСКО — фонари, каналы, жёлтые стены. Вечером зажигают тысячи фонариков — это нужно видеть. Лучше гулять без карты — просто потеряться в переулках.",
-    photos: ["","",""] },
+    photos: [P.HOIAN_1, P.HOIAN_2, P.HOIAN_3] },
 
   { id: 20, cityId: "hoian", category: "Кафе и рестораны", name: "Morning Glory",
     tags: "🍜 cao lau · белая роза · легенда",
@@ -227,7 +272,7 @@ const INITIAL_PLACES = [
     district: "Убуд (север)", lat: -8.4337, lng: 115.2789,
     schedule: "весь день",
     description: "Знаменитые рисовые террасы к северу от Убуда. Изумрудные ступени уходят вниз в долину — один из символов острова. Лучший свет для фото — раннее утро или за час до заката.",
-    photos: ["","",""] },
+    photos: [P.TEGAL_1, P.TEGAL_2, P.TEGAL_3] },
 
   { id: 22, cityId: "bali", category: "Кафе и рестораны", name: "Locavore",
     tags: "🍃 farm-to-table · Убуд · 50 Best",
@@ -290,6 +335,37 @@ function Chips({ options, active, onSelect }) {
   );
 }
 
+// ── Photo carousel (in accordion) ─────────────────────────────────────────
+function PhotoCarousel({ photos, name }) {
+  const valid = (photos || []).filter(u => u);
+  if (valid.length === 0) return null;
+
+  return (
+    <div style={s.carousel}>
+      {valid.map((url, i) => (
+        <div key={i} style={s.carouselSlide}>
+          <img
+            src={url}
+            alt={`${name} — фото ${i + 1}`}
+            style={s.carouselImg}
+            onError={e => {
+              e.currentTarget.style.display = "none";
+              const ph = e.currentTarget.nextSibling;
+              if (ph) ph.style.display = "flex";
+            }}
+          />
+          <div style={{ ...s.carouselPlaceholder, background: PHOTO_BG[i % 3] }}>
+            <span style={s.photoInitial}>{name[0]}</span>
+          </div>
+        </div>
+      ))}
+      {valid.length > 1 && (
+        <div style={s.carouselHint}>← свайп →</div>
+      )}
+    </div>
+  );
+}
+
 // ── Place Card ─────────────────────────────────────────────────────────────
 function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, distanceKm }) {
   const status = getOpenStatus(place.openFrom, place.openTo);
@@ -335,21 +411,35 @@ function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, dist
         </div>
       </div>
 
-      {/* ── Full-width photo strip ── */}
+      {/* ── Full-width photo strip (top 3 preview) ── */}
       <div style={s.photoStrip} onClick={onToggle}>
         {[0, 1, 2].map(i => (
           <div key={i} style={{ ...s.photoCell, background: PHOTO_BG[i] }}>
-            {place.photos?.[i]
-              ? <img src={place.photos[i]} alt={place.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              : <span style={s.photoInitial}>{place.name[0]}</span>
-            }
+            {place.photos?.[i] ? (
+              <>
+                <img
+                  src={place.photos[i]}
+                  alt={place.name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  onError={e => {
+                    e.currentTarget.style.display = "none";
+                    const fb = e.currentTarget.nextSibling;
+                    if (fb) fb.style.display = "flex";
+                  }}
+                />
+                <span style={{ ...s.photoInitial, display: "none" }}>{place.name[0]}</span>
+              </>
+            ) : (
+              <span style={s.photoInitial}>{place.name[0]}</span>
+            )}
           </div>
         ))}
       </div>
 
-      {/* ── Accordion (description + links) ── */}
-      <div style={{ ...s.accordion, maxHeight: isOpen ? 300 : 0 }}>
+      {/* ── Accordion: carousel + description + map links ── */}
+      <div style={{ ...s.accordion, maxHeight: isOpen ? 700 : 0 }}>
         <div style={s.accordionInner}>
+          <PhotoCarousel photos={place.photos} name={place.name} />
           <p style={s.expandedDesc}>{place.description}</p>
           <div style={s.mapLinks}>
             <a href={gMapsUrl(place.name, city?.name)} target="_blank" rel="noreferrer" style={s.mapBtn}>
@@ -378,10 +468,10 @@ export default function App() {
   const [toast, setToast]               = useState(null);
 
   // Location & filters
-  const [userLoc, setUserLoc]           = useState(null);
-  const [locLoading, setLocLoading]     = useState(false);
-  const [locError, setLocError]         = useState(false);
-  const [radiusKm, setRadiusKm]         = useState(null);
+  const [userLoc, setUserLoc]               = useState(null);
+  const [locLoading, setLocLoading]         = useState(false);
+  const [locError, setLocError]             = useState(false);
+  const [radiusKm, setRadiusKm]             = useState(null);
   const [districtFilter, setDistrictFilter] = useState(null);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2000); };
@@ -400,16 +490,10 @@ export default function App() {
   const cityFor       = (cityId) => CITIES.find(c => c.id === cityId);
 
   const goCity = (city) => {
-    setSelectedCity(city);
-    setExpandedId(null);
-    setDistrictFilter(null);
-    setScreen("city");
+    setSelectedCity(city); setExpandedId(null); setDistrictFilter(null); setScreen("city");
   };
   const goCat = (cat) => {
-    setSelectedCat(cat);
-    setExpandedId(null);
-    setDistrictFilter(null);
-    setScreen("places");
+    setSelectedCat(cat); setExpandedId(null); setDistrictFilter(null); setScreen("places");
   };
   const goBack = () => {
     setExpandedId(null);
@@ -420,19 +504,15 @@ export default function App() {
 
   const requestLocation = () => {
     if (!navigator.geolocation) { setLocError(true); return; }
-    setLocLoading(true);
-    setLocError(false);
+    setLocLoading(true); setLocError(false);
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocLoading(false);
-      },
+      pos => { setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocLoading(false); },
       () => { setLocLoading(false); setLocError(true); },
       { timeout: 8000 }
     );
   };
 
-  // Compute displayed places (with distance, filtered, sorted)
+  // Compute displayed places with distance, filters, sort
   const rawPlaces = placesFor(selectedCity?.id, selectedCat);
   const districts = [...new Set(rawPlaces.map(p => p.district).filter(Boolean))];
 
@@ -454,7 +534,6 @@ export default function App() {
     { value: 5,    label: "5 км" },
     { value: 10,   label: "10 км" },
   ];
-
   const districtOptions = [
     { value: null, label: "Все районы" },
     ...districts.map(d => ({ value: d, label: d })),
@@ -527,37 +606,20 @@ export default function App() {
               <p style={s.label}>{selectedCity.name} · {selectedCat}</p>
             </div>
 
-            {/* ── Filters ── */}
+            {/* Filters */}
             <div style={s.filtersBlock}>
-
-              {/* Location button */}
               <button style={s.locBtn} onClick={requestLocation} disabled={locLoading}>
                 <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   {Icons.locate}
-                  {locLoading
-                    ? "Определяем..."
-                    : userLoc
-                      ? "Геолокация активна"
-                      : "Найти ближайшие"}
+                  {locLoading ? "Определяем..." : userLoc ? "Геолокация активна" : "Найти ближайшие"}
                 </span>
                 {userLoc && <span style={s.locDot} />}
               </button>
-              {locError && (
-                <p style={s.locErrorMsg}>Не удалось получить геолокацию</p>
-              )}
-
-              {/* Radius chips — only if location known */}
-              {userLoc && (
-                <Chips options={RADIUS_OPTIONS} active={radiusKm} onSelect={setRadiusKm} />
-              )}
-
-              {/* District chips — if more than one district in this category */}
-              {districts.length > 1 && (
-                <Chips options={districtOptions} active={districtFilter} onSelect={setDistrictFilter} />
-              )}
+              {locError && <p style={s.locErrorMsg}>Не удалось получить геолокацию</p>}
+              {userLoc && <Chips options={RADIUS_OPTIONS} active={radiusKm} onSelect={setRadiusKm} />}
+              {districts.length > 1 && <Chips options={districtOptions} active={districtFilter} onSelect={setDistrictFilter} />}
             </div>
 
-            {/* ── Place list ── */}
             <div style={s.list}>
               {displayPlaces.length === 0 ? (
                 <p style={s.empty}>Нет мест в выбранном фильтре</p>
@@ -592,8 +654,7 @@ export default function App() {
                 {savedPlaces.map((place, i) => {
                   const live = places.find(p => p.id === place.id);
                   const distanceKm = userLoc && live.lat && live.lng
-                    ? haversine(userLoc.lat, userLoc.lng, live.lat, live.lng)
-                    : null;
+                    ? haversine(userLoc.lat, userLoc.lng, live.lat, live.lng) : null;
                   return (
                     <PlaceCard key={place.id} place={live} index={i} city={cityFor(place.cityId)}
                       isOpen={expandedId === place.id}
@@ -656,31 +717,12 @@ const s = {
 
   // Filters
   filtersBlock: { padding: "14px 0 4px", borderBottom: "1px solid #DED9D3" },
-  locBtn: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    width: "100%", background: "none", border: "1px solid #DED9D3", borderRadius: 3,
-    padding: "10px 14px", color: "#2C2520", cursor: "pointer",
-    fontFamily: "inherit", fontSize: 13, fontWeight: 500, letterSpacing: "0.02em",
-    marginBottom: 10,
-  },
+  locBtn: { display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: "1px solid #DED9D3", borderRadius: 3, padding: "10px 14px", color: "#2C2520", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, letterSpacing: "0.02em", marginBottom: 10 },
   locDot: { width: 7, height: 7, borderRadius: "50%", background: "#7BAE7F", flexShrink: 0 },
   locErrorMsg: { fontSize: 11, color: "#B07070", marginBottom: 8, letterSpacing: "0.02em" },
-  chipsRow: {
-    display: "flex", gap: 6, overflowX: "auto", paddingBottom: 10,
-    scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
-  },
-  chip: {
-    flexShrink: 0, padding: "6px 12px", border: "1px solid #DED9D3", borderRadius: 20,
-    background: "none", color: "#8A7F78", cursor: "pointer",
-    fontSize: 12, fontWeight: 500, letterSpacing: "0.03em", fontFamily: "inherit",
-    whiteSpace: "nowrap",
-  },
-  chipActive: {
-    flexShrink: 0, padding: "6px 12px", border: "1px solid #2C2520", borderRadius: 20,
-    background: "#2C2520", color: "#F0EDE8", cursor: "pointer",
-    fontSize: 12, fontWeight: 500, letterSpacing: "0.03em", fontFamily: "inherit",
-    whiteSpace: "nowrap",
-  },
+  chipsRow: { display: "flex", gap: 6, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none", WebkitOverflowScrolling: "touch" },
+  chip: { flexShrink: 0, padding: "6px 12px", border: "1px solid #DED9D3", borderRadius: 20, background: "none", color: "#8A7F78", cursor: "pointer", fontSize: 12, fontWeight: 500, letterSpacing: "0.03em", fontFamily: "inherit", whiteSpace: "nowrap" },
+  chipActive: { flexShrink: 0, padding: "6px 12px", border: "1px solid #2C2520", borderRadius: 20, background: "#2C2520", color: "#F0EDE8", cursor: "pointer", fontSize: 12, fontWeight: 500, letterSpacing: "0.03em", fontFamily: "inherit", whiteSpace: "nowrap" },
 
   // Place card
   placeCard: { borderBottom: "1px solid #DED9D3" },
@@ -689,24 +731,57 @@ const s = {
   placeIdx: { fontSize: 11, color: "#C5BEB7", minWidth: 22, flexShrink: 0, fontWeight: 500, letterSpacing: "0.05em" },
   placeName: { fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", flex: 1, lineHeight: 1.2 },
   saveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, flexShrink: 0, padding: "2px", fontFamily: "inherit", lineHeight: 1 },
-
   placeMeta: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingLeft: 32, flexWrap: "wrap" },
   badge: { fontSize: 11, fontWeight: 600, color: "#2C2520", letterSpacing: "0.02em" },
   area: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.03em" },
   tags: { fontSize: 12, color: "#6A6058", letterSpacing: "0.02em", marginBottom: 6, paddingLeft: 32, lineHeight: 1.4 },
-
   statusRow: { display: "flex", alignItems: "center", gap: 5, paddingLeft: 32, marginBottom: 10 },
   dot: { width: 6, height: 6, borderRadius: "50%", flexShrink: 0 },
   scheduleText: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.03em" },
 
-  // Photo strip — full width
+  // Photo strip (top preview — 3 cells)
   photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 100, cursor: "pointer" },
   photoCell: { flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
   photoInitial: { fontSize: 28, fontWeight: 800, color: "#B8B2A8" },
 
+  // Photo carousel (inside accordion)
+  carousel: {
+    display: "flex",
+    overflowX: "auto",
+    scrollSnapType: "x mandatory",
+    scrollbarWidth: "none",
+    WebkitOverflowScrolling: "touch",
+    marginLeft: -24,
+    width: "calc(100% + 48px)",
+    height: 220,
+    marginBottom: 18,
+    position: "relative",
+  },
+  carouselSlide: {
+    minWidth: "100%",
+    height: "100%",
+    scrollSnapAlign: "start",
+    flexShrink: 0,
+    position: "relative",
+  },
+  carouselImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+  carouselPlaceholder: {
+    position: "absolute", inset: 0,
+    display: "none",
+    alignItems: "center", justifyContent: "center",
+  },
+  carouselHint: {
+    position: "absolute",
+    bottom: 8, right: 12,
+    fontSize: 10, color: "rgba(255,255,255,0.7)",
+    letterSpacing: "0.08em",
+    pointerEvents: "none",
+    textShadow: "0 1px 3px rgba(0,0,0,0.4)",
+  },
+
   // Accordion
   accordion: { overflow: "hidden", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)" },
-  accordionInner: { paddingTop: 14, paddingBottom: 4 },
+  accordionInner: { paddingTop: 16, paddingBottom: 4 },
   expandedDesc: { fontSize: 14, color: "#5A5048", lineHeight: 1.75, margin: "0 0 18px" },
   mapLinks: { display: "flex", gap: 10, marginBottom: 12 },
   mapBtn: { flex: 1, padding: "12px 0", background: "none", border: "1px solid #DED9D3", borderRadius: 3, textAlign: "center", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", color: "#2C2520", textDecoration: "none", display: "block" },
