@@ -273,8 +273,16 @@ export default function App() {
 
   const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
 
-  const categoriesFor = (cityId) => [...new Set(places.filter(p => p.cityId === cityId).map(p => p.category))];
-  const placesFor     = (cityId, cat) => places.filter(p => p.cityId === cityId && p.category === cat);
+  const TRAVEL_CAT = "__travel__";
+  const categoriesFor = (cityId) => {
+    const cats = [...new Set(places.filter(p => p.cityId === cityId).map(p => p.category))];
+    if (places.some(p => p.cityId === cityId && p.travelAround)) cats.push(TRAVEL_CAT);
+    return cats;
+  };
+  const placesFor = (cityId, cat) =>
+    cat === TRAVEL_CAT
+      ? places.filter(p => p.cityId === cityId && p.travelAround)
+      : places.filter(p => p.cityId === cityId && p.category === cat);
   const savedPlaces   = places.filter(p => p.saved);
   const cityFor       = (cityId) => CITIES.find(c => c.id === cityId);
 
@@ -387,8 +395,8 @@ export default function App() {
             <div style={s.list}>
               {categoriesFor(selectedCity.id).map(cat => (
                 <button key={cat} style={s.catRow} onClick={() => goCat(cat)}>
-                  <span style={s.catIcon}>{CATEGORY_ICONS[cat] || Icons.pin}</span>
-                  <span style={s.catName}>{cat}</span>
+                  <span style={s.catIcon}>{cat === TRAVEL_CAT ? Icons.pin : (CATEGORY_ICONS[cat] || Icons.pin)}</span>
+                  <span style={s.catName}>{cat === TRAVEL_CAT ? "За городом" : cat}</span>
                   <span style={s.catMeta}>{placesFor(selectedCity.id, cat).length}&nbsp;мест&nbsp;→</span>
                 </button>
               ))}
@@ -400,7 +408,7 @@ export default function App() {
         {screen === "places" && selectedCity && selectedCat && (
           <>
             <div style={s.pageHero}>
-              <p style={s.label}>{selectedCity.name} · {selectedCat}</p>
+              <p style={s.label}>{selectedCity.name} · {selectedCat === TRAVEL_CAT ? "За городом" : selectedCat}</p>
             </div>
 
             {/* Filters */}
