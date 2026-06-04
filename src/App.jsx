@@ -45,48 +45,75 @@ const CATEGORY_ICONS = {
 };
 
 // ── Photo helpers ──────────────────────────────────────────────────────────
-// All photo URLs are from Wikimedia Commons (CC-licensed, free to use)
 const WM = "https://upload.wikimedia.org/wikipedia/commons/thumb";
+const TA = "https://media-cdn.tripadvisor.com/media/photo-f";
 
 const P = {
-  // Каскад Ереван
+  // ── Wikimedia Commons (CC-licensed) ──
   CASCADE_1: `${WM}/6/6e/Cascade_of_Yerevan.JPG/800px-Cascade_of_Yerevan.JPG`,
   CASCADE_2: `${WM}/f/fc/Night_View_of_the_Cascade.jpg/800px-Night_View_of_the_Cascade.jpg`,
   CASCADE_3: `${WM}/e/e8/View_of_Yerevan_and_Mount_Ararat_from_Cafesjian_Museum_of_Art.JPG/800px-View_of_Yerevan_and_Mount_Ararat_from_Cafesjian_Museum_of_Art.JPG`,
-  // Матенадаран
   MAT_1: `${WM}/1/17/Matenadaran_(29).JPG/800px-Matenadaran_(29).JPG`,
   MAT_2: `${WM}/0/06/Matenadaran_2009.jpg/800px-Matenadaran_2009.jpg`,
-  // Озеро Севан
   SEVAN_1: `${WM}/8/89/375_Le_lac_Sevan.JPG/800px-375_Le_lac_Sevan.JPG`,
   SEVAN_2: `${WM}/5/5e/Sevanavank_(Sevan_Monastery).JPG/800px-Sevanavank_(Sevan_Monastery).JPG`,
   SEVAN_3: `${WM}/5/51/Young_Women_at_Sevan_Monastery_-_Lake_Sevan_-_Armenia_(19479384679).jpg/800px-Young_Women_at_Sevan_Monastery_-_Lake_Sevan_-_Armenia_(19479384679).jpg`,
-  // Вернисаж
   VERN_1: `${WM}/1/14/Vernissage_market_Yerevan.jpg/800px-Vernissage_market_Yerevan.jpg`,
   VERN_2: `${WM}/6/66/Vernissage_Yerevan.jpg/800px-Vernissage_Yerevan.jpg`,
-  // Wat Pho
   WATPHO_1: `${WM}/8/8d/Bangkok_Wat_Pho_reclining_Buddha.jpg/800px-Bangkok_Wat_Pho_reclining_Buddha.jpg`,
   WATPHO_2: `${WM}/0/07/Wat_Pho_01.jpg/800px-Wat_Pho_01.jpg`,
-  // Chatuchak
-  CHAUCH_1: `${WM}/3/3c/Chatuchak_Weekend_Market.jpg/800px-Chatuchak_Weekend_Market.jpg`,
-  // Chaweng Beach
   CHAW_1: `${WM}/8/8b/Thailand,_Koh-Samui,_Chaweng_beach_-_Monkey_bay,_2011_-_panoramio.jpg/800px-Thailand,_Koh-Samui,_Chaweng_beach_-_Monkey_bay,_2011_-_panoramio.jpg`,
   CHAW_2: `${WM}/a/af/Koh_Samui_Bang_Kao_Beach.JPG/800px-Koh_Samui_Bang_Kao_Beach.JPG`,
   CHAW_3: `${WM}/6/6b/Ko_Samui_Sunset.JPG/800px-Ko_Samui_Sunset.JPG`,
-  // Haad Yao
   HAAD_1: `${WM}/a/af/Haad_Yao,_Ko_Phangan_in_2023_1.jpg/800px-Haad_Yao,_Ko_Phangan_in_2023_1.jpg`,
   HAAD_2: `${WM}/8/80/Haad_Yao,_Ko_Phangan_in_2023_2.jpg/800px-Haad_Yao,_Ko_Phangan_in_2023_2.jpg`,
   HAAD_3: `${WM}/8/86/Haad_Yao_Sunset.jpg/800px-Haad_Yao_Sunset.jpg`,
-  // Than Sadet
   THAN_1: `${WM}/5/58/Than_sadet_koh_phangan.jpg/800px-Than_sadet_koh_phangan.jpg`,
   THAN_2: `${WM}/2/2d/Than_Sadet_Rama_V_statue.jpg/800px-Than_Sadet_Rama_V_statue.jpg`,
-  // Hoi An
   HOIAN_1: `${WM}/7/79/Den_long_Hoi_An_3.JPG/800px-Den_long_Hoi_An_3.JPG`,
   HOIAN_2: `${WM}/c/c2/Hoi_An_street.jpg/800px-Hoi_An_street.jpg`,
   HOIAN_3: `${WM}/d/d8/Hoian.jpg/800px-Hoian.jpg`,
-  // Tegallalang
   TEGAL_1: `${WM}/c/cf/Tegallalang_Rice_Terrace.jpg/800px-Tegallalang_Rice_Terrace.jpg`,
   TEGAL_2: `${WM}/8/80/Tegallalang_Rice_Terraces_Bali_1.jpg/800px-Tegallalang_Rice_Terraces_Bali_1.jpg`,
   TEGAL_3: `${WM}/0/0f/Bali_Rice_Terrace.JPG/800px-Bali_Rice_Terrace.JPG`,
+
+  // ── TripAdvisor CDN (public photo URLs) ──
+  // Jazzve Coffee
+  JAZZVE_1: `${TA}/0e/f0/fa/a8/jazzve-coffee.jpg`,
+  JAZZVE_2: `${TA}/06/78/ea/cc/jazzve-interior.jpg`,
+  JAZZVE_3: `${TA}/11/39/3c/a5/jazzve-atmosphere.jpg`,
+  // Aperitivo
+  APERI_1: `${TA}/18/61/3c/98/aperitivo-interior.jpg`,
+  APERI_2: `${TA}/18/61/3c/82/aperitivo-terrace.jpg`,
+  APERI_3: `${TA}/11/0b/a4/92/aperitivo-wine.jpg`,
+  // Dolmama
+  DOLM_1: `${TA}/2e/27/db/df/dolmama-interior.jpg`,
+  DOLM_2: `${TA}/0c/19/ba/05/dolmama-cosy.jpg`,
+  DOLM_3: `${TA}/0f/68/ee/4d/dolmama.jpg`,
+  // Lavash
+  LAVA_1: `${TA}/12/8e/6c/6f/lavash-interior.jpg`,
+  LAVA_2: `${TA}/12/39/b9/4a/lavash.jpg`,
+  LAVA_3: `${TA}/11/d9/a0/3e/lavash-atm.jpg`,
+  // Wine Republic
+  WINE_1: `${TA}/11/6d/91/f3/wine-republic.jpg`,
+  // Gaggan Anand
+  GAGG_1: `${TA}/1a/97/70/0d/gaggan-anand.jpg`,
+  GAGG_2: `${TA}/05/e8/88/fe/gaggan-courses.jpg`,
+  GAGG_3: `${TA}/09/89/23/4e/gaggan-dining.jpg`,
+  // Chatuchak
+  CHAT_1: `${TA}/04/24/c9/6f/chatuchak.jpg`,
+  CHAT_2: `${TA}/01/5d/f5/24/chatuchak-decor.jpg`,
+  // Nahm
+  NAHM_1: `${TA}/0d/07/a0/e7/nahm.jpg`,
+  NAHM_2: `${TA}/05/dd/1f/4e/nahm-interior.jpg`,
+  NAHM_3: `${TA}/08/9f/df/f1/nahm-restaurant.jpg`,
+  // Morning Glory
+  MORG_1: `${TA}/11/60/eb/53/morning-glory.jpg`,
+  MORG_2: `${TA}/06/24/92/ef/morning-glory-view.jpg`,
+  MORG_3: `${TA}/09/b0/1f/d4/morning-glory-intro.jpg`,
+  // Locavore
+  LOCA_1: `${TA}/10/db/be/62/locavore.jpg`,
+  LOCA_2: `${TA}/10/5b/44/97/locavore-ubud.jpg`,
 };
 
 // ── Data ───────────────────────────────────────────────────────────────────
@@ -107,7 +134,7 @@ const INITIAL_PLACES = [
     district: "Кентрон", lat: 40.1772, lng: 44.5126,
     schedule: "09:00–22:00", openFrom: 9, openTo: 22,
     description: "Армянская кофейня с традиционным кофе в джезве. Деревянный интерьер, тихая атмосфера и лучшая турка в центре Еревана. Обязательно попробуй кофе с кардамоном — это местная классика.",
-    photos: ["","",""] },
+    photos: [P.JAZZVE_1, P.JAZZVE_2, P.JAZZVE_3] },
 
   { id: 2, cityId: "yerevan", category: "Кафе и рестораны", name: "Aperitivo",
     tags: "🍝 паста · терраса · вино",
@@ -115,7 +142,7 @@ const INITIAL_PLACES = [
     district: "Кентрон", lat: 40.1805, lng: 44.5142,
     schedule: "12:00–23:00", openFrom: 12, openTo: 23,
     description: "Итальянско-армянская кухня с открытой террасой. Отличная паста, живая музыка по выходным и бокал вина с видом на город. Один из лучших ресторанов для вечера на свежем воздухе.",
-    photos: ["","",""] },
+    photos: [P.APERI_1, P.APERI_2, P.APERI_3] },
 
   { id: 3, cityId: "yerevan", category: "Кафе и рестораны", name: "Dolmama",
     tags: "🍽 армянская · дворик · авторская",
@@ -123,7 +150,7 @@ const INITIAL_PLACES = [
     district: "Кентрон", lat: 40.1820, lng: 44.5155,
     schedule: "13:00–23:00", openFrom: 13, openTo: 23,
     description: "Один из лучших ресторанов армянской кухни в городе. Классические блюда в современной подаче, уютный дворик. Шеф переосмыслил традиционные рецепты — результат впечатляет.",
-    photos: ["","",""] },
+    photos: [P.DOLM_1, P.DOLM_2, P.DOLM_3] },
 
   { id: 4, cityId: "yerevan", category: "Кафе и рестораны", name: "Lavash",
     tags: "🫓 хачапури · кюфта · домашнее",
@@ -131,7 +158,7 @@ const INITIAL_PLACES = [
     district: "Кентрон", lat: 40.1795, lng: 44.5167,
     schedule: "11:00–23:00", openFrom: 11, openTo: 23,
     description: "Ресторан традиционной армянской кухни. Фирменные хачапури, кюфта и домашние вина. Место где едят местные — без туристических наценок и с настоящей атмосферой.",
-    photos: ["","",""] },
+    photos: [P.LAVA_1, P.LAVA_2, P.LAVA_3] },
 
   { id: 5, cityId: "yerevan", category: "Бары", name: "Wine Republic",
     tags: "🍷 армянское · грузинское · сыр",
@@ -139,7 +166,7 @@ const INITIAL_PLACES = [
     district: "Кентрон", lat: 40.1788, lng: 44.5133,
     schedule: "с 16:00", openFrom: 16, openTo: 1,
     description: "Винный бар с огромной картой армянских и грузинских вин. Тёплая атмосфера, живая музыка и отличные сырные тарелки. Идеально для вечера с друзьями или романтического ужина.",
-    photos: ["","",""] },
+    photos: [P.WINE_1, "", ""] },
 
   { id: 6, cityId: "yerevan", category: "Бары", name: "Churchill Bar",
     tags: "🥃 виски · паб · дартс",
@@ -188,7 +215,7 @@ const INITIAL_PLACES = [
     district: "Lumphini", lat: 13.7367, lng: 100.5535,
     schedule: "18:00–23:00", openFrom: 18, openTo: 23,
     description: "Прогрессивная индийская кухня — один из лучших ресторанов Азии по версии 50 Best. Меню в виде эмодзи, 25 курсов. Бронировать нужно за несколько месяцев — того стоит.",
-    photos: ["","",""] },
+    photos: [P.GAGG_1, P.GAGG_2, P.GAGG_3] },
 
   { id: 12, cityId: "bangkok", category: "Кафе и рестораны", name: "Nahm",
     tags: "🫚 тайская · аутентично · шеф",
@@ -196,7 +223,7 @@ const INITIAL_PLACES = [
     district: "Silom", lat: 13.7220, lng: 100.5269,
     schedule: "18:00–22:30", openFrom: 18, openTo: 22,
     description: "Аутентичная тайская кухня в исполнении шеф-повара мирового уровня. Рецепты из старинных книг, почти исчезнувшие блюда. Одно из лучших мест чтобы понять настоящую тайскую кухню.",
-    photos: ["","",""] },
+    photos: [P.NAHM_1, P.NAHM_2, P.NAHM_3] },
 
   { id: 13, cityId: "bangkok", category: "Достопримечательности", name: "Wat Pho",
     tags: "🛕 храм · Будда 46м · массаж",
@@ -212,7 +239,7 @@ const INITIAL_PLACES = [
     district: "Chatuchak", lat: 13.7998, lng: 100.5519,
     schedule: "Сб–Вс 09:00–18:00", openFrom: 9, openTo: 18,
     description: "Один из крупнейших рынков мира — 15 000 лотков. Антиквариат, одежда, растения, еда, всё что угодно. Только по выходным. Приходи утром — днём очень жарко.",
-    photos: [P.CHAUCH_1, "", ""] },
+    photos: [P.CHAT_1, P.CHAT_2, ""] },
 
   // — Самуи —
   { id: 15, cityId: "samui", category: "Пляжи", name: "Chaweng Beach",
@@ -263,7 +290,7 @@ const INITIAL_PLACES = [
     district: "Старый город", lat: 15.8803, lng: 108.3360,
     schedule: "11:00–21:30", openFrom: 11, openTo: 21,
     description: "Самый известный ресторан вьетнамской уличной еды в Хой Ане. Белая роза, cao lầu, жареные вонтоны — всё здесь лучшее. Основательница ресторана лично встречает гостей.",
-    photos: ["","",""] },
+    photos: [P.MORG_1, P.MORG_2, P.MORG_3] },
 
   // — Бали —
   { id: 21, cityId: "bali", category: "Природа", name: "Tegallalang Rice Terraces",
@@ -280,7 +307,7 @@ const INITIAL_PLACES = [
     district: "Убуд", lat: -8.5069, lng: 115.2625,
     schedule: "12:00–22:00", openFrom: 12, openTo: 22,
     description: "Один из лучших ресторанов Азии в Убуде. Вся еда — с местных ферм и рынков. Дегустационное меню с историей каждого ингредиента. Столик нужно бронировать заранее.",
-    photos: ["","",""] },
+    photos: [P.LOCA_1, P.LOCA_2, ""] },
 ].map(p => ({ ...p, saved: false }));
 
 // ── Helpers ────────────────────────────────────────────────────────────────
