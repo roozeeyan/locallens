@@ -291,7 +291,9 @@ function PlaceCard({ place, index, city, onSave, isSaved, distanceKm, onPhotoZoo
       {/* ── Description (expandable, outside accordion) ── */}
       {place.description ? (
         <div style={s.descSection} onClick={e => e.stopPropagation()}>
-          <p style={{ ...s.descText, WebkitLineClamp: descOpen ? "unset" : 3 }}>
+          <p style={descOpen
+            ? { fontSize: 13, color: "#5A5048", lineHeight: 1.7, margin: "0 0 4px" }
+            : { ...s.descText, WebkitLineClamp: 3 }}>
             {place.description}
           </p>
           <button style={s.descToggle} onClick={() => setDescOpen(v => !v)}>

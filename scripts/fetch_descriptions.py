@@ -62,30 +62,73 @@ def serper_search(query: str) -> dict:
         return {}
 
 
+# Domains that produce low-quality snippets (social media, review aggregators)
+BAD_DOMAINS = (
+    "instagram.com", "facebook.com", "twitter.com", "tiktok.com",
+    "vk.com", "ok.ru", "t.me", "youtube.com",
+    "tripadvisor.com", "foursquare.com", "yelp.com",
+    "2gis.com", "zoon.ru", "yell.com", "mapquest.com",
+)
+
+# Phrases that indicate a non-descriptive snippet
+BAD_PHRASES = (
+    "followers", "following", " posts", " likes", " репост",
+    "reviews of", "rated ", "ranked #", "unbiased reviews",
+    "Tel. +", "E-mail.", "tel:", "mailto:",
+    "добраться", "билеты на поезд", "booking.com",
+    "Book a Table", "CapCut", "reels",
+    "HGЯO",  # Wikipedia geo template artifact
+)
+
+
+def is_garbage(text: str, url: str = "") -> bool:
+    """Return True if the snippet looks like a social media post, rating, or directory listing."""
+    lower_url = url.lower()
+    for domain in BAD_DOMAINS:
+        if domain in lower_url:
+            return True
+    lower_text = text.lower()
+    for phrase in BAD_PHRASES:
+        if phrase.lower() in lower_text:
+            return True
+    # Emoji-heavy text typical of Instagram captions
+    emoji_count = sum(1 for c in text if ord(c) > 0x2600)
+    if emoji_count >= 3:
+        return True
+    return False
+
+
+def best_organic(organic: list) -> str:
+    """Return the best snippet from organic results, skipping garbage sources."""
+    for result in organic[:5]:
+        url = result.get("link", "")
+        snippet = (result.get("snippet") or "").strip()
+        if len(snippet) < 40:
+            continue
+        if is_garbage(snippet, url):
+            continue
+        return snippet
+    return ""
+
+
 def extract_description(data: dict) -> str:
     """
     Extract best description from Serper search result.
-    Priority: knowledgeGraph description > answerBox snippet > organic[0] snippet.
+    Priority: knowledgeGraph description > answerBox snippet > best organic snippet.
     """
-    # Knowledge graph (Google My Business / Wikipedia)
+    # Knowledge graph (Google My Business / Wikipedia) — always high quality
     kg = data.get("knowledgeGraph", {})
     if kg.get("description"):
         return kg["description"].strip()
 
     # Answer box
     ab = data.get("answerBox", {})
-    if ab.get("snippet"):
-        return ab["snippet"].strip()
+    snippet = (ab.get("snippet") or ab.get("answer") or "").strip()
+    if snippet and not is_garbage(snippet):
+        return snippet
 
-    # First organic result snippet
-    organic = data.get("organic", [])
-    if organic and organic[0].get("snippet"):
-        snippet = organic[0]["snippet"].strip()
-        # Skip generic directory listings (too short or just address)
-        if len(snippet) > 40:
-            return snippet
-
-    return ""
+    # Best organic snippet (skip social media / review aggregators)
+    return best_organic(data.get("organic", []))
 
 
 def get_description(name: str, city_id: str) -> str:
@@ -94,9 +137,9 @@ def get_description(name: str, city_id: str) -> str:
     data = serper_search(f'"{name}" {city}')
     desc = extract_description(data)
     if not desc:
-        # Fallback: search without quotes
+        # Fallback: search without quotes + "about" to target official sites
         time.sleep(0.3)
-        data2 = serper_search(f"{name} {city}")
+        data2 = serper_search(f"{name} {city} about")
         desc = extract_description(data2)
     return desc
 
