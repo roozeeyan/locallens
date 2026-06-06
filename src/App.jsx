@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { CITIES, INITIAL_PLACES } from "./data.js";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
@@ -114,44 +114,96 @@ function Chips({ options, active, onSelect }) {
   );
 }
 
-// ── Card photo grid (3 photos side by side, tap to zoom) ──────────────────
-function CardPhotos({ photos, name, onZoom, onToggle }) {
+// ── Lightbox — vertical filmstrip (swipe up/down, peek neighbors) ──────────
+function Lightbox({ photos, initialIdx, onClose }) {
+  const stripRef = useRef(null);
   const valid = (photos || []).filter(u => u);
 
+  useEffect(() => {
+    if (!stripRef.current) return;
+    const slides = stripRef.current.querySelectorAll("[data-slide]");
+    if (slides[initialIdx]) {
+      slides[initialIdx].scrollIntoView({ behavior: "instant", block: "center" });
+    }
+  }, [initialIdx]);
+
   return (
-    <div style={s.photoStrip}>
-      {[0, 1, 2].map(i => {
-        const url = valid[i];
-        return (
-          <div
-            key={i}
-            style={{ ...s.photoCell, background: PHOTO_BG[i] }}
-            onClick={() => url ? (onZoom && onZoom(url)) : onToggle && onToggle()}
-          >
-            <span style={s.photoInitial}>{name[0]}</span>
-            {url && (
-              <img
-                src={url}
-                alt={`${name} ${i + 1}`}
-                style={s.photoCellImg}
-                onError={e => { e.currentTarget.style.display = "none"; }}
-              />
-            )}
+    <div style={s.lightbox} onClick={onClose}>
+      <button style={s.lightboxClose} onClick={e => { e.stopPropagation(); onClose(); }}>✕</button>
+      <div ref={stripRef} style={s.filmStrip}>
+        {valid.map((url, i) => (
+          <div key={i} data-slide="" style={s.filmSlide}>
+            <img
+              src={url}
+              alt={`фото ${i + 1}`}
+              style={s.filmImg}
+              onClick={e => e.stopPropagation()}
+            />
           </div>
-        );
-      })}
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Card photo carousel (arrows, objectFit contain, all photos) ────────────
+function CardPhotos({ photos, name, onZoom, onToggle }) {
+  const [idx, setIdx] = useState(0);
+  const valid = (photos || []).filter(u => u);
+
+  if (valid.length === 0) {
+    return (
+      <div style={s.photoStrip} onClick={onToggle}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{ ...s.photoCell, background: PHOTO_BG[i] }}>
+            <span style={s.photoInitial}>{name[0]}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const go = (e, dir) => {
+    e.stopPropagation();
+    setIdx(i => Math.max(0, Math.min(valid.length - 1, i + dir)));
+  };
+
+  return (
+    <div style={s.carouselWrap}>
+      <img
+        src={valid[idx]}
+        alt={`${name} ${idx + 1}`}
+        style={s.carouselImg}
+        onClick={() => onZoom && onZoom(idx)}
+        onError={e => { e.currentTarget.style.opacity = "0"; }}
+      />
+      {idx > 0 && (
+        <button style={s.arrowLeft} onClick={e => go(e, -1)}>&#8249;</button>
+      )}
+      {idx < valid.length - 1 && (
+        <button style={s.arrowRight} onClick={e => go(e, 1)}>&#8250;</button>
+      )}
+      {valid.length > 1 && (
+        <div style={s.cardDots}>
+          {valid.map((_, i) => (
+            <span key={i} style={{
+              ...s.cardDot,
+              background: i === idx ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)",
+              width: i === idx ? 14 : 5,
+            }} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 // ── Place Card ─────────────────────────────────────────────────────────────
 function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, distanceKm, onPhotoZoom }) {
+  const [descOpen, setDescOpen] = useState(false);
   const status = getOpenStatus(place.openFrom, place.openTo);
 
-  const areaText = [
-    place.district,
-    distanceKm !== null ? formatDist(distanceKm) : null,
-  ].filter(Boolean).join(" · ");
+  const distText = distanceKm !== null ? formatDist(distanceKm) : null;
 
   return (
     <div style={s.placeCard}>
@@ -167,13 +219,20 @@ function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, dist
           </button>
         </div>
 
+        {/* Meta row: badge · distance · district */}
         <div style={s.placeMeta}>
           {place.badge && <span style={s.badge}>{place.badge}</span>}
-          {areaText && <span style={s.area}>{areaText}</span>}
+          {place.district && <span style={s.area}>{place.district}</span>}
+          {distText && (
+            <span style={s.distPill}>
+              {Icons.locate}&nbsp;{distText}
+            </span>
+          )}
         </div>
 
         {place.tags && <div style={s.tags}>{place.tags}</div>}
 
+        {/* Open/closed status */}
         <div style={s.statusRow}>
           {status ? (
             <>
@@ -189,13 +248,29 @@ function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, dist
         </div>
       </div>
 
-      {/* ── Photo carousel (swipe + tap to zoom, no accordion toggle) ── */}
-      <CardPhotos photos={place.photos} name={place.name} onZoom={onPhotoZoom} onToggle={onToggle} />
+      {/* ── Description (expandable, outside accordion) ── */}
+      {place.description ? (
+        <div style={s.descSection} onClick={e => e.stopPropagation()}>
+          <p style={{ ...s.descText, WebkitLineClamp: descOpen ? "unset" : 3 }}>
+            {place.description}
+          </p>
+          <button style={s.descToggle} onClick={() => setDescOpen(v => !v)}>
+            {descOpen ? "свернуть ↑" : "читать далее ↓"}
+          </button>
+        </div>
+      ) : null}
 
-      {/* ── Accordion: carousel + description + map links ── */}
-      <div style={{ ...s.accordion, maxHeight: isOpen ? 320 : 0 }}>
+      {/* ── Photo carousel (tap to open lightbox) ── */}
+      <CardPhotos
+        photos={place.photos}
+        name={place.name}
+        onZoom={idx => onPhotoZoom({ photos: place.photos, idx })}
+        onToggle={onToggle}
+      />
+
+      {/* ── Accordion: map links ── */}
+      <div style={{ ...s.accordion, maxHeight: isOpen ? 120 : 0 }}>
         <div style={s.accordionInner}>
-          <p style={s.expandedDesc}>{place.description}</p>
           <div style={s.mapLinks}>
             <a href={place.mapsUrl || gMapsUrl(place.name, city?.name)} target="_blank" rel="noreferrer" style={s.mapBtn}>
               Google Maps ↗
@@ -222,12 +297,13 @@ export default function App() {
   const [expandedId, setExpandedId]     = useState(null);
   const [toast, setToast]               = useState(null);
 
-  // Lightbox
-  const [lightboxUrl, setLightboxUrl] = useState(null);
+  // Lightbox: { photos: [], idx: number }
+  const [lightbox, setLightbox] = useState(null);
 
   // Search & filters
   const [searchQuery, setSearchQuery]       = useState("");
   const [openNowOnly, setOpenNowOnly]       = useState(false);
+  const [rooOnly, setRooOnly]               = useState(false);
 
   // Location & filters
   const [userLoc, setUserLoc]               = useState(null);
@@ -259,16 +335,18 @@ export default function App() {
   const savedPlaces   = places.filter(p => p.saved);
   const cityFor       = (cityId) => CITIES.find(c => c.id === cityId);
 
+  const resetFilters = () => { setSearchQuery(""); setOpenNowOnly(false); setRooOnly(false); };
+
   const goCity = (city) => {
     setSelectedCity(city); setExpandedId(null); setDistrictFilter(null);
-    setSearchQuery(""); setOpenNowOnly(false); setScreen("city");
+    resetFilters(); setScreen("city");
   };
   const goCat = (cat) => {
     setSelectedCat(cat); setExpandedId(null); setDistrictFilter(null);
-    setSearchQuery(""); setOpenNowOnly(false); setScreen("places");
+    resetFilters(); setScreen("places");
   };
   const goBack = () => {
-    setExpandedId(null); setSearchQuery(""); setOpenNowOnly(false);
+    setExpandedId(null); resetFilters();
     if (screen === "places") return setScreen("city");
     if (screen === "city")   return setScreen("home");
     setScreen("home");
@@ -297,6 +375,7 @@ export default function App() {
     }))
     .filter(p => !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .filter(p => !openNowOnly || getOpenStatus(p.openFrom, p.openTo)?.open === true)
+    .filter(p => !rooOnly || p.rooChoice === true)
     .filter(p => !districtFilter || p.district === districtFilter)
     .filter(p => !radiusKm || !userLoc || (p.distanceKm !== null && p.distanceKm <= radiusKm))
     .sort((a, b) => userLoc ? (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999) : 0);
@@ -318,11 +397,12 @@ export default function App() {
       {toast && <div style={s.toast}>{toast}</div>}
 
       {/* ── Lightbox ── */}
-      {lightboxUrl && (
-        <div style={s.lightbox} onClick={() => setLightboxUrl(null)}>
-          <img src={lightboxUrl} alt="" style={s.lightboxImg} />
-          <button style={s.lightboxClose} onClick={() => setLightboxUrl(null)}>✕</button>
-        </div>
+      {lightbox && (
+        <Lightbox
+          photos={lightbox.photos}
+          initialIdx={lightbox.idx}
+          onClose={() => setLightbox(null)}
+        />
       )}
 
       <header style={s.header}>
@@ -404,13 +484,21 @@ export default function App() {
                 )}
               </div>
 
-              {/* Open now toggle */}
-              <button
-                style={openNowOnly ? s.chipActive : s.chip}
-                onClick={() => setOpenNowOnly(v => !v)}
-              >
-                🟢 Открыто сейчас
-              </button>
+              {/* Chips row: Open now + ROO */}
+              <div style={s.chipsRow}>
+                <button
+                  style={openNowOnly ? s.chipActive : s.chip}
+                  onClick={() => setOpenNowOnly(v => !v)}
+                >
+                  🟢 Открыто сейчас
+                </button>
+                <button
+                  style={rooOnly ? s.chipActive : s.chip}
+                  onClick={() => setRooOnly(v => !v)}
+                >
+                  ⭐ ROO выбор
+                </button>
+              </div>
 
               <button style={s.locBtn} onClick={requestLocation} disabled={locLoading}>
                 <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -441,7 +529,7 @@ export default function App() {
                       onSave={() => toggleSave(place.id)}
                       isSaved={live.saved}
                       distanceKm={place.distanceKm}
-                      onPhotoZoom={setLightboxUrl} />
+                      onPhotoZoom={setLightbox} />
                   );
                 })
               )}
@@ -471,7 +559,7 @@ export default function App() {
                       onSave={() => toggleSave(place.id)}
                       isSaved={live.saved}
                       distanceKm={distanceKm}
-                      onPhotoZoom={setLightboxUrl} />
+                      onPhotoZoom={setLightbox} />
                   );
                 })}
               </div>
@@ -547,35 +635,100 @@ const s = {
   placeMeta: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingLeft: 32, flexWrap: "wrap" },
   badge: { fontSize: 11, fontWeight: 600, color: "#2C2520", letterSpacing: "0.02em" },
   area: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.03em" },
+  distPill: { display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "#6A8A6E", letterSpacing: "0.03em" },
   tags: { fontSize: 12, color: "#6A6058", letterSpacing: "0.02em", marginBottom: 6, paddingLeft: 32, lineHeight: 1.4 },
   statusRow: { display: "flex", alignItems: "center", gap: 5, paddingLeft: 32, marginBottom: 10 },
   dot: { width: 6, height: 6, borderRadius: "50%", flexShrink: 0 },
   scheduleText: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.03em" },
 
-  // Photo strip — 3 photos side by side
-  photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 120 },
-  photoCell: { flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: "pointer" },
+  // Photo strip — placeholder (no photos)
+  photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 120, cursor: "pointer" },
+  photoCell: { flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
   photoInitial: { fontSize: 28, fontWeight: 800, color: "#B8B2A8" },
-  photoCellImg: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#E0DBD3", display: "block" },
 
-  // Lightbox
+  // Card photo carousel
+  carouselWrap: {
+    position: "relative",
+    marginLeft: -24,
+    width: "calc(100% + 48px)",
+    height: 200,
+    background: "#E0DBD3",
+    overflow: "hidden",
+  },
+  carouselImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
+    display: "block",
+    cursor: "zoom-in",
+  },
+  arrowLeft: {
+    position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
+    background: "rgba(255,255,255,0.82)", border: "none", borderRadius: "50%",
+    width: 36, height: 36, fontSize: 26, lineHeight: 1, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    color: "#2C2520", zIndex: 2, fontFamily: "inherit", boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+  },
+  arrowRight: {
+    position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
+    background: "rgba(255,255,255,0.82)", border: "none", borderRadius: "50%",
+    width: 36, height: 36, fontSize: 26, lineHeight: 1, cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    color: "#2C2520", zIndex: 2, fontFamily: "inherit", boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+  },
+  cardDots: {
+    position: "absolute", bottom: 8, left: 0, right: 0,
+    display: "flex", justifyContent: "center", gap: 5, pointerEvents: "none",
+  },
+  cardDot: { height: 5, borderRadius: 3, transition: "width 0.2s, background 0.2s" },
+
+  // Description section
+  descSection: { padding: "0 0 10px", borderBottom: "none" },
+  descText: {
+    fontSize: 13, color: "#5A5048", lineHeight: 1.7, margin: "0 0 4px",
+    display: "-webkit-box", WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+  },
+  descToggle: { background: "none", border: "none", color: "#8A7F78", fontSize: 11, letterSpacing: "0.08em", cursor: "pointer", fontFamily: "inherit", padding: "2px 0" },
+
+  // Lightbox — vertical filmstrip
   lightbox: {
     position: "fixed", inset: 0, zIndex: 999,
-    background: "rgba(0,0,0,0.93)",
-    display: "flex", alignItems: "center", justifyContent: "center",
+    background: "rgba(30,24,20,0.78)",
     cursor: "zoom-out",
   },
-  lightboxImg: {
-    maxWidth: "100%",
-    maxHeight: "calc(100vh - 80px)",
-    objectFit: "contain",
-  },
   lightboxClose: {
-    position: "absolute", top: 20, right: 20,
-    background: "rgba(255,255,255,0.15)", border: "none", color: "white",
+    position: "fixed", top: 18, right: 18, zIndex: 1001,
+    background: "rgba(255,255,255,0.18)", border: "none", color: "white",
     width: 38, height: 38, borderRadius: "50%", fontSize: 18, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
     fontFamily: "inherit", lineHeight: 1,
+  },
+  filmStrip: {
+    position: "fixed", inset: 0, zIndex: 1000,
+    overflowY: "scroll",
+    scrollSnapType: "y mandatory",
+    scrollbarWidth: "none",
+    WebkitOverflowScrolling: "touch",
+    display: "flex", flexDirection: "column", alignItems: "center",
+    paddingTop: "7.5vh", paddingBottom: "7.5vh",
+    cursor: "default",
+  },
+  filmSlide: {
+    width: "100%",
+    minHeight: "85vh",
+    flexShrink: 0,
+    scrollSnapAlign: "center",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    padding: "8px 12px",
+    boxSizing: "border-box",
+  },
+  filmImg: {
+    maxWidth: "100%",
+    maxHeight: "83vh",
+    objectFit: "contain",
+    borderRadius: 2,
+    cursor: "default",
   },
 
   // Accordion
