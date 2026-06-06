@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { CITIES, INITIAL_PLACES } from "./data.js";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
@@ -114,63 +114,32 @@ function Chips({ options, active, onSelect }) {
   );
 }
 
-// ── Card photo carousel (top of card, swipeable, tap to zoom) ─────────────
+// ── Card photo grid (3 photos side by side, tap to zoom) ──────────────────
 function CardPhotos({ photos, name, onZoom, onToggle }) {
-  const [idx, setIdx] = useState(0);
-  const ref = useRef(null);
   const valid = (photos || []).filter(u => u);
 
-  const onScroll = () => {
-    if (!ref.current) return;
-    const w = ref.current.offsetWidth;
-    if (w) setIdx(Math.round(ref.current.scrollLeft / w));
-  };
-
-  // No photos — show 3 gradient placeholder cells, tap opens accordion
-  if (valid.length === 0) {
-    return (
-      <div style={s.photoStrip} onClick={onToggle}>
-        {[0, 1, 2].map(i => (
-          <div key={i} style={{ ...s.photoCell, background: PHOTO_BG[i] }}>
-            <span style={s.photoInitial}>{name[0]}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div style={{ position: "relative" }}>
-      <div ref={ref} style={s.cardCarousel} onScroll={onScroll}>
-        {valid.map((url, i) => (
-          <div key={i} style={s.cardSlide} onClick={() => onZoom && onZoom(url)}>
-            <img
-              src={url}
-              alt={`${name} ${i + 1}`}
-              style={s.cardSlideImg}
-              onError={e => {
-                e.currentTarget.style.display = "none";
-                const fb = e.currentTarget.nextSibling;
-                if (fb) fb.style.display = "flex";
-              }}
-            />
-            <div style={{ ...s.cardSlidePlaceholder, background: PHOTO_BG[i % 3] }}>
-              <span style={s.photoInitial}>{name[0]}</span>
-            </div>
+    <div style={s.photoStrip}>
+      {[0, 1, 2].map(i => {
+        const url = valid[i];
+        return (
+          <div
+            key={i}
+            style={{ ...s.photoCell, background: PHOTO_BG[i] }}
+            onClick={() => url ? (onZoom && onZoom(url)) : onToggle && onToggle()}
+          >
+            <span style={s.photoInitial}>{name[0]}</span>
+            {url && (
+              <img
+                src={url}
+                alt={`${name} ${i + 1}`}
+                style={s.photoCellImg}
+                onError={e => { e.currentTarget.style.display = "none"; }}
+              />
+            )}
           </div>
-        ))}
-      </div>
-      {valid.length > 1 && (
-        <div style={s.cardDots}>
-          {valid.map((_, i) => (
-            <span key={i} style={{
-              ...s.cardDot,
-              background: i === idx ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)",
-              width: i === idx ? 14 : 5,
-            }} />
-          ))}
-        </div>
-      )}
+        );
+      })}
     </div>
   );
 }
@@ -583,47 +552,11 @@ const s = {
   dot: { width: 6, height: 6, borderRadius: "50%", flexShrink: 0 },
   scheduleText: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.03em" },
 
-  // Photo strip — placeholder (no photos case)
-  photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 110, cursor: "pointer" },
-  photoCell: { flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
+  // Photo strip — 3 photos side by side
+  photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 120 },
+  photoCell: { flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: "pointer" },
   photoInitial: { fontSize: 28, fontWeight: 800, color: "#B8B2A8" },
-
-  // Card photo carousel (when real photos exist)
-  cardCarousel: {
-    display: "flex",
-    overflowX: "auto",
-    scrollSnapType: "x mandatory",
-    scrollbarWidth: "none",
-    WebkitOverflowScrolling: "touch",
-    marginLeft: -24,
-    width: "calc(100% + 48px)",
-    height: 200,
-    cursor: "zoom-in",
-  },
-  cardSlide: {
-    minWidth: "100%",
-    height: "100%",
-    scrollSnapAlign: "start",
-    flexShrink: 0,
-    position: "relative",
-    overflow: "hidden",
-  },
-  cardSlideImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
-  cardSlidePlaceholder: {
-    position: "absolute", inset: 0,
-    display: "none",
-    alignItems: "center", justifyContent: "center",
-  },
-  cardDots: {
-    position: "absolute",
-    bottom: 8, left: 0, right: 0,
-    display: "flex", justifyContent: "center", gap: 5,
-    pointerEvents: "none",
-  },
-  cardDot: {
-    height: 5, borderRadius: 3,
-    transition: "width 0.2s, background 0.2s",
-  },
+  photoCellImg: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#E0DBD3", display: "block" },
 
   // Lightbox
   lightbox: {
