@@ -179,24 +179,21 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
       <div ref={trackRef} style={s.carouselTrack}>
         {pages.map((page, pi) => (
           <div key={pi} style={s.carouselPage}>
-            {[0, 1, 2].map(j => {
-              const url = page[j];
+            {page.map((url, j) => {
               const globalIdx = pi * 3 + j;
               return (
                 <div
                   key={j}
-                  style={{ ...s.photoCell, background: PHOTO_BG[j] }}
-                  onClick={() => url ? (onZoom && onZoom(globalIdx)) : (onToggle && onToggle())}
+                  style={{ ...s.photoCell, background: PHOTO_BG[j % 3] }}
+                  onClick={() => onZoom && onZoom(globalIdx)}
                 >
                   <span style={s.photoInitial}>{name[0]}</span>
-                  {url && (
-                    <img
-                      src={url}
-                      alt={`${name} ${globalIdx + 1}`}
-                      style={{ ...s.photoCellImg, background: PHOTO_BG[j] }}
-                      onError={e => { e.currentTarget.style.opacity = "0"; }}
-                    />
-                  )}
+                  <img
+                    src={url}
+                    alt={`${name} ${globalIdx + 1}`}
+                    style={{ ...s.photoCellImg, background: PHOTO_BG[j % 3] }}
+                    onError={e => { e.currentTarget.style.opacity = "0"; }}
+                  />
                 </div>
               );
             })}
@@ -671,7 +668,7 @@ const s = {
   photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 110, cursor: "pointer" },
   photoCell: { flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: "zoom-in" },
   photoInitial: { fontSize: 24, fontWeight: 800, color: "#B8B2A8" },
-  photoCellImg: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" },
+  photoCellImg: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" },
 
   // Card photo carousel — 3 photos per page
   carouselOuter: {
