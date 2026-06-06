@@ -332,8 +332,6 @@ export default function App() {
     .filter(p => !radiusKm || !userLoc || (p.distanceKm !== null && p.distanceKm <= radiusKm))
     .sort((a, b) => userLoc ? (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999) : 0);
 
-  const hasAnyHours = rawPlaces.some(p => p.openFrom || p.openTo);
-
   const RADIUS_OPTIONS = [
     { value: null, label: "Все" },
     { value: 1,    label: "1 км" },
@@ -437,15 +435,13 @@ export default function App() {
                 )}
               </div>
 
-              {/* Open now toggle — only when category has places with hours */}
-              {hasAnyHours && (
-                <button
-                  style={openNowOnly ? s.chipActive : s.chip}
-                  onClick={() => setOpenNowOnly(v => !v)}
-                >
-                  🟢 Открыто сейчас
-                </button>
-              )}
+              {/* Open now toggle */}
+              <button
+                style={openNowOnly ? s.chipActive : s.chip}
+                onClick={() => setOpenNowOnly(v => !v)}
+              >
+                🟢 Открыто сейчас
+              </button>
 
               <button style={s.locBtn} onClick={requestLocation} disabled={locLoading}>
                 <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -461,7 +457,11 @@ export default function App() {
 
             <div style={s.list}>
               {displayPlaces.length === 0 ? (
-                <p style={s.empty}>Нет мест в выбранном фильтре</p>
+                <p style={s.empty}>
+                  {openNowOnly && !rawPlaces.some(p => p.openFrom || p.openTo)
+                    ? "Расписание для этой категории ещё не загружено"
+                    : "Нет мест в выбранном фильтре"}
+                </p>
               ) : (
                 displayPlaces.map((place, i) => {
                   const live = places.find(p => p.id === place.id);
