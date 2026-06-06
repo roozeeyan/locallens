@@ -332,6 +332,8 @@ export default function App() {
     .filter(p => !radiusKm || !userLoc || (p.distanceKm !== null && p.distanceKm <= radiusKm))
     .sort((a, b) => userLoc ? (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999) : 0);
 
+  const hasAnyHours = rawPlaces.some(p => p.openFrom || p.openTo);
+
   const RADIUS_OPTIONS = [
     { value: null, label: "Все" },
     { value: 1,    label: "1 км" },
@@ -435,13 +437,15 @@ export default function App() {
                 )}
               </div>
 
-              {/* Open now toggle */}
-              <button
-                style={openNowOnly ? s.chipActive : s.chip}
-                onClick={() => setOpenNowOnly(v => !v)}
-              >
-                🟢 Открыто сейчас
-              </button>
+              {/* Open now toggle — only when category has places with hours */}
+              {hasAnyHours && (
+                <button
+                  style={openNowOnly ? s.chipActive : s.chip}
+                  onClick={() => setOpenNowOnly(v => !v)}
+                >
+                  🟢 Открыто сейчас
+                </button>
+              )}
 
               <button style={s.locBtn} onClick={requestLocation} disabled={locLoading}>
                 <span style={{ display: "flex", alignItems: "center", gap: 6 }}>

@@ -12,7 +12,6 @@ export const CITIES = [
 ];
 
 export const INITIAL_PLACES = [
-  { id: 100, cityId: "yerevan", category: "Велнес и spa", name: `Spring Spa Ubud`, lat: 40.1872, lng: 44.5152, mapsUrl: "https://www.google.com/maps/place/Spring+Spa+Ubud/data=!4m2!3m1!1s0x2dd2230026ae2cdd:0xa5cce2273b6a6e89" },
   { id: 101, cityId: "yerevan", category: "Кафе и рестораны", name: `Como`, lat: 40.1872, lng: 44.5152, mapsUrl: "https://www.google.com/maps/place/Como/data=!4m2!3m1!1s0x406abde04f09cb05:0x9020f15e715ba09", description: `Эстетичный ресторан «высокой» итальянской кухни в центре Еревана. Лаконичное меню Сото выдержано в узнаваемой итальянской стилистике, но каждое блюдо выполнено по-новому и с особым шиком: брускетта с рикоттой и сморчкам, карпаччо с трюфелем и муссом из пармезана, осьминог на гриле с соусом из копчёного перца, шоколадный тарт с чёрной икрой. По утрам в Сото встречаются на завтраки, по вечерам - на коктейли и вино.
 (от Редакции Яндекс)` },
   { id: 102, cityId: "yerevan", category: "Кафе и рестораны", name: `Openhaus Community`, lat: 40.1872, lng: 44.5152, mapsUrl: "https://www.google.com/maps/place/Openhaus+Community/data=!4m2!3m1!1s0x406abdacfe1f52b3:0x782d894e294d6e0b" },
