@@ -104,6 +104,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch", type=int, default=9999)
     parser.add_argument("--skip", type=str, default="")
+    parser.add_argument("--city", type=str, default="",
+                        help="Process only places with this cityId (e.g. 'yerevan')")
     args = parser.parse_args()
 
     if not SERPER_KEY:
@@ -125,7 +127,9 @@ def main():
         js = f.read()
 
     places = extract_places(js)
-    print(f"Found {len(places)} places in data.js")
+    if args.city:
+        places = [(pid, cid, cat, name) for pid, cid, cat, name in places if cid == args.city]
+        print(f"Found {len(places)} places in data.js for city '{args.city}'")
 
     queries_used = 0
     processed = 0

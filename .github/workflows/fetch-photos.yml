@@ -3,12 +3,16 @@ name: Fetch Place Photos
 on:
   workflow_dispatch:
     inputs:
-      batch_size:
-        description: 'Places per run (default 936 = all)'
+      city:
+        description: 'City to process: yerevan / bangkok / samui / phangan / hoian / bali / danang / singapore (leave empty for all)'
         required: false
-        default: '936'
+        default: 'yerevan'
+      batch_size:
+        description: 'Max places per run (default 9999 = all in city)'
+        required: false
+        default: '9999'
       skip_ids:
-        description: 'Comma-separated IDs to skip (already done)'
+        description: 'Comma-separated IDs to skip'
         required: false
         default: ''
 
@@ -36,6 +40,7 @@ jobs:
           SERPER_KEY: ${{ secrets.SERPER_KEY }}
         run: |
           python scripts/fetch_photos.py \
+            --city "${{ inputs.city }}" \
             --batch "${{ inputs.batch_size }}" \
             --skip "${{ inputs.skip_ids }}"
 
