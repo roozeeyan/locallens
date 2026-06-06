@@ -4,19 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       city:
-        description: 'City to process: yerevan / bangkok / samui / phangan / hoian / bali / danang / singapore (leave empty for all)'
+        description: 'City: yerevan / bangkok / samui / phangan / hoian / bali / danang / singapore'
         required: false
         default: 'yerevan'
       batch_size:
-        description: 'Max places per run (default 9999 = all in city)'
+        description: 'Max places per run (9999 = all)'
         required: false
         default: '9999'
       max_photos:
-        description: 'Max photos per place (5-10). Cafes/bars always get 2 queries for variety.'
+        description: 'Max photos per place (5-10)'
         required: false
         default: '10'
       skip_ids:
-        description: 'Comma-separated IDs to skip'
+        description: 'Comma-separated place IDs to skip'
         required: false
         default: ''
 
@@ -24,12 +24,12 @@ jobs:
   fetch-photos:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -39,9 +39,11 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Fetch photos via Serper
+      - name: Fetch photos and commit via GitHub API
         env:
           SERPER_KEY: ${{ secrets.SERPER_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python scripts/fetch_photos.py \
             --city "${{ inputs.city }}" \
@@ -49,38 +51,10 @@ jobs:
             --batch "${{ inputs.batch_size }}" \
             --skip "${{ inputs.skip_ids }}"
 
-      - name: Print stats
-        if: always()
-        run: |
-          python -c "
-          import json
-          with open('src/photos.json') as f:
-              d = json.load(f)
-          filled = sum(1 for v in d.values() if v)
-          print(f'Places with photos: {filled}/{len(d)}')
-          "
-
-      - name: Upload photos.json as artifact (safety backup)
+      - name: Upload photos.json as backup artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: photos-json
           path: src/photos.json
           retention-days: 90
-
-      - name: Commit and push
-        if: always()
-        run: |
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git fetch origin main
-          git checkout main
-          git pull origin main
-          cp src/photos.json /tmp/photos_result.json
-          git checkout main -- src/photos.json 2>/dev/null || true
-          cp /tmp/photos_result.json src/photos.json
-          git add src/photos.json
-          git diff --staged --quiet && echo "Nothing to commit" && exit 0
-          FILLED=$(python -c "import json; d=json.load(open('src/photos.json')); print(sum(1 for v in d.values() if v))")
-          git commit -m "Add place photos via Serper API ($FILLED places)"
-          git push origin main

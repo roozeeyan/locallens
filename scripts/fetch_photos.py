@@ -8,6 +8,7 @@ Usage:
 """
 
 import argparse
+import base64
 import json
 import os
 import re
@@ -17,7 +18,10 @@ import time
 import requests
 
 SERPER_KEY = os.environ.get("SERPER_KEY", "")
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
+GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY", "roozeeyan/locallens")
 PHOTOS_FILE = "src/photos.json"
+PHOTOS_API_PATH = "src/photos.json"
 DATA_FILE = "src/data.js"
 
 CITY_EN = {
@@ -176,7 +180,7 @@ def main():
         # Polite rate limit: ~2 req/sec max
         time.sleep(0.5)
 
-    # Final save
+    # Final local save
     with open(PHOTOS_FILE, "w", encoding="utf-8") as f:
         json.dump(photos_db, f, ensure_ascii=False, indent=2)
 
@@ -186,6 +190,36 @@ def main():
     print(f"  Already existed (skipped): {skipped_existing}")
     print(f"  Total in photos.json: {len(photos_db)} ({filled} with photos)")
     print(f"  Serper queries used this run: {queries_used}")
+
+    # Push directly via GitHub API — no git, no conflicts
+    if GITHUB_TOKEN and processed > 0:
+        print("\nPushing photos.json via GitHub API...")
+        api = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{PHOTOS_API_PATH}"
+        headers = {"Authorization": f"token {GITHUB_TOKEN}", "Accept": "application/vnd.github+json"}
+
+        # Get current file SHA (needed for update)
+        resp = requests.get(api, headers=headers, timeout=30)
+        sha = resp.json().get("sha", "") if resp.status_code == 200 else ""
+
+        content = base64.b64encode(
+            json.dumps(photos_db, ensure_ascii=False, indent=2).encode()
+        ).decode()
+
+        payload = {
+            "message": f"Add photos for {filled} places ({args.city or 'all'} city)",
+            "content": content,
+        }
+        if sha:
+            payload["sha"] = sha
+
+        put = requests.put(api, headers=headers, json=payload, timeout=60)
+        if put.status_code in (200, 201):
+            print(f"  photos.json committed to repo successfully.")
+        else:
+            print(f"  GitHub API push failed: {put.status_code} {put.text[:300]}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        print("\nSkipping GitHub API push (no token or nothing processed).")
 
 
 if __name__ == "__main__":
