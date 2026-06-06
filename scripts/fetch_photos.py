@@ -36,6 +36,10 @@ FOOD_CATS = {"Кафе и рестораны", "Кофе и чай", "Бары",
 BUDGET = 2300  # Leave 200 credit buffer from 2500 free credits
 
 
+class CreditsExhausted(Exception):
+    """Raised when Serper reports the free credit balance is used up."""
+
+
 def serper_images(query: str, n: int = 8) -> list:
     """Query Serper image search and return list of image URLs."""
     try:
@@ -45,10 +49,15 @@ def serper_images(query: str, n: int = 8) -> list:
             json={"q": query, "num": n},
             timeout=30,
         )
+        # 402 Payment Required / 403 = credits exhausted on free plan
+        if resp.status_code in (401, 402, 403):
+            raise CreditsExhausted(f"HTTP {resp.status_code}: {resp.text[:200]}")
         resp.raise_for_status()
         items = resp.json().get("images", [])
         urls = [img["imageUrl"] for img in items if img.get("imageUrl")]
         return urls[:n]
+    except CreditsExhausted:
+        raise
     except Exception as e:
         print(f"    Serper error: {e}", file=sys.stderr)
         return []
@@ -141,7 +150,13 @@ def main():
             break
 
         print(f"[{pid}] {name} ({city_id} / {category})")
-        photos = get_photos(name, city_id, category)
+        try:
+            photos = get_photos(name, city_id, category)
+        except CreditsExhausted as e:
+            print(f"\n!! Serper credits exhausted: {e}")
+            print("   Saving progress and stopping cleanly. Re-run later with a "
+                  "fresh key to continue — already-done places are skipped.")
+            break
         photos_db[pid] = photos
         queries_used += needed
         processed += 1

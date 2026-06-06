@@ -40,6 +40,7 @@ jobs:
             --skip "${{ inputs.skip_ids }}"
 
       - name: Print stats
+        if: always()
         run: |
           python -c "
           import json
@@ -49,7 +50,16 @@ jobs:
           print(f'Places with photos: {filled}/{len(d)}')
           "
 
+      - name: Upload photos.json as artifact (safety backup)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: photos-json
+          path: src/photos.json
+          retention-days: 90
+
       - name: Commit and push
+        if: always()
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
