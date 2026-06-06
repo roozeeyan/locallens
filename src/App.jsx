@@ -305,7 +305,6 @@ function PlaceCard({ place, index, city, onSave, isSaved, distanceKm, onPhotoZoo
         photos={place.photos}
         name={place.name}
         onZoom={(validPhotos, idx) => onPhotoZoom({ photos: validPhotos, idx })}
-        onToggle={onToggle}
       />
 
       {/* ── Map links — always visible, small grid ── */}
