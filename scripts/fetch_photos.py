@@ -63,29 +63,26 @@ def serper_images(query: str, n: int = 8) -> list:
         return []
 
 
-def get_photos(name: str, city_id: str, category: str) -> list:
-    """Fetch 5-8 photos for a place: atmosphere + optionally food."""
+def get_photos(name: str, city_id: str, category: str, max_photos: int = 6) -> list:
+    """Fetch photos for a place. Uses 2 queries for food if max_photos > 4."""
     city = CITY_EN.get(city_id, city_id)
-    photos = []
 
-    # Primary search: atmosphere / interior / general
-    primary = serper_images(f'"{name}" {city}', 8)
+    # Primary search
+    primary = serper_images(f'"{name}" {city}', max(max_photos, 6))
     if not primary:
-        # Fallback without quotes for unusual names
-        primary = serper_images(f"{name} {city}", 8)
+        primary = serper_images(f"{name} {city}", max(max_photos, 6))
 
-    if category in FOOD_CATS:
-        # Secondary search: food / dishes
-        food_q = f'"{name}" {city} food menu'
-        food = serper_images(food_q, 5)
+    if category in FOOD_CATS and max_photos > 4:
+        # Secondary search for food/dishes only when budget allows extra query
+        food = serper_images(f'"{name}" {city} food menu', max_photos)
         if not food:
-            food = serper_images(f"{name} {city} food", 5)
-        # Mix: 4 atmosphere + 3 food (max 7 total)
-        photos = primary[:4] + food[:3]
+            food = serper_images(f"{name} {city} food", max_photos)
+        atm_count = max(1, max_photos - 3)
+        photos = primary[:atm_count] + food[:3]
     else:
-        photos = primary[:6]
+        photos = primary[:max_photos]
 
-    return photos
+    return photos[:max_photos]
 
 
 def extract_places(js_content: str) -> list:
@@ -106,6 +103,8 @@ def main():
     parser.add_argument("--skip", type=str, default="")
     parser.add_argument("--city", type=str, default="",
                         help="Process only places with this cityId (e.g. 'yerevan')")
+    parser.add_argument("--max_photos", type=int, default=6,
+                        help="Max photos per place (4 = 1 query each; 6-7 = 2 queries for food)")
     args = parser.parse_args()
 
     if not SERPER_KEY:
@@ -148,14 +147,14 @@ def main():
             break
 
         # Estimate queries needed for budget check
-        needed = 2 if category in FOOD_CATS else 1
+        needed = 2 if (category in FOOD_CATS and args.max_photos > 4) else 1
         if queries_used + needed > BUDGET:
             print(f"Budget limit ({BUDGET}) reached after {queries_used} queries. Stopping.")
             break
 
         print(f"[{pid}] {name} ({city_id} / {category})")
         try:
-            photos = get_photos(name, city_id, category)
+            photos = get_photos(name, city_id, category, args.max_photos)
         except CreditsExhausted as e:
             print(f"\n!! Serper credits exhausted: {e}")
             print("   Saving progress and stopping cleanly. Re-run later with a "

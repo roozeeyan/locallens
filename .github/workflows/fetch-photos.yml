@@ -11,6 +11,10 @@ on:
         description: 'Max places per run (default 9999 = all in city)'
         required: false
         default: '9999'
+      max_photos:
+        description: 'Photos per place: 4 = 1 query/place (saves credits); 6 = 2 queries for cafes/bars'
+        required: false
+        default: '4'
       skip_ids:
         description: 'Comma-separated IDs to skip'
         required: false
@@ -41,6 +45,7 @@ jobs:
         run: |
           python scripts/fetch_photos.py \
             --city "${{ inputs.city }}" \
+            --max_photos "${{ inputs.max_photos }}" \
             --batch "${{ inputs.batch_size }}" \
             --skip "${{ inputs.skip_ids }}"
 
