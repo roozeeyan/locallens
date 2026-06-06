@@ -256,6 +256,10 @@ export default function App() {
   // Lightbox
   const [lightboxUrl, setLightboxUrl] = useState(null);
 
+  // Search & filters
+  const [searchQuery, setSearchQuery]       = useState("");
+  const [openNowOnly, setOpenNowOnly]       = useState(false);
+
   // Location & filters
   const [userLoc, setUserLoc]               = useState(null);
   const [locLoading, setLocLoading]         = useState(false);
@@ -287,13 +291,15 @@ export default function App() {
   const cityFor       = (cityId) => CITIES.find(c => c.id === cityId);
 
   const goCity = (city) => {
-    setSelectedCity(city); setExpandedId(null); setDistrictFilter(null); setScreen("city");
+    setSelectedCity(city); setExpandedId(null); setDistrictFilter(null);
+    setSearchQuery(""); setOpenNowOnly(false); setScreen("city");
   };
   const goCat = (cat) => {
-    setSelectedCat(cat); setExpandedId(null); setDistrictFilter(null); setScreen("places");
+    setSelectedCat(cat); setExpandedId(null); setDistrictFilter(null);
+    setSearchQuery(""); setOpenNowOnly(false); setScreen("places");
   };
   const goBack = () => {
-    setExpandedId(null);
+    setExpandedId(null); setSearchQuery(""); setOpenNowOnly(false);
     if (screen === "places") return setScreen("city");
     if (screen === "city")   return setScreen("home");
     setScreen("home");
@@ -320,6 +326,8 @@ export default function App() {
         ? haversine(userLoc.lat, userLoc.lng, p.lat, p.lng)
         : null,
     }))
+    .filter(p => !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(p => !openNowOnly || getOpenStatus(p.openFrom, p.openTo)?.open === true)
     .filter(p => !districtFilter || p.district === districtFilter)
     .filter(p => !radiusKm || !userLoc || (p.distanceKm !== null && p.distanceKm <= radiusKm))
     .sort((a, b) => userLoc ? (a.distanceKm ?? 99999) - (b.distanceKm ?? 99999) : 0);
@@ -413,6 +421,28 @@ export default function App() {
 
             {/* Filters */}
             <div style={s.filtersBlock}>
+              {/* Search */}
+              <div style={s.searchWrap}>
+                <input
+                  type="text"
+                  placeholder="Поиск по названию..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={s.searchInput}
+                />
+                {searchQuery && (
+                  <button style={s.searchClear} onClick={() => setSearchQuery("")}>✕</button>
+                )}
+              </div>
+
+              {/* Open now toggle */}
+              <button
+                style={openNowOnly ? s.chipActive : s.chip}
+                onClick={() => setOpenNowOnly(v => !v)}
+              >
+                🟢 Открыто сейчас
+              </button>
+
               <button style={s.locBtn} onClick={requestLocation} disabled={locLoading}>
                 <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   {Icons.locate}
@@ -523,8 +553,11 @@ const s = {
   catMeta: { fontSize: 12, color: "#8A7F78", letterSpacing: "0.05em", flexShrink: 0 },
 
   // Filters
-  filtersBlock: { padding: "14px 0 4px", borderBottom: "1px solid #DED9D3" },
-  locBtn: { display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: "1px solid #DED9D3", borderRadius: 3, padding: "10px 14px", color: "#2C2520", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, letterSpacing: "0.02em", marginBottom: 10 },
+  filtersBlock: { padding: "14px 0 4px", borderBottom: "1px solid #DED9D3", display: "flex", flexDirection: "column", gap: 10 },
+  searchWrap: { position: "relative", display: "flex", alignItems: "center" },
+  searchInput: { width: "100%", padding: "10px 36px 10px 14px", border: "1px solid #DED9D3", borderRadius: 3, background: "#F0EDE8", color: "#2C2520", fontSize: 14, fontFamily: "'DM Sans', -apple-system, sans-serif", outline: "none", boxSizing: "border-box", letterSpacing: "0.01em" },
+  searchClear: { position: "absolute", right: 10, background: "none", border: "none", color: "#8A7F78", cursor: "pointer", fontSize: 13, padding: 4, lineHeight: 1 },
+  locBtn: { display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: "1px solid #DED9D3", borderRadius: 3, padding: "10px 14px", color: "#2C2520", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, letterSpacing: "0.02em" },
   locDot: { width: 7, height: 7, borderRadius: "50%", background: "#7BAE7F", flexShrink: 0 },
   locErrorMsg: { fontSize: 11, color: "#B07070", marginBottom: 8, letterSpacing: "0.02em" },
   chipsRow: { display: "flex", gap: 6, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none", WebkitOverflowScrolling: "touch" },
