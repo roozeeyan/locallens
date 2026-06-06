@@ -63,22 +63,25 @@ def serper_images(query: str, n: int = 8) -> list:
         return []
 
 
-def get_photos(name: str, city_id: str, category: str, max_photos: int = 6) -> list:
-    """Fetch photos for a place. Uses 2 queries for food if max_photos > 4."""
+def get_photos(name: str, city_id: str, category: str, max_photos: int = 10) -> list:
+    """Fetch up to max_photos for a place.
+    Food/bar categories: 2 queries (atmosphere + food) = 2 credits, richer mix.
+    All others: 1 query = 1 credit, up to 10 photos.
+    """
     city = CITY_EN.get(city_id, city_id)
 
     # Primary search
-    primary = serper_images(f'"{name}" {city}', max(max_photos, 6))
+    primary = serper_images(f'"{name}" {city}', 10)
     if not primary:
-        primary = serper_images(f"{name} {city}", max(max_photos, 6))
+        primary = serper_images(f"{name} {city}", 10)
 
-    if category in FOOD_CATS and max_photos > 4:
-        # Secondary search for food/dishes only when budget allows extra query
-        food = serper_images(f'"{name}" {city} food menu', max_photos)
+    if category in FOOD_CATS:
+        # Second query for food/dishes
+        food = serper_images(f'"{name}" {city} food menu', 10)
         if not food:
-            food = serper_images(f"{name} {city} food", max_photos)
-        atm_count = max(1, max_photos - 3)
-        photos = primary[:atm_count] + food[:3]
+            food = serper_images(f"{name} {city} food", 10)
+        half = max_photos // 2
+        photos = primary[:half] + food[:max_photos - half]
     else:
         photos = primary[:max_photos]
 
@@ -147,7 +150,7 @@ def main():
             break
 
         # Estimate queries needed for budget check
-        needed = 2 if (category in FOOD_CATS and args.max_photos > 4) else 1
+        needed = 2 if category in FOOD_CATS else 1
         if queries_used + needed > BUDGET:
             print(f"Budget limit ({BUDGET}) reached after {queries_used} queries. Stopping.")
             break

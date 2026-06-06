@@ -12,9 +12,9 @@ on:
         required: false
         default: '9999'
       max_photos:
-        description: 'Photos per place: 4 = 1 query/place (saves credits); 6 = 2 queries for cafes/bars'
+        description: 'Max photos per place (5-10). Cafes/bars always get 2 queries for variety.'
         required: false
-        default: '4'
+        default: '10'
       skip_ids:
         description: 'Comma-separated IDs to skip'
         required: false
