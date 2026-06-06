@@ -144,14 +144,31 @@ function Lightbox({ photos, initialIdx, onClose }) {
   );
 }
 
-// ── Card photo carousel — 3 photos per page, swipe pages ──────────────────
+// ── Card photo carousel — 3 photos per page, broken URLs removed ──────────
 function CardPhotos({ photos, name, onZoom, onToggle }) {
+  const [brokenUrls, setBrokenUrls] = useState(new Set());
   const [pageIdx, setPageIdx] = useState(0);
   const trackRef = useRef(null);
-  const valid = (photos || []).filter(u => u);
+
+  const allUrls = (photos || []).filter(u => u);
+  // Remove any URL that failed to load — pages reorganize automatically
+  const valid = allUrls.filter(url => !brokenUrls.has(url));
 
   const pages = [];
   for (let i = 0; i < valid.length; i += 3) pages.push(valid.slice(i, i + 3));
+
+  // Clamp page index if pages shrunk after broken URLs removed
+  const pg = Math.min(pageIdx, Math.max(0, pages.length - 1));
+
+  // Sync scroll position when page or page count changes
+  useEffect(() => {
+    if (trackRef.current) {
+      trackRef.current.scrollLeft = pg * trackRef.current.offsetWidth;
+    }
+  }, [pg, pages.length]);
+
+  const markBroken = (url) =>
+    setBrokenUrls(prev => { const s = new Set(prev); s.add(url); return s; });
 
   if (valid.length === 0) {
     return (
@@ -167,7 +184,7 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
 
   const goPage = (e, dir) => {
     e.stopPropagation();
-    const next = Math.max(0, Math.min(pages.length - 1, pageIdx + dir));
+    const next = Math.max(0, Math.min(pages.length - 1, pg + dir));
     setPageIdx(next);
     if (trackRef.current) {
       trackRef.current.scrollLeft = next * trackRef.current.offsetWidth;
@@ -180,19 +197,19 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
         {pages.map((page, pi) => (
           <div key={pi} style={s.carouselPage}>
             {page.map((url, j) => {
-              const globalIdx = pi * 3 + j;
+              const globalIdx = valid.indexOf(url);
               return (
                 <div
-                  key={j}
+                  key={url}
                   style={{ ...s.photoCell, background: PHOTO_BG[j % 3] }}
-                  onClick={() => onZoom && onZoom(globalIdx)}
+                  onClick={() => onZoom && onZoom(valid, globalIdx)}
                 >
                   <span style={s.photoInitial}>{name[0]}</span>
                   <img
                     src={url}
                     alt={`${name} ${globalIdx + 1}`}
                     style={{ ...s.photoCellImg, background: PHOTO_BG[j % 3] }}
-                    onError={e => { e.currentTarget.style.opacity = "0"; }}
+                    onError={() => markBroken(url)}
                   />
                 </div>
               );
@@ -200,10 +217,10 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
           </div>
         ))}
       </div>
-      {pageIdx > 0 && (
+      {pg > 0 && (
         <button style={s.arrowLeft} onClick={e => goPage(e, -1)}>&#8249;</button>
       )}
-      {pageIdx < pages.length - 1 && (
+      {pg < pages.length - 1 && (
         <button style={s.arrowRight} onClick={e => goPage(e, 1)}>&#8250;</button>
       )}
       {pages.length > 1 && (
@@ -211,8 +228,8 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
           {pages.map((_, i) => (
             <span key={i} style={{
               ...s.cardDot,
-              background: i === pageIdx ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)",
-              width: i === pageIdx ? 14 : 5,
+              background: i === pg ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)",
+              width: i === pg ? 14 : 5,
             }} />
           ))}
         </div>
@@ -222,7 +239,7 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
 }
 
 // ── Place Card ─────────────────────────────────────────────────────────────
-function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, distanceKm, onPhotoZoom }) {
+function PlaceCard({ place, index, city, onSave, isSaved, distanceKm, onPhotoZoom }) {
   const [descOpen, setDescOpen] = useState(false);
   const status = getOpenStatus(place.openFrom, place.openTo);
 
@@ -231,7 +248,7 @@ function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, dist
   return (
     <div style={s.placeCard}>
       {/* ── Info block ── */}
-      <div style={s.placeInfo} onClick={onToggle}>
+      <div style={s.placeInfo}>
 
         <div style={s.placeTop}>
           <span style={s.placeIdx}>{String(index + 1).padStart(2, "0")}</span>
@@ -287,26 +304,21 @@ function PlaceCard({ place, index, city, isOpen, onToggle, onSave, isSaved, dist
       <CardPhotos
         photos={place.photos}
         name={place.name}
-        onZoom={idx => onPhotoZoom({ photos: place.photos, idx })}
+        onZoom={(validPhotos, idx) => onPhotoZoom({ photos: validPhotos, idx })}
         onToggle={onToggle}
       />
 
-      {/* ── Accordion: map links ── */}
-      <div style={{ ...s.accordion, maxHeight: isOpen ? 120 : 0 }}>
-        <div style={s.accordionInner}>
-          <div style={s.mapLinks}>
-            <a href={place.mapsUrl || gMapsUrl(place.name, city?.name)} target="_blank" rel="noreferrer" style={s.mapBtn}>
-              Google Maps ↗
-            </a>
-            <a href={yMapsUrl(place.name, city?.name)} target="_blank" rel="noreferrer" style={s.mapBtn}>
-              Яндекс Карты ↗
-            </a>
-          </div>
-          <button style={s.collapseBtn} onClick={onToggle}>свернуть ↑</button>
-        </div>
+      {/* ── Map links — always visible, small grid ── */}
+      <div style={s.mapLinksRow}>
+        <a href={place.mapsUrl || gMapsUrl(place.name, city?.name)}
+           target="_blank" rel="noreferrer" style={s.mapLinkSmall}>
+          Google Maps ↗
+        </a>
+        <a href={yMapsUrl(place.name, city?.name)}
+           target="_blank" rel="noreferrer" style={s.mapLinkSmall}>
+          Яндекс Карты ↗
+        </a>
       </div>
-
-      <div style={{ height: 14 }} />
     </div>
   );
 }
@@ -317,7 +329,6 @@ export default function App() {
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedCat, setSelectedCat]   = useState(null);
   const [places, setPlaces]             = useState(INITIAL_PLACES);
-  const [expandedId, setExpandedId]     = useState(null);
   const [toast, setToast]               = useState(null);
 
   // Lightbox: { photos: [], idx: number }
@@ -343,7 +354,7 @@ export default function App() {
     showToast(p?.saved ? "Удалено из сохранённых" : "Сохранено");
   };
 
-  const toggleExpand = (id) => setExpandedId(prev => prev === id ? null : id);
+
 
   const TRAVEL_CAT = "__travel__";
   const categoriesFor = (cityId) => {
@@ -361,15 +372,15 @@ export default function App() {
   const resetFilters = () => { setSearchQuery(""); setOpenNowOnly(false); setRooOnly(false); };
 
   const goCity = (city) => {
-    setSelectedCity(city); setExpandedId(null); setDistrictFilter(null);
+    setSelectedCity(city); setDistrictFilter(null);
     resetFilters(); setScreen("city");
   };
   const goCat = (cat) => {
-    setSelectedCat(cat); setExpandedId(null); setDistrictFilter(null);
+    setSelectedCat(cat); setDistrictFilter(null);
     resetFilters(); setScreen("places");
   };
   const goBack = () => {
-    setExpandedId(null); resetFilters();
+    resetFilters();
     if (screen === "places") return setScreen("city");
     if (screen === "city")   return setScreen("home");
     setScreen("home");
@@ -429,7 +440,7 @@ export default function App() {
       )}
 
       <header style={s.header}>
-        <span style={s.logo} onClick={() => { setScreen("home"); setExpandedId(null); }}>LOCALLENS</span>
+        <span style={s.logo} onClick={() => { setScreen("home"); }}>LOCALLENS</span>
         {["city","places"].includes(screen) && (
           <button style={s.backBtn} onClick={goBack}>← назад</button>
         )}
@@ -547,8 +558,6 @@ export default function App() {
                   const live = places.find(p => p.id === place.id);
                   return (
                     <PlaceCard key={place.id} place={live} index={i} city={selectedCity}
-                      isOpen={expandedId === place.id}
-                      onToggle={() => toggleExpand(place.id)}
                       onSave={() => toggleSave(place.id)}
                       isSaved={live.saved}
                       distanceKm={place.distanceKm}
@@ -577,8 +586,6 @@ export default function App() {
                     ? haversine(userLoc.lat, userLoc.lng, live.lat, live.lng) : null;
                   return (
                     <PlaceCard key={place.id} place={live} index={i} city={cityFor(place.cityId)}
-                      isOpen={expandedId === place.id}
-                      onToggle={() => toggleExpand(place.id)}
                       onSave={() => toggleSave(place.id)}
                       isSaved={live.saved}
                       distanceKm={distanceKm}
@@ -596,7 +603,7 @@ export default function App() {
         {[["home","Города"],["saved","Сохранено"]].map(([sc, label]) => {
           const active = sc === "home" ? ["home","city","places"].includes(screen) : screen === sc;
           return (
-            <button key={sc} onClick={() => { setScreen(sc); setExpandedId(null); }}
+            <button key={sc} onClick={() => { setScreen(sc); }}
               style={{ ...s.navBtn, ...(active ? s.navActive : {}) }}>
               {label}
             </button>
@@ -751,13 +758,9 @@ const s = {
     cursor: "default",
   },
 
-  // Accordion
-  accordion: { overflow: "hidden", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)" },
-  accordionInner: { paddingTop: 16, paddingBottom: 4 },
-  expandedDesc: { fontSize: 14, color: "#5A5048", lineHeight: 1.75, margin: "0 0 18px" },
-  mapLinks: { display: "flex", gap: 10, marginBottom: 12 },
-  mapBtn: { flex: 1, padding: "12px 0", background: "none", border: "1px solid #DED9D3", borderRadius: 3, textAlign: "center", fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", color: "#2C2520", textDecoration: "none", display: "block" },
-  collapseBtn: { background: "none", border: "none", color: "#8A7F78", fontSize: 11, letterSpacing: "0.1em", cursor: "pointer", fontFamily: "inherit", padding: "4px 0" },
+  // Map links — always visible below photo strip
+  mapLinksRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "8px 0 14px" },
+  mapLinkSmall: { textAlign: "center", fontSize: 11, color: "#8A7F78", letterSpacing: "0.04em", textDecoration: "none", border: "1px solid #DED9D3", borderRadius: 2, padding: "6px 0", display: "block", fontWeight: 500 },
 
   bottomNav: { position: "fixed", bottom: 0, left: 0, right: 0, background: "#F0EDE8", borderTop: "1px solid #DED9D3", display: "flex", zIndex: 100 },
   navBtn: { flex: 1, padding: "16px 0", background: "none", border: "none", color: "#8A7F78", cursor: "pointer", fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "inherit" },
