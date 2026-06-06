@@ -114,17 +114,15 @@ function Chips({ options, active, onSelect }) {
   );
 }
 
-// ── Lightbox — vertical filmstrip (swipe up/down, peek neighbors) ──────────
+// ── Lightbox — vertical column, equal 20px gaps, no dimming ───────────────
 function Lightbox({ photos, initialIdx, onClose }) {
   const stripRef = useRef(null);
   const valid = (photos || []).filter(u => u);
 
   useEffect(() => {
     if (!stripRef.current) return;
-    const slides = stripRef.current.querySelectorAll("[data-slide]");
-    if (slides[initialIdx]) {
-      slides[initialIdx].scrollIntoView({ behavior: "instant", block: "center" });
-    }
+    const el = stripRef.current.querySelector(`[data-idx="${initialIdx}"]`);
+    if (el) el.scrollIntoView({ behavior: "instant", block: "center" });
   }, [initialIdx]);
 
   return (
@@ -132,24 +130,28 @@ function Lightbox({ photos, initialIdx, onClose }) {
       <button style={s.lightboxClose} onClick={e => { e.stopPropagation(); onClose(); }}>✕</button>
       <div ref={stripRef} style={s.filmStrip}>
         {valid.map((url, i) => (
-          <div key={i} data-slide="" style={s.filmSlide}>
-            <img
-              src={url}
-              alt={`фото ${i + 1}`}
-              style={s.filmImg}
-              onClick={e => e.stopPropagation()}
-            />
-          </div>
+          <img
+            key={i}
+            data-idx={i}
+            src={url}
+            alt={`фото ${i + 1}`}
+            style={s.filmImg}
+            onClick={e => e.stopPropagation()}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-// ── Card photo carousel (arrows, objectFit contain, all photos) ────────────
+// ── Card photo carousel — 3 photos per page, swipe pages ──────────────────
 function CardPhotos({ photos, name, onZoom, onToggle }) {
-  const [idx, setIdx] = useState(0);
+  const [pageIdx, setPageIdx] = useState(0);
+  const trackRef = useRef(null);
   const valid = (photos || []).filter(u => u);
+
+  const pages = [];
+  for (let i = 0; i < valid.length; i += 3) pages.push(valid.slice(i, i + 3));
 
   if (valid.length === 0) {
     return (
@@ -163,33 +165,57 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
     );
   }
 
-  const go = (e, dir) => {
+  const goPage = (e, dir) => {
     e.stopPropagation();
-    setIdx(i => Math.max(0, Math.min(valid.length - 1, i + dir)));
+    const next = Math.max(0, Math.min(pages.length - 1, pageIdx + dir));
+    setPageIdx(next);
+    if (trackRef.current) {
+      trackRef.current.scrollLeft = next * trackRef.current.offsetWidth;
+    }
   };
 
   return (
-    <div style={s.carouselWrap}>
-      <img
-        src={valid[idx]}
-        alt={`${name} ${idx + 1}`}
-        style={s.carouselImg}
-        onClick={() => onZoom && onZoom(idx)}
-        onError={e => { e.currentTarget.style.opacity = "0"; }}
-      />
-      {idx > 0 && (
-        <button style={s.arrowLeft} onClick={e => go(e, -1)}>&#8249;</button>
+    <div style={s.carouselOuter}>
+      <div ref={trackRef} style={s.carouselTrack}>
+        {pages.map((page, pi) => (
+          <div key={pi} style={s.carouselPage}>
+            {[0, 1, 2].map(j => {
+              const url = page[j];
+              const globalIdx = pi * 3 + j;
+              return (
+                <div
+                  key={j}
+                  style={{ ...s.photoCell, background: PHOTO_BG[j] }}
+                  onClick={() => url ? (onZoom && onZoom(globalIdx)) : (onToggle && onToggle())}
+                >
+                  <span style={s.photoInitial}>{name[0]}</span>
+                  {url && (
+                    <img
+                      src={url}
+                      alt={`${name} ${globalIdx + 1}`}
+                      style={{ ...s.photoCellImg, background: PHOTO_BG[j] }}
+                      onError={e => { e.currentTarget.style.opacity = "0"; }}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      {pageIdx > 0 && (
+        <button style={s.arrowLeft} onClick={e => goPage(e, -1)}>&#8249;</button>
       )}
-      {idx < valid.length - 1 && (
-        <button style={s.arrowRight} onClick={e => go(e, 1)}>&#8250;</button>
+      {pageIdx < pages.length - 1 && (
+        <button style={s.arrowRight} onClick={e => goPage(e, 1)}>&#8250;</button>
       )}
-      {valid.length > 1 && (
+      {pages.length > 1 && (
         <div style={s.cardDots}>
-          {valid.map((_, i) => (
+          {pages.map((_, i) => (
             <span key={i} style={{
               ...s.cardDot,
-              background: i === idx ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)",
-              width: i === idx ? 14 : 5,
+              background: i === pageIdx ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.4)",
+              width: i === pageIdx ? 14 : 5,
             }} />
           ))}
         </div>
@@ -642,45 +668,49 @@ const s = {
   scheduleText: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.03em" },
 
   // Photo strip — placeholder (no photos)
-  photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 120, cursor: "pointer" },
-  photoCell: { flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" },
-  photoInitial: { fontSize: 28, fontWeight: 800, color: "#B8B2A8" },
+  photoStrip: { display: "flex", gap: 2, marginLeft: -24, width: "calc(100% + 48px)", height: 110, cursor: "pointer" },
+  photoCell: { flex: 1, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", cursor: "zoom-in" },
+  photoInitial: { fontSize: 24, fontWeight: 800, color: "#B8B2A8" },
+  photoCellImg: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" },
 
-  // Card photo carousel
-  carouselWrap: {
+  // Card photo carousel — 3 photos per page
+  carouselOuter: {
     position: "relative",
     marginLeft: -24,
     width: "calc(100% + 48px)",
-    height: 200,
-    background: "#E0DBD3",
-    overflow: "hidden",
+    height: 110,
   },
-  carouselImg: {
-    width: "100%",
+  carouselTrack: {
+    display: "flex",
+    overflowX: "hidden",
     height: "100%",
-    objectFit: "contain",
-    display: "block",
-    cursor: "zoom-in",
+  },
+  carouselPage: {
+    minWidth: "100%",
+    flexShrink: 0,
+    display: "flex",
+    height: "100%",
+    gap: 2,
   },
   arrowLeft: {
-    position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)",
-    background: "rgba(255,255,255,0.82)", border: "none", borderRadius: "50%",
-    width: 36, height: 36, fontSize: 26, lineHeight: 1, cursor: "pointer",
+    position: "absolute", left: 6, top: "50%", transform: "translateY(-50%)",
+    background: "rgba(255,255,255,0.85)", border: "none", borderRadius: "50%",
+    width: 32, height: 32, fontSize: 24, lineHeight: 1, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
-    color: "#2C2520", zIndex: 2, fontFamily: "inherit", boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+    color: "#2C2520", zIndex: 2, fontFamily: "inherit", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
   },
   arrowRight: {
-    position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-    background: "rgba(255,255,255,0.82)", border: "none", borderRadius: "50%",
-    width: 36, height: 36, fontSize: 26, lineHeight: 1, cursor: "pointer",
+    position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)",
+    background: "rgba(255,255,255,0.85)", border: "none", borderRadius: "50%",
+    width: 32, height: 32, fontSize: 24, lineHeight: 1, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
-    color: "#2C2520", zIndex: 2, fontFamily: "inherit", boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+    color: "#2C2520", zIndex: 2, fontFamily: "inherit", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
   },
   cardDots: {
-    position: "absolute", bottom: 8, left: 0, right: 0,
-    display: "flex", justifyContent: "center", gap: 5, pointerEvents: "none",
+    position: "absolute", bottom: 5, left: 0, right: 0,
+    display: "flex", justifyContent: "center", gap: 4, pointerEvents: "none",
   },
-  cardDot: { height: 5, borderRadius: 3, transition: "width 0.2s, background 0.2s" },
+  cardDot: { height: 4, borderRadius: 2, transition: "width 0.2s, background 0.2s" },
 
   // Description section
   descSection: { padding: "0 0 10px", borderBottom: "none" },
@@ -691,43 +721,36 @@ const s = {
   },
   descToggle: { background: "none", border: "none", color: "#8A7F78", fontSize: 11, letterSpacing: "0.08em", cursor: "pointer", fontFamily: "inherit", padding: "2px 0" },
 
-  // Lightbox — vertical filmstrip
+  // Lightbox — vertical column, 20px equal gaps, no dimming
   lightbox: {
     position: "fixed", inset: 0, zIndex: 999,
-    background: "rgba(30,24,20,0.78)",
+    background: "rgba(30,24,20,0.82)",
     cursor: "zoom-out",
   },
   lightboxClose: {
-    position: "fixed", top: 18, right: 18, zIndex: 1001,
-    background: "rgba(255,255,255,0.18)", border: "none", color: "white",
-    width: 38, height: 38, borderRadius: "50%", fontSize: 18, cursor: "pointer",
+    position: "fixed", top: 16, right: 16, zIndex: 1001,
+    background: "rgba(255,255,255,0.2)", border: "none", color: "white",
+    width: 36, height: 36, borderRadius: "50%", fontSize: 17, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
     fontFamily: "inherit", lineHeight: 1,
   },
   filmStrip: {
     position: "fixed", inset: 0, zIndex: 1000,
-    overflowY: "scroll",
-    scrollSnapType: "y mandatory",
+    overflowY: "auto",
     scrollbarWidth: "none",
     WebkitOverflowScrolling: "touch",
-    display: "flex", flexDirection: "column", alignItems: "center",
-    paddingTop: "7.5vh", paddingBottom: "7.5vh",
+    display: "flex",
+    flexDirection: "column",
+    gap: 20,
+    padding: "20px 0",
+    boxSizing: "border-box",
     cursor: "default",
   },
-  filmSlide: {
-    width: "100%",
-    minHeight: "85vh",
-    flexShrink: 0,
-    scrollSnapAlign: "center",
-    display: "flex", alignItems: "center", justifyContent: "center",
-    padding: "8px 12px",
-    boxSizing: "border-box",
-  },
   filmImg: {
-    maxWidth: "100%",
-    maxHeight: "83vh",
-    objectFit: "contain",
-    borderRadius: 2,
+    width: "100%",
+    height: "auto",
+    display: "block",
+    flexShrink: 0,
     cursor: "default",
   },
 
