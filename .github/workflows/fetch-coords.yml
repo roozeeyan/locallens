@@ -1,0 +1,58 @@
+name: Fetch Place Coordinates
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'City: yerevan / bangkok / samui / phangan / hoian / bali / danang / singapore'
+        required: false
+        default: 'yerevan'
+      batch_size:
+        description: 'Max places per run (9999 = all)'
+        required: false
+        default: '9999'
+      overwrite:
+        description: 'Re-geocode existing entries (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  fetch-coords:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch coordinates and commit via GitHub API
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          OVERWRITE_FLAG=""
+          if [ "${{ inputs.overwrite }}" = "true" ]; then
+            OVERWRITE_FLAG="--overwrite"
+          fi
+          python scripts/fetch_coords.py \
+            --city "${{ inputs.city }}" \
+            --batch "${{ inputs.batch_size }}" \
+            $OVERWRITE_FLAG
+
+      - name: Upload coords.json as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coords-json
+          path: src/coords.json
+          retention-days: 90

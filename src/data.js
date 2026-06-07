@@ -1,5 +1,7 @@
 import PHOTOS from "./photos.json";
 import DESCRIPTIONS from "./descriptions.json";
+import COORDS from "./coords.json";
+import HOURS from "./hours.json";
 
 export const CITIES = [
   { id: "yerevan", name: "Ереван", country: "Армения", emoji: "🇦🇲" },
@@ -954,4 +956,12 @@ Chay Đà Nẵng`, lat: 16.0544, lng: 108.2022, mapsUrl: "https://www.google.com
   { id: 1023, cityId: "singapore", category: "Бары", name: `Club21 at COMO Orchard`, lat: 1.3521, lng: 103.8198, mapsUrl: "https://www.google.com/maps/place/Club21+at+COMO+Orchard/data=!4m2!3m1!1s0x31da197b5b5c8765:0x46ee7392ff314acb" },
   { id: 1024, cityId: "singapore", category: "Достопримечательности", name: `Парагон Шопинг Сентр`, lat: 1.3521, lng: 103.8198, mapsUrl: "https://www.google.com/maps/place/%D0%9F%D0%B0%D1%80%D0%B0%D0%B3%D0%BE%D0%BD+%D0%A8%D0%BE%D0%BF%D0%B8%D0%BD%D0%B3+%D0%A1%D0%B5%D0%BD%D1%82%D1%80/data=!4m2!3m1!1s0x31da1992320efb97:0xcd0a05fe09ae092a" },
   { id: 1025, cityId: "singapore", category: "Бары", name: `Tanjong Beach Club`, lat: 1.3521, lng: 103.8198, mapsUrl: "https://www.google.com/maps/place/Tanjong+Beach+Club/data=!4m2!3m1!1s0x31da1ea8ad36ab73:0xa9ff01927bfff5ce" },
-].map(p => ({ ...p, saved: false, photos: PHOTOS[p.id] || [], description: p.description || DESCRIPTIONS[String(p.id)] || "" }));
+].map(p => ({
+  ...p,
+  saved: false,
+  photos: PHOTOS[p.id] || [],
+  description: p.description || DESCRIPTIONS[String(p.id)] || "",
+  lat: COORDS[String(p.id)]?.lat ?? p.lat,
+  lng: COORDS[String(p.id)]?.lng ?? p.lng,
+  hours: HOURS[String(p.id)] || null,
+}));

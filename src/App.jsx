@@ -90,14 +90,37 @@ function formatDist(km) {
   return Math.round(km) + " км";
 }
 
-function getOpenStatus(openFrom, openTo) {
-  if (!openFrom && !openTo) return null;
+function parseMin(s) {
+  const m = s && s.trim().match(/(\d+):(\d+)/);
+  if (!m) return null;
+  return parseInt(m[1]) * 60 + parseInt(m[2]);
+}
+
+function getOpenStatus(place) {
+  const hours = place.hours;
+  if (hours && typeof hours === "object") {
+    const DAY = ["Su","Mo","Tu","We","Th","Fr","Sa"][new Date().getDay()];
+    const entry = hours[DAY];
+    if (!entry) return null;
+    if (entry === "closed") return { open: false, label: "Закрыто сегодня" };
+    const openMin = parseMin(entry.o);
+    const closeMin = parseMin(entry.c);
+    if (openMin === null || closeMin === null) return null;
+    const cur = new Date().getHours() * 60 + new Date().getMinutes();
+    const isOpen = closeMin > openMin
+      ? cur >= openMin && cur < closeMin
+      : cur >= openMin || cur < closeMin;
+    if (isOpen) return { open: true,  label: `Открыто · до ${entry.c}` };
+    return             { open: false, label: `Закрыто · с ${entry.o}` };
+  }
+  // Legacy openFrom/openTo integers
+  if (!place.openFrom && !place.openTo) return null;
   const h = new Date().getHours();
-  const open = openTo > openFrom
-    ? h >= openFrom && h < openTo
-    : h >= openFrom || h < openTo;
-  if (open) return { open: true, label: `Открыто · до ${String(openTo).padStart(2, "0")}:00` };
-  return { open: false, label: `Закрыто · с ${String(openFrom).padStart(2, "0")}:00` };
+  const open = place.openTo > place.openFrom
+    ? h >= place.openFrom && h < place.openTo
+    : h >= place.openFrom || h < place.openTo;
+  if (open) return { open: true,  label: `Открыто · до ${String(place.openTo).padStart(2,"0")}:00` };
+  return           { open: false, label: `Закрыто · с ${String(place.openFrom).padStart(2,"0")}:00` };
 }
 
 // ── Filter chips ───────────────────────────────────────────────────────────
@@ -241,7 +264,7 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
 // ── Place Card ─────────────────────────────────────────────────────────────
 function PlaceCard({ place, index, city, onSave, isSaved, distanceKm, onPhotoZoom }) {
   const [descOpen, setDescOpen] = useState(false);
-  const status = getOpenStatus(place.openFrom, place.openTo);
+  const status = getOpenStatus(place);
 
   const distText = distanceKm !== null ? formatDist(distanceKm) : null;
 
@@ -344,10 +367,20 @@ export default function App() {
   const [userLoc, setUserLoc]               = useState(null);
   const [locLoading, setLocLoading]         = useState(false);
   const [locError, setLocError]             = useState(false);
+  const [locAsked, setLocAsked]             = useState(false);
   const [radiusKm, setRadiusKm]             = useState(null);
   const [districtFilter, setDistrictFilter] = useState(null);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2000); };
+
+  // Auto-request geolocation once when the user opens any places list
+  useEffect(() => {
+    if (screen === "places" && !locAsked && !userLoc && !locLoading) {
+      setLocAsked(true);
+      requestLocation();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
 
   const toggleSave = (id) => {
     const p = places.find(p => p.id === id);
@@ -535,14 +568,16 @@ export default function App() {
                 </button>
               </div>
 
-              <button style={s.locBtn} onClick={requestLocation} disabled={locLoading}>
-                <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {Icons.locate}
-                  {locLoading ? "Определяем..." : userLoc ? "Геолокация активна" : "Найти ближайшие"}
-                </span>
-                {userLoc && <span style={s.locDot} />}
-              </button>
-              {locError && <p style={s.locErrorMsg}>Не удалось получить геолокацию</p>}
+              {/* Location status row */}
+              {locLoading && (
+                <p style={s.locStatusMsg}>{Icons.locate}&nbsp; Определяем расстояния...</p>
+              )}
+              {locError && (
+                <p style={s.locErrorMsg}>
+                  Геолокация недоступна —{" "}
+                  <button style={s.locRetryBtn} onClick={requestLocation}>повторить</button>
+                </p>
+              )}
               {userLoc && <Chips options={RADIUS_OPTIONS} active={radiusKm} onSelect={setRadiusKm} />}
               {districts.length > 1 && <Chips options={districtOptions} active={districtFilter} onSelect={setDistrictFilter} />}
             </div>
@@ -649,9 +684,9 @@ const s = {
   searchWrap: { position: "relative", display: "flex", alignItems: "center" },
   searchInput: { width: "100%", padding: "10px 36px 10px 14px", border: "1px solid #DED9D3", borderRadius: 3, background: "#F0EDE8", color: "#2C2520", fontSize: 14, fontFamily: "'DM Sans', -apple-system, sans-serif", outline: "none", boxSizing: "border-box", letterSpacing: "0.01em" },
   searchClear: { position: "absolute", right: 10, background: "none", border: "none", color: "#8A7F78", cursor: "pointer", fontSize: 13, padding: 4, lineHeight: 1 },
-  locBtn: { display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", background: "none", border: "1px solid #DED9D3", borderRadius: 3, padding: "10px 14px", color: "#2C2520", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, letterSpacing: "0.02em" },
-  locDot: { width: 7, height: 7, borderRadius: "50%", background: "#7BAE7F", flexShrink: 0 },
-  locErrorMsg: { fontSize: 11, color: "#B07070", marginBottom: 8, letterSpacing: "0.02em" },
+  locStatusMsg: { fontSize: 11, color: "#8A7F78", margin: 0, display: "flex", alignItems: "center", gap: 4, letterSpacing: "0.02em" },
+  locErrorMsg: { fontSize: 11, color: "#B07070", margin: 0, letterSpacing: "0.02em" },
+  locRetryBtn: { background: "none", border: "none", color: "#B07070", cursor: "pointer", fontSize: 11, padding: 0, fontFamily: "inherit", textDecoration: "underline" },
   chipsRow: { display: "flex", gap: 6, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none", WebkitOverflowScrolling: "touch" },
   chip: { flexShrink: 0, padding: "6px 12px", border: "1px solid #DED9D3", borderRadius: 20, background: "none", color: "#8A7F78", cursor: "pointer", fontSize: 12, fontWeight: 500, letterSpacing: "0.03em", fontFamily: "inherit", whiteSpace: "nowrap" },
   chipActive: { flexShrink: 0, padding: "6px 12px", border: "1px solid #2C2520", borderRadius: 20, background: "#2C2520", color: "#F0EDE8", cursor: "pointer", fontSize: 12, fontWeight: 500, letterSpacing: "0.03em", fontFamily: "inherit", whiteSpace: "nowrap" },

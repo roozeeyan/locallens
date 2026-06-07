@@ -1,0 +1,75 @@
+name: Fetch Opening Hours
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'City: yerevan / bangkok / samui / phangan / hoian / bali / danang / singapore'
+        required: false
+        default: 'yerevan'
+      batch_size:
+        description: 'Max places per run (9999 = all)'
+        required: false
+        default: '9999'
+      skip_ids:
+        description: 'Comma-separated place IDs to skip'
+        required: false
+        default: ''
+      overwrite:
+        description: 'Re-fetch even if hours already exist (true/false)'
+        required: false
+        default: 'false'
+      no_coords:
+        description: 'Skip updating coords.json (true/false)'
+        required: false
+        default: 'false'
+
+jobs:
+  fetch-hours:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch hours and commit via GitHub API
+        env:
+          SERPER_KEY: ${{ secrets.SERPER_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          OVERWRITE_FLAG=""
+          if [ "${{ inputs.overwrite }}" = "true" ]; then
+            OVERWRITE_FLAG="--overwrite"
+          fi
+          NO_COORDS_FLAG=""
+          if [ "${{ inputs.no_coords }}" = "true" ]; then
+            NO_COORDS_FLAG="--no-coords"
+          fi
+          python scripts/fetch_hours.py \
+            --city "${{ inputs.city }}" \
+            --batch "${{ inputs.batch_size }}" \
+            --skip "${{ inputs.skip_ids }}" \
+            $OVERWRITE_FLAG \
+            $NO_COORDS_FLAG
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: place-data-json
+          path: |
+            src/hours.json
+            src/coords.json
+          retention-days: 90
