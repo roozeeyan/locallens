@@ -52,6 +52,7 @@ const CATEGORY_ICONS = {
   "Храмы":                 Icons.temple,
   "Архитектура":           Icons.column,
   "Музеи и галереи":       Icons.palette,
+  "Арт галереи":           Icons.palette,
   "Смотровые точки":       Icons.eye,
   "Природа":               Icons.leaf,
   "Пляжи":                 Icons.wave,
