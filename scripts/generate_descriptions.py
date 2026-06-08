@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Generate place descriptions using Claude AI (claude-haiku-4-5-20251001).
-High quality, consistent, no scraping garbage.
-Cost: ~$0.30 for all 925 places.
+Generate place descriptions using Groq AI (llama-3.3-70b-versatile).
+Free tier, no credit card required. Sign up at console.groq.com.
+~925 places well within free daily limits (14,400 req/day).
 
-Requires: ANTHROPIC_API_KEY secret in GitHub Actions.
+Requires: GROQ_API_KEY secret in GitHub Actions.
 """
 
 import argparse
@@ -17,7 +17,7 @@ import time
 
 import requests
 
-ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+GROQ_KEY = os.environ.get("GROQ_API_KEY", "")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY", "roozeeyan/locallens")
 DESC_FILE = "src/descriptions.json"
@@ -55,9 +55,48 @@ CATEGORY_HINTS = {
 }
 
 
-def claude_describe(name: str, category: str, city_id: str) -> str:
-    """Call Claude Haiku to generate a place description. Returns "" on failure."""
+def groq_describe(name: str, category: str, city_id: str) -> str:
+    """Call Groq Llama to generate a place description. Returns '' on failure."""
     city = CITY_RU.get(city_id, city_id)
+    cat_hint = CATEGORY_HINTS.get(category, category)
+
+    prompt = (
+        f'Напиши описание места "{name}" — это {cat_hint} в городе {city}.\n'
+        "1–2 предложения. Описывай атмосферу, концепцию или чем оно примечательно.\n"
+        "Будь конкретным и живым, без шаблонных фраз. Не начинай с названия места.\n"
+        "Ответ: только текст описания, без кавычек и пояснений."
+    )
+
+    for attempt in range(3):
+        try:
+            resp = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "max_tokens": 150,
+                    "temperature": 0.7,
+                    "messages": [{"role": "user", "content": prompt}],
+                },
+                timeout=30,
+            )
+            if resp.status_code == 429:
+                wait = int(resp.headers.get("retry-after", 10))
+                print(f"  Rate limited, waiting {wait}s...")
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            text = resp.json()["choices"][0]["message"]["content"].strip()
+            text = re.sub(r'^[""«]+|[""»]+$', "", text).strip()
+            return text
+        except Exception as e:
+            print(f"  Groq error (attempt {attempt+1}): {e}", file=sys.stderr)
+            time.sleep(3)
+
+    return ""
     cat_hint = CATEGORY_HINTS.get(category, category)
 
     prompt = (
@@ -152,8 +191,8 @@ def main():
                         help="Regenerate even if description already exists")
     args = parser.parse_args()
 
-    if not ANTHROPIC_KEY:
-        print("ERROR: ANTHROPIC_API_KEY not set", file=sys.stderr)
+    if not GROQ_KEY:
+        print("ERROR: GROQ_API_KEY not set", file=sys.stderr)
         sys.exit(1)
 
     skip_ids = {s.strip() for s in args.skip.split(",") if s.strip()}
@@ -191,7 +230,7 @@ def main():
             break
 
         print(f"[{pid}] {name}  ({city_id}/{category})")
-        desc = claude_describe(name, category, city_id)
+        desc = groq_describe(name, category, city_id)
         desc_db[pid] = desc
         processed += 1
 
