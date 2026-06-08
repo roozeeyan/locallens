@@ -397,7 +397,7 @@ function PlaceCard({ place, index, city, onSave, isSaved, distanceKm, onPhotoZoo
 }
 
 // ── Access gate (replaces index.html prompt — works in Telegram WebApp) ────
-const ACCESS_CODE = "919526";
+const ACCESS_CODE = process.env.REACT_APP_ACCESS_CODE || "919526";
 function AccessGate({ onUnlock }) {
   const [val, setVal] = useState("");
   const [err, setErr] = useState(false);
