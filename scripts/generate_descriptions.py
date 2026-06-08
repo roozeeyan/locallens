@@ -55,17 +55,29 @@ CATEGORY_HINTS = {
 }
 
 
-def groq_describe(name: str, category: str, city_id: str) -> str:
+def groq_describe(name: str, category: str, city_id: str, travel_around: bool = False) -> str:
     """Call Groq Llama to generate a place description. Returns '' on failure."""
     city = CITY_RU.get(city_id, city_id)
     cat_hint = CATEGORY_HINTS.get(category, category)
 
-    prompt = (
-        f'Напиши описание места "{name}" — это {cat_hint} в городе {city}.\n'
-        "1–2 предложения. Описывай атмосферу, концепцию или чем оно примечательно.\n"
-        "Будь конкретным и живым, без шаблонных фраз. Не начинай с названия места.\n"
-        "Ответ: только текст описания, без кавычек и пояснений."
-    )
+    if travel_around:
+        # Place is OUTSIDE the city — don't claim it's "в центре города"
+        country = city.split(",")[-1].strip()
+        location_ctx = f"за пределами города, в {country}"
+        prompt = (
+            f'Напиши описание места "{name}" — это {cat_hint}, находится {location_ctx}.\n'
+            "1–2 предложения. Опиши природу, атмосферу, маршрут или что там можно делать.\n"
+            "НЕ пиши что место находится в городе или в центре города.\n"
+            "Будь конкретным и живым, без шаблонных фраз. Не начинай с названия места.\n"
+            "Ответ: только текст описания, без кавычек и пояснений."
+        )
+    else:
+        prompt = (
+            f'Напиши описание места "{name}" — это {cat_hint} в городе {city}.\n'
+            "1–2 предложения. Описывай атмосферу, концепцию или чем оно примечательно.\n"
+            "Будь конкретным и живым, без шаблонных фраз. Не начинай с названия места.\n"
+            "Ответ: только текст описания, без кавычек и пояснений."
+        )
 
     for attempt in range(3):
         try:
@@ -136,19 +148,21 @@ def groq_describe(name: str, category: str, city_id: str) -> str:
 
 
 def extract_places(js_content: str) -> list:
-    """Extract (id, cityId, category, name, has_hardcoded_desc) from data.js."""
+    """Extract (id, cityId, category, name, has_hardcoded_desc, travel_around) from data.js."""
     pattern = re.compile(
         r'\{\s*id:\s*(\d+),\s*cityId:\s*"([^"]+)",\s*category:\s*"([^"]+)"'
         r'.*?name:\s*["`]([^"`\n]+)["`]'
         r'(.*?)(?=\{|$)',
         re.DOTALL,
     )
-    desc_pat = re.compile(r'description:\s*["`]([^"`]{10,})["`]')
+    desc_pat      = re.compile(r'description:\s*["`]([^"`]{10,})["`]')
+    travel_pat    = re.compile(r'travelAround:\s*true')
     results = []
     for m in pattern.finditer(js_content):
-        block = m.group(5)
-        has_desc = bool(desc_pat.search(block))
-        results.append((m.group(1), m.group(2), m.group(3), m.group(4), has_desc))
+        block        = m.group(5)
+        has_desc     = bool(desc_pat.search(block))
+        travel_around = bool(travel_pat.search(block))
+        results.append((m.group(1), m.group(2), m.group(3), m.group(4), has_desc, travel_around))
     return results
 
 
@@ -213,7 +227,7 @@ def main():
 
     processed = skipped = 0
 
-    for pid, city_id, category, name, has_hardcoded in places:
+    for pid, city_id, category, name, has_hardcoded, travel_around in places:
         if pid in skip_ids:
             continue
         # Skip if hardcoded description in data.js
@@ -229,8 +243,9 @@ def main():
             print(f"Batch limit {args.batch} reached.")
             break
 
-        print(f"[{pid}] {name}  ({city_id}/{category})")
-        desc = groq_describe(name, category, city_id)
+        tag = " [За городом]" if travel_around else ""
+        print(f"[{pid}] {name}  ({city_id}/{category}){tag}")
+        desc = groq_describe(name, category, city_id, travel_around=travel_around)
         desc_db[pid] = desc
         processed += 1
 
