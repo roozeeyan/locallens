@@ -1,0 +1,31 @@
+name: Fetch Culture Images
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+
+      - name: Fetch Wikipedia images for culture facts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python scripts/fetch_culture_images.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: culture-json
+          path: src/culture.json
+          retention-days: 30

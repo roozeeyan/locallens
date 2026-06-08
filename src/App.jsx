@@ -432,6 +432,23 @@ function CultureModal({ cityId, onClose }) {
         <div style={s.cultureCard}>
           <h2 style={s.cultureInvention}>{fact.invention}</h2>
           <p style={s.culturePerson}>{fact.person}</p>
+
+          {/* Photos — two side by side like in reference */}
+          {(fact.personImg || fact.inventionImg) && (
+            <div style={s.culturePhotos}>
+              {fact.personImg && (
+                <img src={fact.personImg} alt={fact.person}
+                  style={s.culturePhoto}
+                  onError={e => { e.target.style.display = "none"; }} />
+              )}
+              {fact.inventionImg && (
+                <img src={fact.inventionImg} alt={fact.invention}
+                  style={s.culturePhoto}
+                  onError={e => { e.target.style.display = "none"; }} />
+              )}
+            </div>
+          )}
+
           <p style={s.cultureYearLoc}>{fact.year} · {fact.location}</p>
           <p style={s.cultureText}>{fact.text}</p>
         </div>
@@ -1016,7 +1033,9 @@ const s = {
   cultureCard: { flex: 1, display: "flex", flexDirection: "column" },
   cultureInvention: { fontSize: 34, fontWeight: 800, color: "#F5F0EA", lineHeight: 1.1, letterSpacing: "-0.02em", marginBottom: 8 },
   culturePerson: { fontSize: 18, fontStyle: "italic", color: "#C4A882", marginBottom: 12, fontWeight: 400 },
-  cultureYearLoc: { fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", color: "#6A5F55", textTransform: "uppercase", marginBottom: 24, paddingBottom: 24, borderBottom: "1px solid #2A2420" },
+  culturePhotos: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 16 },
+  culturePhoto: { width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 4, filter: "grayscale(30%)" },
+  cultureYearLoc: { fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", color: "#6A5F55", textTransform: "uppercase", marginBottom: 20, paddingBottom: 20, borderBottom: "1px solid #2A2420" },
   cultureText: { fontSize: 15, lineHeight: 1.75, color: "#C8BEB4", flex: 1 },
 
   // Culture navigation
