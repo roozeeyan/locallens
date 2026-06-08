@@ -137,10 +137,18 @@ function Chips({ options, active, onSelect }) {
   );
 }
 
-// ── Lightbox — vertical column, equal 20px gaps, no dimming ───────────────
+// ── Lightbox — vertical column, equal 20px gaps ───────────────────────────
 function Lightbox({ photos, initialIdx, onClose }) {
   const stripRef = useRef(null);
+  const touchData = useRef(null);
   const valid = (photos || []).filter(u => u);
+
+  // Lock body scroll while open (prevents iOS background scroll)
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   useEffect(() => {
     if (!stripRef.current) return;
@@ -148,10 +156,32 @@ function Lightbox({ photos, initialIdx, onClose }) {
     if (el) el.scrollIntoView({ behavior: "instant", block: "center" });
   }, [initialIdx]);
 
+  const onTouchStart = (e) => {
+    touchData.current = {
+      y: e.touches[0].clientY,
+      scrollTop: stripRef.current?.scrollTop ?? 0,
+    };
+  };
+
+  const onTouchEnd = (e) => {
+    if (!touchData.current) return;
+    const deltaY = e.changedTouches[0].clientY - touchData.current.y;
+    const scrollMoved = Math.abs((stripRef.current?.scrollTop ?? 0) - touchData.current.scrollTop);
+    touchData.current = null;
+    // Sharp long swipe (>130px) that didn't scroll the strip → close
+    if (Math.abs(deltaY) > 130 && scrollMoved < 40) onClose();
+  };
+
   return (
-    <div style={s.lightbox} onClick={onClose}>
-      <button style={s.lightboxClose} onClick={e => { e.stopPropagation(); onClose(); }}>✕</button>
-      <div ref={stripRef} style={s.filmStrip}>
+    <div style={s.lightbox}>
+      <button style={s.lightboxClose} onClick={onClose}>✕</button>
+      <div
+        ref={stripRef}
+        style={s.filmStrip}
+        onClick={e => e.stopPropagation()}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         {valid.map((url, i) => (
           <img
             key={i}
@@ -159,7 +189,6 @@ function Lightbox({ photos, initialIdx, onClose }) {
             src={url}
             alt={`фото ${i + 1}`}
             style={s.filmImg}
-            onClick={e => e.stopPropagation()}
           />
         ))}
       </div>
@@ -172,6 +201,7 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
   const [brokenUrls, setBrokenUrls] = useState(new Set());
   const [pageIdx, setPageIdx] = useState(0);
   const trackRef = useRef(null);
+  const swipeStartX = useRef(null);
 
   const allUrls = (photos || []).filter(u => u);
   // Remove any URL that failed to load — pages reorganize automatically
@@ -206,7 +236,7 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
   }
 
   const goPage = (e, dir) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     const next = Math.max(0, Math.min(pages.length - 1, pg + dir));
     setPageIdx(next);
     if (trackRef.current) {
@@ -214,8 +244,23 @@ function CardPhotos({ photos, name, onZoom, onToggle }) {
     }
   };
 
+  const onCarouselTouchStart = (e) => {
+    swipeStartX.current = e.touches[0].clientX;
+  };
+
+  const onCarouselTouchEnd = (e) => {
+    if (swipeStartX.current === null) return;
+    const dx = e.changedTouches[0].clientX - swipeStartX.current;
+    swipeStartX.current = null;
+    if (Math.abs(dx) > 40) goPage(null, dx < 0 ? 1 : -1);
+  };
+
   return (
-    <div style={s.carouselOuter}>
+    <div
+      style={{ ...s.carouselOuter, touchAction: "pan-y" }}
+      onTouchStart={onCarouselTouchStart}
+      onTouchEnd={onCarouselTouchEnd}
+    >
       <div ref={trackRef} style={s.carouselTrack}>
         {pages.map((page, pi) => (
           <div key={pi} style={s.carouselPage}>
@@ -311,15 +356,18 @@ function PlaceCard({ place, index, city, onSave, isSaved, distanceKm, onPhotoZoo
         </div>
       </div>
 
-      {/* ── Description (expandable, outside accordion) ── */}
+      {/* ── Description (expandable — click anywhere in block) ── */}
       {place.description ? (
-        <div style={s.descSection} onClick={e => e.stopPropagation()}>
+        <div
+          style={{ ...s.descSection, cursor: "pointer" }}
+          onClick={e => { e.stopPropagation(); setDescOpen(v => !v); }}
+        >
           <p style={descOpen
             ? { fontSize: 13, color: "#5A5048", lineHeight: 1.7, margin: "0 0 4px" }
             : { ...s.descText, WebkitLineClamp: 3 }}>
             {place.description}
           </p>
-          <button style={s.descToggle} onClick={() => setDescOpen(v => !v)}>
+          <button style={s.descToggle}>
             {descOpen ? "свернуть ↑" : "читать далее ↓"}
           </button>
         </div>
@@ -531,8 +579,9 @@ export default function App() {
         {/* ── PLACES ── */}
         {screen === "places" && selectedCity && selectedCat && (
           <>
-            <div style={s.pageHero}>
-              <p style={s.label}>{selectedCity.name} · {selectedCat === TRAVEL_CAT ? "За городом" : selectedCat}</p>
+            {/* Sticky category label — always visible while scrolling */}
+            <div style={s.stickyListHeader}>
+              {selectedCity.name} · {selectedCat === TRAVEL_CAT ? "За городом" : selectedCat}
             </div>
 
             {/* Filters */}
@@ -678,6 +727,23 @@ const s = {
   catName: { fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em", flex: 1, textAlign: "left" },
   catMeta: { fontSize: 12, color: "#8A7F78", letterSpacing: "0.05em", flexShrink: 0 },
 
+  stickyListHeader: {
+    position: "sticky",
+    top: 50,
+    zIndex: 90,
+    background: "#F0EDE8",
+    borderBottom: "1px solid #DED9D3",
+    padding: "10px 0",
+    marginLeft: -24,
+    marginRight: -24,
+    paddingLeft: 24,
+    paddingRight: 24,
+    fontSize: 10,
+    letterSpacing: "0.22em",
+    textTransform: "uppercase",
+    color: "#8A7F78",
+  },
+
   // Filters
   filtersBlock: { padding: "14px 0 4px", borderBottom: "1px solid #DED9D3", display: "flex", flexDirection: "column", gap: 10 },
   searchWrap: { position: "relative", display: "flex", alignItems: "center" },
@@ -760,28 +826,31 @@ const s = {
   },
   descToggle: { background: "none", border: "none", color: "#8A7F78", fontSize: 11, letterSpacing: "0.08em", cursor: "pointer", fontFamily: "inherit", padding: "2px 0" },
 
-  // Lightbox — vertical column, 20px equal gaps, no dimming
+  // Lightbox — vertical column, 20px equal gaps
   lightbox: {
     position: "fixed", inset: 0, zIndex: 999,
-    background: "rgba(30,24,20,0.82)",
-    cursor: "zoom-out",
+    background: "rgba(30,24,20,0.88)",
   },
   lightboxClose: {
     position: "fixed", top: 16, right: 16, zIndex: 1001,
-    background: "rgba(255,255,255,0.2)", border: "none", color: "white",
-    width: 36, height: 36, borderRadius: "50%", fontSize: 17, cursor: "pointer",
+    background: "rgba(20,14,10,0.75)",
+    border: "1.5px solid rgba(255,255,255,0.3)",
+    color: "white",
+    width: 38, height: 38, borderRadius: "50%", fontSize: 17, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
     fontFamily: "inherit", lineHeight: 1,
+    boxShadow: "0 2px 10px rgba(0,0,0,0.5)",
   },
   filmStrip: {
     position: "fixed", inset: 0, zIndex: 1000,
     overflowY: "auto",
+    overscrollBehavior: "contain",
     scrollbarWidth: "none",
     WebkitOverflowScrolling: "touch",
     display: "flex",
     flexDirection: "column",
     gap: 20,
-    padding: "20px 0",
+    padding: "60px 0 20px",
     boxSizing: "border-box",
     cursor: "default",
   },
