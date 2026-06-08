@@ -25,6 +25,11 @@ on:
         required: false
         default: false
         type: boolean
+      fix_template:
+        description: 'Regenerate descriptions starting with cliche phrases (В сердце / В центре)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   generate:
@@ -59,11 +64,15 @@ jobs:
           if [ "${{ inputs.fix_language }}" = "true" ]; then
             FIX_LANG_FLAG="--fix-language"
           fi
+          FIX_TMPL_FLAG=""
+          if [ "${{ inputs.fix_template }}" = "true" ]; then
+            FIX_TMPL_FLAG="--fix-template"
+          fi
           python scripts/generate_descriptions.py \
             --city "${{ inputs.city }}" \
             --batch "${{ inputs.batch_size }}" \
             --skip "${{ inputs.skip_ids }}" \
-            $OVERWRITE_FLAG $FIX_LANG_FLAG
+            $OVERWRITE_FLAG $FIX_LANG_FLAG $FIX_TMPL_FLAG
 
       - name: Upload descriptions.json as artifact
         if: always()

@@ -218,6 +218,8 @@ def main():
                         help="Regenerate even if description already exists")
     parser.add_argument("--fix-language", action="store_true",
                         help="Regenerate only descriptions that are in English instead of Russian")
+    parser.add_argument("--fix-template", action="store_true",
+                        help="Regenerate descriptions that start with cliche phrases like 'В сердце', 'В центре'")
     args = parser.parse_args()
 
     if not GROQ_KEY:
@@ -254,6 +256,15 @@ def main():
         if args.fix_language:
             # Only process entries that are in English
             if not is_english(existing):
+                skipped += 1
+                continue
+        elif args.fix_template:
+            # Only process entries that start with cliche location openers
+            low = existing.lower()
+            is_template = any(low.startswith(p) for p in (
+                "в сердце", "в центре", "в самом сердце", "расположен ", "находится в ",
+            ))
+            if not is_template:
                 skipped += 1
                 continue
         elif not args.overwrite and existing and len(existing) > 40:
