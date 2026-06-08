@@ -379,8 +379,7 @@ export default function App() {
       setLocAsked(true);
       requestLocation();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen]);
+  }, [screen]); // intentional: only re-run when screen changes
 
   const toggleSave = (id) => {
     const p = places.find(p => p.id === id);
