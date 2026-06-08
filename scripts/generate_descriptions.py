@@ -263,11 +263,16 @@ def main():
         else:
             print(f"    → (empty)")
 
-        # Checkpoint every 50 places
-        if processed % 50 == 0:
+        # Checkpoint every 20 places — save locally AND commit to GitHub
+        if processed % 20 == 0:
             with open(DESC_FILE, "w", encoding="utf-8") as f:
                 json.dump(desc_db, f, ensure_ascii=False, indent=2)
-            print(f"  Checkpoint: {processed} done")
+            if GITHUB_TOKEN:
+                filled_now = sum(1 for v in desc_db.values() if v)
+                print(f"  Checkpoint commit: {processed} done")
+                github_commit(desc_db, args.city, filled_now)
+            else:
+                print(f"  Checkpoint: {processed} done")
 
         time.sleep(0.2)  # be gentle with API
 
