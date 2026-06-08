@@ -31,6 +31,11 @@ on:
         default: false
         type: boolean
 
+  # Auto-run when new places are added to data.js
+  push:
+    branches: [main]
+    paths: ['src/data.js']
+
 jobs:
   generate:
     runs-on: ubuntu-latest

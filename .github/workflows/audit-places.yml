@@ -2,10 +2,13 @@ name: Audit Place Data Quality
 
 on:
   workflow_dispatch:
-  # Also run automatically after descriptions are regenerated
+  # Auto-run after descriptions are regenerated
   workflow_run:
     workflows: ["Generate AI Descriptions"]
     types: [completed]
+  # Daily check at 10:00 Armenia time (06:00 UTC)
+  schedule:
+    - cron: '0 6 * * *'
 
 jobs:
   audit:

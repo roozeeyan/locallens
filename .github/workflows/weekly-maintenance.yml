@@ -1,0 +1,81 @@
+name: Weekly Quality Maintenance
+
+on:
+  workflow_dispatch:
+  # Every Monday at 08:00 Armenia time (04:00 UTC)
+  schedule:
+    - cron: '0 4 * * 1'
+
+jobs:
+  fix-language:
+    name: Fix English descriptions → Russian
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - name: Convert English descriptions to Russian
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python scripts/generate_descriptions.py \
+            --city "" \
+            --batch 9999 \
+            --fix-language
+
+  fix-templates:
+    name: Fix cliche template descriptions
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: fix-language
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - name: Rewrite cliche descriptions
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python scripts/generate_descriptions.py \
+            --city "" \
+            --batch 9999 \
+            --fix-template
+
+  audit:
+    name: Audit data quality after maintenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: fix-templates
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - name: Run quality audit
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python scripts/audit_places.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: weekly-audit-report
+          path: audit_report.json
+          retention-days: 90

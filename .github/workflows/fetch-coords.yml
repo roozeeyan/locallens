@@ -16,6 +16,11 @@ on:
         required: false
         default: 'false'
 
+  # Auto-run when new places are added to data.js
+  push:
+    branches: [main]
+    paths: ['src/data.js']
+
 jobs:
   fetch-coords:
     runs-on: ubuntu-latest
