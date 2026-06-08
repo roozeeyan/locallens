@@ -397,18 +397,26 @@ function PlaceCard({ place, index, city, onSave, isSaved, distanceKm, onPhotoZoo
   );
 }
 
-// ── Culture Modal ────────────────────────────────────────────────────────────
+// ── Culture Modal — Stories layout ───────────────────────────────────────────
 function CultureModal({ cityId, onClose }) {
   const data = CULTURE_DATA[cityId];
   const [idx, setIdx] = useState(0);
   const touchX = useRef(null);
+  const thumbRef = useRef(null);
 
   if (!data || !data.facts || data.facts.length === 0) return null;
   const facts = data.facts;
   const fact = facts[idx];
 
-  const prev = () => setIdx(i => Math.max(0, i - 1));
-  const next = () => setIdx(i => Math.min(facts.length - 1, i + 1));
+  const goTo = (i) => {
+    setIdx(i);
+    if (thumbRef.current) {
+      const btn = thumbRef.current.children[i];
+      if (btn) btn.scrollIntoView({ inline: "center", behavior: "smooth" });
+    }
+  };
+  const prev = () => goTo(Math.max(0, idx - 1));
+  const next = () => goTo(Math.min(facts.length - 1, idx + 1));
 
   const onTouchStart = e => { touchX.current = e.touches[0].clientX; };
   const onTouchEnd = e => {
@@ -419,54 +427,69 @@ function CultureModal({ cityId, onClose }) {
     touchX.current = null;
   };
 
+  const onTap = e => {
+    const x = e.clientX;
+    const half = window.innerWidth / 2;
+    if (x < half) prev(); else next();
+  };
+
   return (
-    <div style={s.cultureOverlay} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-      <div style={s.cultureModal}>
-        {/* Header */}
-        <div style={s.cultureHeader}>
-          <span style={s.cultureTag}>{data.headline}</span>
-          <button style={s.cultureClose} onClick={onClose}>✕</button>
-        </div>
+    <div style={s.cultureOverlay}>
+      {/* Story card — tappable left/right to navigate */}
+      <div style={s.storyCard} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} onClick={onTap}>
 
-        {/* Card */}
-        <div style={s.cultureCard}>
-          <h2 style={s.cultureInvention}>{fact.invention}</h2>
-          <p style={s.culturePerson}>{fact.person}</p>
-
-          {/* Photos — two side by side like in reference */}
-          {(fact.personImg || fact.inventionImg) && (
-            <div style={s.culturePhotos}>
-              {fact.personImg && (
-                <img src={fact.personImg} alt={fact.person}
-                  style={s.culturePhoto}
-                  onError={e => { e.target.style.display = "none"; }} />
-              )}
-              {fact.inventionImg && (
-                <img src={fact.inventionImg} alt={fact.invention}
-                  style={s.culturePhoto}
-                  onError={e => { e.target.style.display = "none"; }} />
-              )}
-            </div>
-          )}
-
-          <p style={s.cultureYearLoc}>{fact.year} · {fact.location}</p>
-          <p style={s.cultureText}>{fact.text}</p>
-        </div>
-
-        {/* Dots */}
-        <div style={s.cultureDots}>
+        {/* Progress bars */}
+        <div style={s.storyBars}>
           {facts.map((_, i) => (
-            <button key={i} onClick={() => setIdx(i)}
-              style={{ ...s.cultureDot, opacity: i === idx ? 1 : 0.3 }} />
+            <div key={i} style={s.storyBarBg}>
+              <div style={{ ...s.storyBarFill, width: i <= idx ? "100%" : "0%" }} />
+            </div>
           ))}
         </div>
 
-        {/* Nav arrows */}
-        <div style={s.cultureNav}>
-          <button style={{ ...s.cultureNavBtn, opacity: idx === 0 ? 0.2 : 1 }} onClick={prev}>←</button>
-          <span style={s.cultureNavCount}>{idx + 1} / {facts.length}</span>
-          <button style={{ ...s.cultureNavBtn, opacity: idx === facts.length - 1 ? 0.2 : 1 }} onClick={next}>→</button>
+        {/* Top row: label + close */}
+        <div style={s.storyTopRow}>
+          <span style={s.storyLabel}>{data.headline}</span>
+          <button style={s.storyClose} onClick={e => { e.stopPropagation(); onClose(); }}>✕</button>
         </div>
+
+        {/* Photos */}
+        {(fact.personImg || fact.inventionImg) ? (
+          <div style={s.storyPhotoGrid}>
+            {fact.personImg && (
+              <img src={fact.personImg} alt={fact.person} style={s.storyPhotoImg}
+                onError={e => { e.target.style.display = "none"; }} />
+            )}
+            {fact.inventionImg && (
+              <img src={fact.inventionImg} alt={fact.invention} style={s.storyPhotoImg}
+                onError={e => { e.target.style.display = "none"; }} />
+            )}
+          </div>
+        ) : (
+          <div style={s.storyPhotoPlaceholder} />
+        )}
+
+        {/* Text content */}
+        <div style={s.storyContent}>
+          <p style={s.storyYearLoc}>{fact.year} · {fact.location}</p>
+          <h2 style={s.storyInvention}>{fact.invention}</h2>
+          <p style={s.storyPerson}>{fact.person}</p>
+          <p style={s.storyText}>{fact.text}</p>
+        </div>
+      </div>
+
+      {/* Bottom thumbnail carousel */}
+      <div style={s.storyThumbs} ref={thumbRef}>
+        {facts.map((f, i) => (
+          <button key={i} onClick={e => { e.stopPropagation(); goTo(i); }}
+            style={{ ...s.storyThumb, outline: i === idx ? "2px solid #F5F0EA" : "2px solid transparent" }}>
+            {f.personImg
+              ? <img src={f.personImg} alt={f.invention} style={s.storyThumbImg}
+                  onError={e => { e.target.style.display = "none"; }} />
+              : <span style={s.storyThumbLetter}>{f.invention[0]}</span>
+            }
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -1044,4 +1067,148 @@ const s = {
   cultureNav: { display: "flex", justifyContent: "space-between", alignItems: "center" },
   cultureNavBtn: { background: "none", border: "1px solid #3A3028", color: "#F5F0EA", fontSize: 18, cursor: "pointer", padding: "10px 20px", borderRadius: 3, fontFamily: "inherit" },
   cultureNavCount: { fontSize: 12, color: "#6A5F55", letterSpacing: "0.1em" },
+
+  // Stories layout
+  storyCard: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    cursor: "pointer",
+    userSelect: "none",
+    overflowY: "auto",
+    scrollbarWidth: "none",
+    WebkitOverflowScrolling: "touch",
+  },
+  storyBars: {
+    display: "flex",
+    gap: 4,
+    padding: "16px 16px 8px",
+    background: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%)",
+    flexShrink: 0,
+  },
+  storyBarBg: {
+    flex: 1,
+    height: 2,
+    background: "rgba(255,255,255,0.3)",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  storyBarFill: {
+    height: "100%",
+    background: "rgba(255,255,255,0.9)",
+    borderRadius: 2,
+  },
+  storyTopRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 16px 16px",
+    flexShrink: 0,
+  },
+  storyLabel: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#F5F0EA",
+    letterSpacing: "-0.01em",
+  },
+  storyClose: {
+    background: "none",
+    border: "none",
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 20,
+    cursor: "pointer",
+    padding: "4px 6px",
+    lineHeight: 1,
+    fontFamily: "inherit",
+  },
+  storyPhotoGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 8,
+    padding: "0 16px",
+    marginBottom: 20,
+    flexShrink: 0,
+  },
+  storyPhotoImg: {
+    width: "100%",
+    aspectRatio: "1",
+    objectFit: "cover",
+    borderRadius: 10,
+    filter: "grayscale(15%)",
+    display: "block",
+  },
+  storyPhotoPlaceholder: {
+    height: 160,
+    marginBottom: 20,
+    flexShrink: 0,
+  },
+  storyContent: {
+    padding: "0 20px 24px",
+    flex: 1,
+  },
+  storyYearLoc: {
+    fontSize: 11,
+    fontWeight: 600,
+    letterSpacing: "0.12em",
+    color: "#7A6F65",
+    textTransform: "uppercase",
+    margin: "0 0 10px",
+  },
+  storyInvention: {
+    fontSize: 30,
+    fontWeight: 800,
+    color: "#F5F0EA",
+    lineHeight: 1.1,
+    letterSpacing: "-0.02em",
+    margin: "0 0 8px",
+  },
+  storyPerson: {
+    fontSize: 15,
+    fontStyle: "italic",
+    color: "#C4A882",
+    margin: "0 0 16px",
+    fontWeight: 400,
+  },
+  storyText: {
+    fontSize: 14,
+    lineHeight: 1.75,
+    color: "#C8BEB4",
+    margin: 0,
+  },
+  storyThumbs: {
+    display: "flex",
+    gap: 10,
+    padding: "14px 16px 28px",
+    overflowX: "auto",
+    scrollbarWidth: "none",
+    WebkitOverflowScrolling: "touch",
+    background: "rgba(0,0,0,0.5)",
+    flexShrink: 0,
+  },
+  storyThumb: {
+    width: 52,
+    height: 52,
+    borderRadius: 10,
+    overflow: "hidden",
+    flexShrink: 0,
+    background: "#2A2420",
+    border: "none",
+    cursor: "pointer",
+    padding: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    outlineOffset: 2,
+  },
+  storyThumbImg: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block",
+  },
+  storyThumbLetter: {
+    fontSize: 18,
+    fontWeight: 800,
+    color: "#6A5F55",
+  },
 };
