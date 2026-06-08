@@ -109,43 +109,7 @@ def groq_describe(name: str, category: str, city_id: str, travel_around: bool = 
             print(f"  Groq error (attempt {attempt+1}): {e}", file=sys.stderr)
             time.sleep(3)
 
-    return ""
-    cat_hint = CATEGORY_HINTS.get(category, category)
-
-    prompt = (
-        f'Напиши описание места "{name}" — это {cat_hint} в городе {city}.\n'
-        "1–2 предложения. Описывай атмосферу, концепцию или чем оно примечательно.\n"
-        "Будь конкретным и живым, без шаблонных фраз. Не начинай с названия места.\n"
-        "Ответ: только текст описания, без кавычек и пояснений."
-    )
-
-    try:
-        resp = requests.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={
-                "x-api-key": ANTHROPIC_KEY,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={
-                "model": "claude-haiku-4-5-20251001",
-                "max_tokens": 150,
-                "messages": [{"role": "user", "content": prompt}],
-            },
-            timeout=30,
-        )
-        if resp.status_code == 529:
-            print("  API overloaded, waiting 10s...")
-            time.sleep(10)
-            return claude_describe(name, category, city_id)
-        resp.raise_for_status()
-        text = resp.json()["content"][0]["text"].strip()
-        # Strip surrounding quotes if any
-        text = re.sub(r'^["“«]+|["”»]+$', "", text).strip()
-        return text
-    except Exception as e:
-        print(f"  Claude API error: {e}", file=sys.stderr)
-        return ""
+    return “”
 
 
 def extract_places(js_content: str) -> list:

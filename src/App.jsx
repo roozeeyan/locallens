@@ -396,8 +396,43 @@ function PlaceCard({ place, index, city, onSave, isSaved, distanceKm, onPhotoZoo
   );
 }
 
+// ── Access gate (replaces index.html prompt — works in Telegram WebApp) ────
+const ACCESS_CODE = "919526";
+function AccessGate({ onUnlock }) {
+  const [val, setVal] = useState("");
+  const [err, setErr] = useState(false);
+  const submit = () => {
+    if (val === ACCESS_CODE) {
+      localStorage.setItem("ll_access", ACCESS_CODE);
+      onUnlock();
+    } else {
+      setErr(true);
+      setVal("");
+    }
+  };
+  return (
+    <div style={s.gateWrap}>
+      <p style={s.gateLogo}>LOCALLENS</p>
+      <p style={s.gateHint}>Введи код доступа</p>
+      <input
+        type="password"
+        inputMode="numeric"
+        autoFocus
+        value={val}
+        onChange={e => { setVal(e.target.value); setErr(false); }}
+        onKeyDown={e => e.key === "Enter" && submit()}
+        placeholder="······"
+        style={{ ...s.gateInput, borderColor: err ? "#C06060" : "#DED9D3" }}
+      />
+      {err && <p style={s.gateErr}>Неверный код</p>}
+      <button style={s.gateBtn} onClick={submit}>Войти →</button>
+    </div>
+  );
+}
+
 // ── App ────────────────────────────────────────────────────────────────────
 export default function App() {
+  const [unlocked, setUnlocked] = useState(() => localStorage.getItem("ll_access") === ACCESS_CODE);
   const [screen, setScreen]             = useState("home");
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedCat, setSelectedCat]   = useState(null);
@@ -490,7 +525,7 @@ export default function App() {
         : null,
     }))
     .filter(p => !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .filter(p => !openNowOnly || getOpenStatus(p.openFrom, p.openTo)?.open === true)
+    .filter(p => !openNowOnly || getOpenStatus(p)?.open === true)
     .filter(p => !rooOnly || p.rooChoice === true)
     .filter(p => !districtFilter || p.district === districtFilter)
     .filter(p => !radiusKm || !userLoc || (p.distanceKm !== null && p.distanceKm <= radiusKm))
@@ -507,6 +542,8 @@ export default function App() {
     { value: null, label: "Все районы" },
     ...districts.map(d => ({ value: d, label: d })),
   ];
+
+  if (!unlocked) return <AccessGate onUnlock={() => setUnlocked(true)} />;
 
   return (
     <div style={s.root}>
@@ -872,4 +909,12 @@ const s = {
   navActive: { color: "#2C2520" },
   toast: { position: "fixed", bottom: 88, left: "50%", transform: "translateX(-50%)", background: "#2C2520", color: "#F0EDE8", padding: "10px 22px", borderRadius: 3, fontSize: 12, fontWeight: 500, letterSpacing: "0.08em", zIndex: 200, whiteSpace: "nowrap" },
   empty: { textAlign: "center", color: "#8A7F78", padding: "64px 0", fontSize: 14, lineHeight: 1.7 },
+
+  // Access gate
+  gateWrap: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#F0EDE8", padding: 32, gap: 16 },
+  gateLogo: { fontSize: 13, fontWeight: 700, letterSpacing: "0.18em", color: "#2C2520", marginBottom: 24 },
+  gateHint: { fontSize: 14, color: "#8A7F78", letterSpacing: "0.04em", marginBottom: 8 },
+  gateInput: { width: "100%", maxWidth: 260, textAlign: "center", padding: "14px 16px", border: "1px solid #DED9D3", borderRadius: 3, background: "#F0EDE8", color: "#2C2520", fontSize: 22, letterSpacing: "0.3em", fontFamily: "'DM Sans', sans-serif", outline: "none" },
+  gateErr: { fontSize: 12, color: "#C06060", letterSpacing: "0.04em" },
+  gateBtn: { marginTop: 8, padding: "12px 32px", background: "#2C2520", color: "#F0EDE8", border: "none", borderRadius: 3, fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", cursor: "pointer", fontFamily: "inherit" },
 };
