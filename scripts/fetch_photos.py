@@ -35,6 +35,52 @@ CITY_EN = {
 FOOD_CATS = {"Кафе и рестораны", "Кофе и чай", "Бары", "Фудмаркеты"}
 BUDGET = 2300  # leave 200-credit buffer from 2500 free credits
 
+# Domains that never contain venue photos — music, social media, ecommerce, etc.
+BAD_DOMAINS = {
+    "sndcdn.com", "soundcloud.com", "spotify.com",
+    "tiktok.com", "tiktokcdn.com", "musical.ly",
+    "amazon.com", "amazon.co", "ebay.com", "aliexpress.com",
+    "facebook.com", "fbcdn.net",
+    "instagram.com", "lookaside.instagram.com", "cdninstagram.com",
+    "wikipedia.org", "wikimedia.org",
+    "imdb.com", "allmovie.com",
+    "youtube.com", "ytimg.com",
+    "twitter.com", "twimg.com",
+    "pinterest.com", "pinimg.com",
+    "shutterstock.com", "gettyimages.com", "istockphoto.com", "alamy.com",
+}
+
+CATEGORY_HINT = {
+    "Кафе и рестораны":      "restaurant cafe interior food",
+    "Кофе и чай":            "coffee shop interior",
+    "Бары":                  "bar interior drinks",
+    "Фудмаркеты":            "food market",
+    "Достопримечательности": "attraction landmark",
+    "Исторические места":    "historic site",
+    "Храмы":                 "temple church",
+    "Архитектура":           "architecture building",
+    "Музеи и галереи":       "museum gallery",
+    "Арт галереи":           "art gallery exhibition",
+    "Смотровые точки":       "viewpoint panorama",
+    "Природа":               "nature park",
+    "Пляжи":                 "beach",
+    "Велнес и spa":          "spa wellness yoga",
+    "Жильё":                 "hotel accommodation",
+    "Шопинг":                "shop store",
+    "Медицина":              "clinic medical",
+    "Коворкинг":             "coworking office",
+}
+
+
+def is_bad_url(url: str) -> bool:
+    """Returns True if URL is from a known non-venue domain."""
+    try:
+        from urllib.parse import urlparse
+        host = urlparse(url).netloc.lower().lstrip("www.")
+        return any(host == d or host.endswith("." + d) for d in BAD_DOMAINS)
+    except Exception:
+        return False
+
 
 class CreditsExhausted(Exception):
     pass
@@ -58,7 +104,9 @@ def serper_images(query: str, n: int = 10) -> list:
         if "error" in data or data.get("statusCode", 200) >= 400:
             raise CreditsExhausted(f"Serper error body: {str(data)[:200]}")
         items = data.get("images", [])
-        return [img["imageUrl"] for img in items if img.get("imageUrl")][:n]
+        urls = [img["imageUrl"] for img in items if img.get("imageUrl")]
+        # Filter out bad domains
+        return [u for u in urls if not is_bad_url(u)][:n]
     except CreditsExhausted:
         raise
     except Exception as e:
@@ -69,15 +117,16 @@ def serper_images(query: str, n: int = 10) -> list:
 def get_photos(name: str, city_id: str, category: str, max_photos: int = 10) -> list:
     """
     Fetch up to max_photos for a place.
+    Always includes category hint to avoid wrong-entity matches.
     Food categories: 2 queries (atmosphere + food/menu) → richer mix.
-    All others: 1 query.
     """
     city = CITY_EN.get(city_id, city_id)
+    hint = CATEGORY_HINT.get(category, "")
 
-    # Primary search (with quotes for precision, fallback without)
-    primary = serper_images(f'"{name}" {city}', 10)
+    # Primary search: name + city + category hint (prevents wrong-entity matches)
+    primary = serper_images(f'"{name}" {city} {hint}'.strip(), 10)
     if not primary:
-        primary = serper_images(f"{name} {city}", 10)
+        primary = serper_images(f"{name} {city} {hint}".strip(), 10)
 
     if category in FOOD_CATS:
         # Small pause between back-to-back queries to avoid rate limits
