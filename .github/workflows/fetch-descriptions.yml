@@ -1,4 +1,4 @@
-name: Fetch Place Photos
+name: Fetch Place Descriptions
 
 on:
   workflow_dispatch:
@@ -11,19 +11,19 @@ on:
         description: 'Max places per run (9999 = all)'
         required: false
         default: '9999'
-      max_photos:
-        description: 'Max photos per place (5-10)'
-        required: false
-        default: '10'
       skip_ids:
         description: 'Comma-separated place IDs to skip'
         required: false
         default: ''
+      overwrite:
+        description: 'Re-fetch even if description exists (true/false)'
+        required: false
+        default: 'false'
 
 jobs:
-  fetch-photos:
+  fetch-descriptions:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
     permissions:
       contents: write
 
@@ -39,22 +39,26 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
-      - name: Fetch photos and commit via GitHub API
+      - name: Fetch descriptions and commit via GitHub API
         env:
           SERPER_KEY: ${{ secrets.SERPER_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          python scripts/fetch_photos.py \
+          OVERWRITE_FLAG=""
+          if [ "${{ inputs.overwrite }}" = "true" ]; then
+            OVERWRITE_FLAG="--overwrite"
+          fi
+          python scripts/fetch_descriptions.py \
             --city "${{ inputs.city }}" \
-            --max_photos "${{ inputs.max_photos }}" \
             --batch "${{ inputs.batch_size }}" \
-            --skip "${{ inputs.skip_ids }}"
+            --skip "${{ inputs.skip_ids }}" \
+            $OVERWRITE_FLAG
 
-      - name: Upload photos.json as backup artifact
+      - name: Upload descriptions.json as backup artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: photos-json
-          path: src/photos.json
+          name: descriptions-json
+          path: src/descriptions.json
           retention-days: 90

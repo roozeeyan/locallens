@@ -1,0 +1,88 @@
+name: Generate AI Descriptions
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'City: yerevan / bangkok / samui / phangan / hoian / bali / danang / singapore (empty = all)'
+        required: false
+        default: 'yerevan'
+      batch_size:
+        description: 'Max places per run (9999 = all)'
+        required: false
+        default: '9999'
+      skip_ids:
+        description: 'Comma-separated place IDs to skip'
+        required: false
+        default: ''
+      overwrite:
+        description: 'Regenerate even if description already exists'
+        required: false
+        default: false
+        type: boolean
+      fix_language:
+        description: 'Regenerate only English descriptions → Russian'
+        required: false
+        default: false
+        type: boolean
+      fix_template:
+        description: 'Regenerate descriptions starting with cliche phrases (В сердце / В центре)'
+        required: false
+        default: false
+        type: boolean
+
+  # Auto-run when new places are added to data.js
+  push:
+    branches: [main]
+    paths: ['src/data.js']
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Generate descriptions via Groq AI
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          OVERWRITE_FLAG=""
+          if [ "${{ inputs.overwrite }}" = "true" ]; then
+            OVERWRITE_FLAG="--overwrite"
+          fi
+          FIX_LANG_FLAG=""
+          if [ "${{ inputs.fix_language }}" = "true" ]; then
+            FIX_LANG_FLAG="--fix-language"
+          fi
+          FIX_TMPL_FLAG=""
+          if [ "${{ inputs.fix_template }}" = "true" ]; then
+            FIX_TMPL_FLAG="--fix-template"
+          fi
+          python scripts/generate_descriptions.py \
+            --city "${{ inputs.city }}" \
+            --batch "${{ inputs.batch_size }}" \
+            --skip "${{ inputs.skip_ids }}" \
+            $OVERWRITE_FLAG $FIX_LANG_FLAG $FIX_TMPL_FLAG
+
+      - name: Upload descriptions.json as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: descriptions-json
+          path: src/descriptions.json
+          retention-days: 90
