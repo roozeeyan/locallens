@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { CITIES, INITIAL_PLACES } from "./data.js";
+import CULTURE_DATA from "./culture.json";
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 const Icon = ({ children }) => (
@@ -396,6 +397,64 @@ function PlaceCard({ place, index, city, onSave, isSaved, distanceKm, onPhotoZoo
   );
 }
 
+// ── Culture Modal ────────────────────────────────────────────────────────────
+function CultureModal({ cityId, onClose }) {
+  const data = CULTURE_DATA[cityId];
+  const [idx, setIdx] = useState(0);
+  const touchX = useRef(null);
+
+  if (!data || !data.facts || data.facts.length === 0) return null;
+  const facts = data.facts;
+  const fact = facts[idx];
+
+  const prev = () => setIdx(i => Math.max(0, i - 1));
+  const next = () => setIdx(i => Math.min(facts.length - 1, i + 1));
+
+  const onTouchStart = e => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = e => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    if (dx < -50) next();
+    else if (dx > 50) prev();
+    touchX.current = null;
+  };
+
+  return (
+    <div style={s.cultureOverlay} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div style={s.cultureModal}>
+        {/* Header */}
+        <div style={s.cultureHeader}>
+          <span style={s.cultureTag}>{data.headline}</span>
+          <button style={s.cultureClose} onClick={onClose}>✕</button>
+        </div>
+
+        {/* Card */}
+        <div style={s.cultureCard}>
+          <h2 style={s.cultureInvention}>{fact.invention}</h2>
+          <p style={s.culturePerson}>{fact.person}</p>
+          <p style={s.cultureYearLoc}>{fact.year} · {fact.location}</p>
+          <p style={s.cultureText}>{fact.text}</p>
+        </div>
+
+        {/* Dots */}
+        <div style={s.cultureDots}>
+          {facts.map((_, i) => (
+            <button key={i} onClick={() => setIdx(i)}
+              style={{ ...s.cultureDot, opacity: i === idx ? 1 : 0.3 }} />
+          ))}
+        </div>
+
+        {/* Nav arrows */}
+        <div style={s.cultureNav}>
+          <button style={{ ...s.cultureNavBtn, opacity: idx === 0 ? 0.2 : 1 }} onClick={prev}>←</button>
+          <span style={s.cultureNavCount}>{idx + 1} / {facts.length}</span>
+          <button style={{ ...s.cultureNavBtn, opacity: idx === facts.length - 1 ? 0.2 : 1 }} onClick={next}>→</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Access gate (replaces index.html prompt — works in Telegram WebApp) ────
 const ACCESS_CODE = process.env.REACT_APP_ACCESS_CODE || "919526";
 function AccessGate({ onUnlock }) {
@@ -438,6 +497,7 @@ export default function App() {
   const [selectedCat, setSelectedCat]   = useState(null);
   const [places, setPlaces]             = useState(INITIAL_PLACES);
   const [toast, setToast]               = useState(null);
+  const [cultureOpen, setCultureOpen]   = useState(false);
 
   // Lightbox: { photos: [], idx: number }
   const [lightbox, setLightbox] = useState(null);
@@ -602,6 +662,19 @@ export default function App() {
               <p style={s.label}>{selectedCity.country}</p>
               <h1 style={s.pageTitle}>{selectedCity.name}</h1>
             </div>
+
+            {/* Culture card — only shown if facts exist for this city */}
+            {CULTURE_DATA[selectedCity.id]?.facts?.length > 0 && (
+              <button style={s.cultureBanner} onClick={() => setCultureOpen(true)}>
+                <div>
+                  <p style={s.cultureBannerLabel}>культурная памятка</p>
+                  <p style={s.cultureBannerTitle}>{CULTURE_DATA[selectedCity.id].headline}</p>
+                  <p style={s.cultureBannerSub}>{CULTURE_DATA[selectedCity.id].facts.length} фактов для смол-тока →</p>
+                </div>
+                <span style={s.cultureBannerEmoji}>💡</span>
+              </button>
+            )}
+
             <div style={s.list}>
               {categoriesFor(selectedCity.id).map(cat => (
                 <button key={cat} style={s.catRow} onClick={() => goCat(cat)}>
@@ -611,6 +684,11 @@ export default function App() {
                 </button>
               ))}
             </div>
+
+            {/* Culture modal */}
+            {cultureOpen && (
+              <CultureModal cityId={selectedCity.id} onClose={() => setCultureOpen(false)} />
+            )}
           </>
         )}
 
@@ -917,4 +995,34 @@ const s = {
   gateInput: { width: "100%", maxWidth: 260, textAlign: "center", padding: "14px 16px", border: "1px solid #DED9D3", borderRadius: 3, background: "#F0EDE8", color: "#2C2520", fontSize: 22, letterSpacing: "0.3em", fontFamily: "'DM Sans', sans-serif", outline: "none" },
   gateErr: { fontSize: 12, color: "#C06060", letterSpacing: "0.04em" },
   gateBtn: { marginTop: 8, padding: "12px 32px", background: "#2C2520", color: "#F0EDE8", border: "none", borderRadius: 3, fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", cursor: "pointer", fontFamily: "inherit" },
+
+  // Culture banner (city screen entry point)
+  cultureBanner: { display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 24px 8px", padding: "16px 20px", background: "#1A1410", borderRadius: 6, border: "none", cursor: "pointer", textAlign: "left", width: "calc(100% - 48px)" },
+  cultureBannerLabel: { fontSize: 9, fontWeight: 700, letterSpacing: "0.18em", color: "#A09080", textTransform: "uppercase", marginBottom: 4 },
+  cultureBannerTitle: { fontSize: 16, fontWeight: 700, color: "#F5F0EA", letterSpacing: "-0.01em", marginBottom: 2 },
+  cultureBannerSub: { fontSize: 12, color: "#7A6F65", letterSpacing: "0.02em" },
+  cultureBannerEmoji: { fontSize: 28, marginLeft: 12, flexShrink: 0 },
+
+  // Culture modal overlay
+  cultureOverlay: { position: "fixed", inset: 0, background: "#0A0806", zIndex: 300, display: "flex", flexDirection: "column", overflowY: "auto" },
+  cultureModal: { display: "flex", flexDirection: "column", minHeight: "100%", padding: "20px 24px 40px" },
+
+  // Culture header
+  cultureHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 },
+  cultureTag: { fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "#6A5F55", textTransform: "uppercase" },
+  cultureClose: { background: "none", border: "none", color: "#6A5F55", fontSize: 18, cursor: "pointer", padding: 4 },
+
+  // Culture card content
+  cultureCard: { flex: 1, display: "flex", flexDirection: "column" },
+  cultureInvention: { fontSize: 34, fontWeight: 800, color: "#F5F0EA", lineHeight: 1.1, letterSpacing: "-0.02em", marginBottom: 8 },
+  culturePerson: { fontSize: 18, fontStyle: "italic", color: "#C4A882", marginBottom: 12, fontWeight: 400 },
+  cultureYearLoc: { fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", color: "#6A5F55", textTransform: "uppercase", marginBottom: 24, paddingBottom: 24, borderBottom: "1px solid #2A2420" },
+  cultureText: { fontSize: 15, lineHeight: 1.75, color: "#C8BEB4", flex: 1 },
+
+  // Culture navigation
+  cultureDots: { display: "flex", justifyContent: "center", gap: 6, marginTop: 32, marginBottom: 16 },
+  cultureDot: { width: 6, height: 6, borderRadius: "50%", background: "#F5F0EA", border: "none", cursor: "pointer", padding: 0 },
+  cultureNav: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  cultureNavBtn: { background: "none", border: "1px solid #3A3028", color: "#F5F0EA", fontSize: 18, cursor: "pointer", padding: "10px 20px", borderRadius: 3, fontFamily: "inherit" },
+  cultureNavCount: { fontSize: 12, color: "#6A5F55", letterSpacing: "0.1em" },
 };
