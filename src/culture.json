@@ -9,8 +9,8 @@
         "year": "1925",
         "location": "Германия",
         "text": "Адамян собрал первый в мире аппарат, который передавал изображение в трёх цветах: красном, зелёном и синем. Изобретение не получило поддержки — в те годы реализация показалась неоправданно сложной. Учёный запатентовал свою технологию, и спустя 30 лет его принципы стали применять по всему миру.",
-        "personImg": "",
-        "inventionImg": ""
+        "personImg": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Adamian1.jpg",
+        "inventionImg": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/RCA_Victor_Color_TV_ad_featuring_milliner_Lilly_Dach%C3%A9%2C_1959.jpg/500px-RCA_Victor_Color_TV_ad_featuring_milliner_Lilly_Dach%C3%A9%2C_1959.jpg"
       },
       {
         "invention": "ПЭТ-сканирование",
@@ -19,7 +19,7 @@
         "location": "США",
         "text": "Физик армянского происхождения разработал метод позитронно-эмиссионной томографии — технологии, которая показывает работу органов изнутри. Сегодня ПЭТ-сканы незаменимы в диагностике опухолей и нейродегенеративных заболеваний.",
         "personImg": "",
-        "inventionImg": ""
+        "inventionImg": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Positron_emission_tomography.png/500px-Positron_emission_tomography.png"
       },
       {
         "invention": "Банкомат",
@@ -37,7 +37,7 @@
         "location": "США",
         "text": "Инженер-самоучка запатентовал механизм управления автомобилем, который позволял автоматически переключать скорости. Эта идея легла в основу всех современных «автоматов», а уже в 1950-м стала массово использоваться в американском автопроме.",
         "personImg": "",
-        "inventionImg": ""
+        "inventionImg": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Automatic_transmission_cut.jpg/500px-Automatic_transmission_cut.jpg"
       },
       {
         "invention": "Кислородная маска А-14",
@@ -46,7 +46,7 @@
         "location": "США",
         "text": "Биохимик из Миннесоты создал первую удобную кислородную маску, которая позволяла пилотам дышать и говорить на высоте. Маска А-14 использовалась лётчиками Второй мировой войны и стала прототипом следующего изобретения — маски BLB, которую применяют не только в авиации, но и в медицине.",
         "personImg": "",
-        "inventionImg": ""
+        "inventionImg": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Simple_face_mask.jpg/500px-Simple_face_mask.jpg"
       },
       {
         "invention": "Ассистивные технологии",
@@ -55,7 +55,7 @@
         "location": "США",
         "text": "Будучи инвалидом-колясочником, Авагян посвятил жизнь изобретениям, облегчающим жизнь — он придумал более 50 приспособлений. Самые известные: устройство для набора текста с помощью дыхания и система управления инвалидной коляской. Его идеи опередили время на десятилетия.",
         "personImg": "",
-        "inventionImg": ""
+        "inventionImg": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Hoergeraet_analog_050609.jpg/500px-Hoergeraet_analog_050609.jpg"
       },
       {
         "invention": "МРТ-сканер",
@@ -63,8 +63,8 @@
         "year": "1977",
         "location": "США",
         "text": "Доктор Дамадян первым доказал, что здоровые и поражённые ткани выглядят по-разному в магнитном поле. На основе этой идеи он собрал первый аппарат для сканирования тела. МРТ перевернула медицину: врачи впервые смогли «заглянуть внутрь» без операции.",
-        "personImg": "",
-        "inventionImg": ""
+        "personImg": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Raymond_Damadian.jpg",
+        "inventionImg": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Structural_MRI_animation.ogv/250px--Structural_MRI_animation.ogv.jpg"
       },
       {
         "invention": "Смеситель Delta",
@@ -72,7 +72,7 @@
         "year": "1954",
         "location": "США",
         "text": "Именно Манукян придумал, как соединить управление температурой и напором воды в одном рычаге, а уже через 5 лет смесители Delta стояли в каждом третьем американском доме. Кстати, американцы называли их «однорукими бандитами».",
-        "personImg": "",
+        "personImg": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Manoogian_mansion_decorated.jpg/500px-Manoogian_mansion_decorated.jpg",
         "inventionImg": ""
       }
     ]
