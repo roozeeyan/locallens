@@ -323,7 +323,7 @@ function PlaceCard({ place, index, city, onSave, isSaved, distanceKm, onPhotoZoo
         <div style={s.placeTop}>
           <span style={s.placeIdx}>{String(index + 1).padStart(2, "0")}</span>
           <span style={s.placeName}>{place.name}</span>
-          <button style={{ ...s.saveBtn, color: isSaved ? "#2C2520" : "#C5BEB7" }}
+          <button style={{ ...s.saveBtn, color: isSaved ? "#3D2B1F" : "#C5BEB7" }}
             onClick={e => { e.stopPropagation(); onSave(); }}>
             {isSaved ? Icons.bookmarkFilled : Icons.bookmarkEmpty}
           </button>
@@ -859,9 +859,9 @@ export default function App() {
 
 // ── Styles ─────────────────────────────────────────────────────────────────
 const s = {
-  root: { fontFamily: "'DM Sans', -apple-system, sans-serif", background: "#F0EDE8", minHeight: "100vh", color: "#2C2520", paddingBottom: 72 },
+  root: { fontFamily: "'DM Sans', -apple-system, sans-serif", background: "#F0EDE8", minHeight: "100vh", color: "#3D2B1F", paddingBottom: 72 },
   header: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "18px 24px", background: "#F0EDE8", borderBottom: "1px solid #DED9D3", position: "sticky", top: 0, zIndex: 100 },
-  logo: { fontSize: 13, fontWeight: 700, letterSpacing: "0.18em", color: "#2C2520", cursor: "pointer" },
+  logo: { fontSize: 13, fontWeight: 700, letterSpacing: "0.18em", color: "#3D2B1F", cursor: "pointer" },
   backBtn: { background: "none", border: "none", color: "#8A7F78", cursor: "pointer", fontSize: 13, letterSpacing: "0.05em", fontFamily: "inherit" },
   main: { maxWidth: 640, margin: "0 auto", padding: "0 24px" },
 
@@ -873,15 +873,15 @@ const s = {
   label: { fontSize: 10, letterSpacing: "0.22em", textTransform: "uppercase", color: "#8A7F78", margin: 0 },
   list: { display: "flex", flexDirection: "column" },
 
-  cityRow: { display: "flex", alignItems: "center", gap: 16, padding: "20px 0", background: "none", border: "none", borderBottom: "1px solid #DED9D3", cursor: "pointer", textAlign: "left", width: "100%", color: "#2C2520", fontFamily: "inherit" },
+  cityRow: { display: "flex", alignItems: "center", gap: 16, padding: "20px 0", background: "none", border: "none", borderBottom: "1px solid #DED9D3", cursor: "pointer", textAlign: "left", width: "100%", color: "#3D2B1F", fontFamily: "inherit" },
   cityEmoji: { fontSize: 26, flexShrink: 0 },
   cityInfo: { display: "flex", flexDirection: "column", gap: 3, flex: 1 },
   cityName: { fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em" },
   cityCountry: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.1em", textTransform: "uppercase" },
   arrow: { color: "#C5BEB7", fontSize: 18, flexShrink: 0 },
-  savedBanner: { marginTop: 32, width: "100%", padding: "16px 20px", background: "#2C2520", color: "#F0EDE8", border: "none", borderRadius: 3, fontSize: 12, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" },
+  savedBanner: { marginTop: 32, width: "100%", padding: "16px 20px", background: "#3D2B1F", color: "#F0EDE8", border: "none", borderRadius: 3, fontSize: 12, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit" },
 
-  catRow: { display: "flex", alignItems: "center", gap: 14, padding: "18px 0", background: "none", border: "none", borderBottom: "1px solid #DED9D3", cursor: "pointer", width: "100%", fontFamily: "inherit", color: "#2C2520" },
+  catRow: { display: "flex", alignItems: "center", gap: 14, padding: "18px 0", background: "none", border: "none", borderBottom: "1px solid #DED9D3", cursor: "pointer", width: "100%", fontFamily: "inherit", color: "#3D2B1F" },
   catIcon: { flexShrink: 0, display: "flex", alignItems: "center" },
   catName: { fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em", flex: 1, textAlign: "left" },
   catMeta: { fontSize: 12, color: "#8A7F78", letterSpacing: "0.05em", flexShrink: 0 },
@@ -906,14 +906,14 @@ const s = {
   // Filters
   filtersBlock: { padding: "14px 0 4px", borderBottom: "1px solid #DED9D3", display: "flex", flexDirection: "column", gap: 10 },
   searchWrap: { position: "relative", display: "flex", alignItems: "center" },
-  searchInput: { width: "100%", padding: "10px 36px 10px 14px", border: "1px solid #DED9D3", borderRadius: 3, background: "#F0EDE8", color: "#2C2520", fontSize: 14, fontFamily: "'DM Sans', -apple-system, sans-serif", outline: "none", boxSizing: "border-box", letterSpacing: "0.01em" },
+  searchInput: { width: "100%", padding: "10px 36px 10px 14px", border: "1px solid #DED9D3", borderRadius: 3, background: "#F0EDE8", color: "#3D2B1F", fontSize: 14, fontFamily: "'DM Sans', -apple-system, sans-serif", outline: "none", boxSizing: "border-box", letterSpacing: "0.01em" },
   searchClear: { position: "absolute", right: 10, background: "none", border: "none", color: "#8A7F78", cursor: "pointer", fontSize: 13, padding: 4, lineHeight: 1 },
   locStatusMsg: { fontSize: 11, color: "#8A7F78", margin: 0, display: "flex", alignItems: "center", gap: 4, letterSpacing: "0.02em" },
   locErrorMsg: { fontSize: 11, color: "#B07070", margin: 0, letterSpacing: "0.02em" },
   locRetryBtn: { background: "none", border: "none", color: "#B07070", cursor: "pointer", fontSize: 11, padding: 0, fontFamily: "inherit", textDecoration: "underline" },
   chipsRow: { display: "flex", gap: 6, overflowX: "auto", paddingBottom: 10, scrollbarWidth: "none", WebkitOverflowScrolling: "touch" },
   chip: { flexShrink: 0, padding: "6px 12px", border: "1px solid #DED9D3", borderRadius: 20, background: "none", color: "#8A7F78", cursor: "pointer", fontSize: 12, fontWeight: 500, letterSpacing: "0.03em", fontFamily: "inherit", whiteSpace: "nowrap" },
-  chipActive: { flexShrink: 0, padding: "6px 12px", border: "1px solid #2C2520", borderRadius: 20, background: "#2C2520", color: "#F0EDE8", cursor: "pointer", fontSize: 12, fontWeight: 500, letterSpacing: "0.03em", fontFamily: "inherit", whiteSpace: "nowrap" },
+  chipActive: { flexShrink: 0, padding: "6px 12px", border: "1px solid #2C2520", borderRadius: 20, background: "#3D2B1F", color: "#F0EDE8", cursor: "pointer", fontSize: 12, fontWeight: 500, letterSpacing: "0.03em", fontFamily: "inherit", whiteSpace: "nowrap" },
 
   // Place card
   placeCard: { borderBottom: "1px solid #DED9D3" },
@@ -923,7 +923,7 @@ const s = {
   placeName: { fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", flex: 1, lineHeight: 1.2 },
   saveBtn: { background: "none", border: "none", cursor: "pointer", fontSize: 15, flexShrink: 0, padding: "2px", fontFamily: "inherit", lineHeight: 1 },
   placeMeta: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6, paddingLeft: 32, flexWrap: "wrap" },
-  badge: { fontSize: 11, fontWeight: 600, color: "#2C2520", letterSpacing: "0.02em" },
+  badge: { fontSize: 11, fontWeight: 600, color: "#3D2B1F", letterSpacing: "0.02em" },
   area: { fontSize: 11, color: "#8A7F78", letterSpacing: "0.03em" },
   distPill: { display: "flex", alignItems: "center", gap: 3, fontSize: 11, color: "#6A8A6E", letterSpacing: "0.03em" },
   tags: { fontSize: 12, color: "#6A6058", letterSpacing: "0.02em", marginBottom: 6, paddingLeft: 32, lineHeight: 1.4 },
@@ -961,14 +961,14 @@ const s = {
     background: "rgba(255,255,255,0.85)", border: "none", borderRadius: "50%",
     width: 32, height: 32, fontSize: 24, lineHeight: 1, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
-    color: "#2C2520", zIndex: 2, fontFamily: "inherit", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+    color: "#3D2B1F", zIndex: 2, fontFamily: "inherit", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
   },
   arrowRight: {
     position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)",
     background: "rgba(255,255,255,0.85)", border: "none", borderRadius: "50%",
     width: 32, height: 32, fontSize: 24, lineHeight: 1, cursor: "pointer",
     display: "flex", alignItems: "center", justifyContent: "center",
-    color: "#2C2520", zIndex: 2, fontFamily: "inherit", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+    color: "#3D2B1F", zIndex: 2, fontFamily: "inherit", boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
   },
   cardDots: {
     position: "absolute", bottom: 5, left: 0, right: 0,
@@ -1027,24 +1027,24 @@ const s = {
 
   bottomNav: { position: "fixed", bottom: 0, left: 0, right: 0, background: "#F0EDE8", borderTop: "1px solid #DED9D3", display: "flex", zIndex: 100 },
   navBtn: { flex: 1, padding: "16px 0", background: "none", border: "none", color: "#8A7F78", cursor: "pointer", fontSize: 11, fontWeight: 600, letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "inherit" },
-  navActive: { color: "#2C2520" },
-  toast: { position: "fixed", bottom: 88, left: "50%", transform: "translateX(-50%)", background: "#2C2520", color: "#F0EDE8", padding: "10px 22px", borderRadius: 3, fontSize: 12, fontWeight: 500, letterSpacing: "0.08em", zIndex: 200, whiteSpace: "nowrap" },
+  navActive: { color: "#3D2B1F" },
+  toast: { position: "fixed", bottom: 88, left: "50%", transform: "translateX(-50%)", background: "#3D2B1F", color: "#F0EDE8", padding: "10px 22px", borderRadius: 3, fontSize: 12, fontWeight: 500, letterSpacing: "0.08em", zIndex: 200, whiteSpace: "nowrap" },
   empty: { textAlign: "center", color: "#8A7F78", padding: "64px 0", fontSize: 14, lineHeight: 1.7 },
 
   // Access gate
   gateWrap: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#F0EDE8", padding: 32, gap: 16 },
-  gateLogo: { fontSize: 13, fontWeight: 700, letterSpacing: "0.18em", color: "#2C2520", marginBottom: 24 },
+  gateLogo: { fontSize: 13, fontWeight: 700, letterSpacing: "0.18em", color: "#3D2B1F", marginBottom: 24 },
   gateHint: { fontSize: 14, color: "#8A7F78", letterSpacing: "0.04em", marginBottom: 8 },
-  gateInput: { width: "100%", maxWidth: 260, textAlign: "center", padding: "14px 16px", border: "1px solid #DED9D3", borderRadius: 3, background: "#F0EDE8", color: "#2C2520", fontSize: 22, letterSpacing: "0.3em", fontFamily: "'DM Sans', sans-serif", outline: "none" },
+  gateInput: { width: "100%", maxWidth: 260, textAlign: "center", padding: "14px 16px", border: "1px solid #DED9D3", borderRadius: 3, background: "#F0EDE8", color: "#3D2B1F", fontSize: 22, letterSpacing: "0.3em", fontFamily: "'DM Sans', sans-serif", outline: "none" },
   gateErr: { fontSize: 12, color: "#C06060", letterSpacing: "0.04em" },
-  gateBtn: { marginTop: 8, padding: "12px 32px", background: "#2C2520", color: "#F0EDE8", border: "none", borderRadius: 3, fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", cursor: "pointer", fontFamily: "inherit" },
+  gateBtn: { marginTop: 8, padding: "12px 32px", background: "#3D2B1F", color: "#F0EDE8", border: "none", borderRadius: 3, fontSize: 13, fontWeight: 600, letterSpacing: "0.12em", cursor: "pointer", fontFamily: "inherit" },
 
   // Culture banner (city screen entry point)
-  cultureBanner: { display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 24px 8px", padding: "16px 20px", background: "#1A1410", borderRadius: 6, border: "none", cursor: "pointer", textAlign: "left", width: "calc(100% - 48px)" },
-  cultureBannerLabel: { fontSize: 9, fontWeight: 700, letterSpacing: "0.18em", color: "#A09080", textTransform: "uppercase", marginBottom: 4 },
-  cultureBannerTitle: { fontSize: 16, fontWeight: 700, color: "#F5F0EA", letterSpacing: "-0.01em", marginBottom: 2 },
-  cultureBannerSub: { fontSize: 12, color: "#7A6F65", letterSpacing: "0.02em" },
-  cultureBannerEmoji: { fontSize: 28, marginLeft: 12, flexShrink: 0 },
+  cultureBanner: { display: "flex", alignItems: "center", justifyContent: "space-between", margin: "16px 0 8px", padding: "18px 20px", background: "linear-gradient(135deg, #2C1800 0%, #3D2410 100%)", borderRadius: 12, border: "none", cursor: "pointer", textAlign: "left", width: "100%", boxSizing: "border-box" },
+  cultureBannerLabel: { fontSize: 9, fontWeight: 700, letterSpacing: "0.2em", color: "#C4956A", textTransform: "uppercase", marginBottom: 5 },
+  cultureBannerTitle: { fontSize: 17, fontWeight: 700, color: "#F5EEE4", letterSpacing: "-0.02em", marginBottom: 3 },
+  cultureBannerSub: { fontSize: 12, color: "#9A7D60", letterSpacing: "0.02em" },
+  cultureBannerEmoji: { fontSize: 26, marginLeft: 16, flexShrink: 0, opacity: 0.9 },
 
   // Culture modal overlay
   cultureOverlay: { position: "fixed", inset: 0, background: "#0A0806", zIndex: 300, display: "flex", flexDirection: "column", overflow: "hidden" },
