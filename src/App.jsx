@@ -453,9 +453,12 @@ function CultureModal({ cityId, onClose }) {
           <button style={s.storyClose} onClick={e => { e.stopPropagation(); onClose(); }}>✕</button>
         </div>
 
-        {/* Photos */}
+        {/* Photos — 2 рядом если оба есть, 1 на всю ширину если один */}
         {(fact.personImg || fact.inventionImg) ? (
-          <div style={s.storyPhotoGrid}>
+          <div style={{
+            ...s.storyPhotoGrid,
+            gridTemplateColumns: (fact.personImg && fact.inventionImg) ? "1fr 1fr" : "1fr",
+          }}>
             {fact.personImg && (
               <img src={fact.personImg} alt={fact.person} style={s.storyPhotoImg}
                 onError={e => { e.target.style.display = "none"; }} />
@@ -1044,7 +1047,7 @@ const s = {
   cultureBannerEmoji: { fontSize: 28, marginLeft: 12, flexShrink: 0 },
 
   // Culture modal overlay
-  cultureOverlay: { position: "fixed", inset: 0, background: "#0A0806", zIndex: 300, display: "flex", flexDirection: "column", overflowY: "auto" },
+  cultureOverlay: { position: "fixed", inset: 0, background: "#0A0806", zIndex: 300, display: "flex", flexDirection: "column", overflow: "hidden" },
   cultureModal: { display: "flex", flexDirection: "column", minHeight: "100%", padding: "20px 24px 40px" },
 
   // Culture header
@@ -1068,22 +1071,20 @@ const s = {
   cultureNavBtn: { background: "none", border: "1px solid #3A3028", color: "#F5F0EA", fontSize: 18, cursor: "pointer", padding: "10px 20px", borderRadius: 3, fontFamily: "inherit" },
   cultureNavCount: { fontSize: 12, color: "#6A5F55", letterSpacing: "0.1em" },
 
-  // Stories layout
+  // Stories layout — всё помещается на один экран без скролла
   storyCard: {
     flex: 1,
+    minHeight: 0,
     display: "flex",
     flexDirection: "column",
     cursor: "pointer",
     userSelect: "none",
-    overflowY: "auto",
-    scrollbarWidth: "none",
-    WebkitOverflowScrolling: "touch",
+    overflow: "hidden",
   },
   storyBars: {
     display: "flex",
     gap: 4,
-    padding: "16px 16px 8px",
-    background: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 100%)",
+    padding: "14px 16px 6px",
     flexShrink: 0,
   },
   storyBarBg: {
@@ -1102,7 +1103,7 @@ const s = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "0 16px 16px",
+    padding: "0 16px 10px",
     flexShrink: 0,
   },
   storyLabel: {
@@ -1121,68 +1122,81 @@ const s = {
     lineHeight: 1,
     fontFamily: "inherit",
   },
+  // фиксированная высота — не растягивается на iPad
   storyPhotoGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: 8,
     padding: "0 16px",
-    marginBottom: 20,
+    marginBottom: 14,
     flexShrink: 0,
+    height: 160,
   },
   storyPhotoImg: {
     width: "100%",
-    aspectRatio: "1",
+    height: "100%",
     objectFit: "cover",
     borderRadius: 10,
     filter: "grayscale(15%)",
     display: "block",
   },
   storyPhotoPlaceholder: {
-    height: 160,
-    marginBottom: 20,
+    height: 0,
     flexShrink: 0,
   },
   storyContent: {
-    padding: "0 20px 24px",
+    padding: "0 20px 12px",
     flex: 1,
+    minHeight: 0,
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
   },
   storyYearLoc: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 600,
     letterSpacing: "0.12em",
     color: "#7A6F65",
     textTransform: "uppercase",
-    margin: "0 0 10px",
+    margin: "0 0 8px",
+    flexShrink: 0,
   },
   storyInvention: {
-    fontSize: 30,
+    fontSize: 26,
     fontWeight: 800,
     color: "#F5F0EA",
     lineHeight: 1.1,
     letterSpacing: "-0.02em",
-    margin: "0 0 8px",
+    margin: "0 0 6px",
+    flexShrink: 0,
   },
   storyPerson: {
-    fontSize: 15,
+    fontSize: 14,
     fontStyle: "italic",
     color: "#C4A882",
-    margin: "0 0 16px",
+    margin: "0 0 10px",
     fontWeight: 400,
+    flexShrink: 0,
   },
   storyText: {
-    fontSize: 14,
-    lineHeight: 1.75,
+    fontSize: 13,
+    lineHeight: 1.65,
     color: "#C8BEB4",
     margin: 0,
+    overflow: "hidden",
+    flex: 1,
+    display: "-webkit-box",
+    WebkitBoxOrient: "vertical",
+    WebkitLineClamp: 6,
   },
   storyThumbs: {
     display: "flex",
-    gap: 10,
-    padding: "14px 16px 28px",
+    gap: 8,
+    padding: "10px 16px 20px",
     overflowX: "auto",
     scrollbarWidth: "none",
     WebkitOverflowScrolling: "touch",
-    background: "rgba(0,0,0,0.5)",
+    background: "rgba(0,0,0,0.4)",
     flexShrink: 0,
   },
   storyThumb: {
