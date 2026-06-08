@@ -16,13 +16,15 @@ on:
         required: false
         default: ''
       overwrite:
-        description: 'Regenerate even if description already exists (true/false)'
+        description: 'Regenerate even if description already exists'
         required: false
-        default: 'false'
+        default: false
+        type: boolean
       fix_language:
-        description: 'Regenerate only English descriptions → Russian (true/false)'
+        description: 'Regenerate only English descriptions → Russian'
         required: false
-        default: 'false'
+        default: false
+        type: boolean
 
 jobs:
   generate:
