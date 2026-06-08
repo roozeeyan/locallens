@@ -115,7 +115,7 @@ def groq_describe(name: str, category: str, city_id: str, travel_around: bool = 
             print(f"  Groq error (attempt {attempt+1}): {e}", file=sys.stderr)
             time.sleep(3)
 
-    return “”
+    return ""
 
 
 def extract_places(js_content: str) -> list:
