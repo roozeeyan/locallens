@@ -196,13 +196,27 @@ def github_commit(desc_db: dict, city: str, filled: int) -> None:
         sys.exit(1)
 
 
+def is_english(text: str) -> bool:
+    """Returns True if text is predominantly Latin (English) rather than Cyrillic (Russian)."""
+    if not text or len(text) < 20:
+        return False
+    alpha = [c for c in text if c.isalpha()]
+    if not alpha:
+        return False
+    latin    = sum(1 for c in alpha if ord(c) < 0x0400)
+    cyrillic = sum(1 for c in alpha if 0x0400 <= ord(c) <= 0x04FF)
+    return latin > cyrillic
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--city",      type=str, default="")
-    parser.add_argument("--batch",     type=int, default=9999)
-    parser.add_argument("--skip",      type=str, default="")
-    parser.add_argument("--overwrite", action="store_true",
+    parser.add_argument("--city",         type=str, default="")
+    parser.add_argument("--batch",        type=int, default=9999)
+    parser.add_argument("--skip",         type=str, default="")
+    parser.add_argument("--overwrite",    action="store_true",
                         help="Regenerate even if description already exists")
+    parser.add_argument("--fix-language", action="store_true",
+                        help="Regenerate only descriptions that are in English instead of Russian")
     args = parser.parse_args()
 
     if not GROQ_KEY:
@@ -236,7 +250,12 @@ def main():
             continue
         # Skip if already has a good description in JSON
         existing = desc_db.get(pid, "")
-        if not args.overwrite and existing and len(existing) > 40:
+        if args.fix_language:
+            # Only process entries that are in English
+            if not is_english(existing):
+                skipped += 1
+                continue
+        elif not args.overwrite and existing and len(existing) > 40:
             skipped += 1
             continue
         if processed >= args.batch:

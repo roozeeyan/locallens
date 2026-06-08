@@ -19,6 +19,10 @@ on:
         description: 'Regenerate even if description already exists (true/false)'
         required: false
         default: 'false'
+      fix_language:
+        description: 'Regenerate only English descriptions → Russian (true/false)'
+        required: false
+        default: 'false'
 
 jobs:
   generate:
@@ -49,11 +53,15 @@ jobs:
           if [ "${{ inputs.overwrite }}" = "true" ]; then
             OVERWRITE_FLAG="--overwrite"
           fi
+          FIX_LANG_FLAG=""
+          if [ "${{ inputs.fix_language }}" = "true" ]; then
+            FIX_LANG_FLAG="--fix-language"
+          fi
           python scripts/generate_descriptions.py \
             --city "${{ inputs.city }}" \
             --batch "${{ inputs.batch_size }}" \
             --skip "${{ inputs.skip_ids }}" \
-            $OVERWRITE_FLAG
+            $OVERWRITE_FLAG $FIX_LANG_FLAG
 
       - name: Upload descriptions.json as artifact
         if: always()
