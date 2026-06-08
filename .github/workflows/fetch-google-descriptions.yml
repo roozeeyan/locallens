@@ -1,0 +1,57 @@
+name: Fetch Google Places Descriptions
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'City: yerevan / bangkok / samui / phangan / hoian / bali / danang / singapore (empty = all)'
+        required: false
+        default: 'yerevan'
+      batch_size:
+        description: 'Max places per run (default 200 to stay in Google free tier)'
+        required: false
+        default: '200'
+      overwrite:
+        description: 'Re-fetch even if description already exists'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - run: pip install requests
+
+      - name: Fetch descriptions from Google Places
+        env:
+          GOOGLE_PLACES_KEY: ${{ secrets.GOOGLE_PLACES_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          OVERWRITE_FLAG=""
+          if [ "${{ inputs.overwrite }}" = "true" ]; then
+            OVERWRITE_FLAG="--overwrite"
+          fi
+          python scripts/fetch_google_descriptions.py \
+            --city "${{ inputs.city }}" \
+            --batch "${{ inputs.batch_size }}" \
+            $OVERWRITE_FLAG
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: descriptions-json
+          path: src/descriptions.json
+          retention-days: 90
