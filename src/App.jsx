@@ -498,6 +498,79 @@ function CultureModal({ cityId, onClose }) {
   );
 }
 
+// ── Onboarding ─────────────────────────────────────────────────────────────
+const ONBOARDING_KEY = "ll_onboarded_v1";
+
+const ONBOARDING_SLIDES = [
+  {
+    emoji: "✦",
+    title: "Личный гид\nот Roo",
+    text: "Только проверенные места — кафе, рестораны, природа и атмосфера в 8 городах мира",
+  },
+  {
+    emoji: "◎",
+    title: "Найди\nсвоё место",
+    text: "Фильтруй по категориям, смотри что открыто прямо сейчас и сортируй по расстоянию от тебя",
+  },
+  {
+    emoji: "◈",
+    title: "Культурная\nпамятка",
+    text: "Перед поездкой — факты о стране, которые удивят в разговоре",
+  },
+];
+
+function Onboarding({ onDone }) {
+  const [idx, setIdx] = useState(0);
+  const touchX = useRef(null);
+  const slide = ONBOARDING_SLIDES[idx];
+  const isLast = idx === ONBOARDING_SLIDES.length - 1;
+
+  const next = () => {
+    if (isLast) { localStorage.setItem(ONBOARDING_KEY, "1"); onDone(); }
+    else setIdx(i => i + 1);
+  };
+  const skip = () => { localStorage.setItem(ONBOARDING_KEY, "1"); onDone(); };
+
+  const onTouchStart = e => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = e => {
+    if (touchX.current === null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    touchX.current = null;
+    if (dx < -50 && !isLast) setIdx(i => i + 1);
+    else if (dx > 50 && idx > 0) setIdx(i => i - 1);
+  };
+
+  return (
+    <div style={s.onboardWrap} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      {/* Контент слайда */}
+      <div style={s.onboardSlide}>
+        <p style={s.onboardEmoji}>{slide.emoji}</p>
+        <h1 style={s.onboardTitle}>{slide.title.split("\n").map((l, i) => (
+          <span key={i}>{l}{i === 0 && <br />}</span>
+        ))}</h1>
+        <p style={s.onboardText}>{slide.text}</p>
+      </div>
+
+      {/* Точки прогресса */}
+      <div style={s.onboardDots}>
+        {ONBOARDING_SLIDES.map((_, i) => (
+          <div key={i} style={{ ...s.onboardDot, width: i === idx ? 24 : 6, background: i === idx ? "#3D2B1F" : "#C8C0B8" }} />
+        ))}
+      </div>
+
+      {/* Кнопки */}
+      <div style={s.onboardActions}>
+        <button style={s.onboardBtn} onClick={next}>
+          {isLast ? "Начать →" : "Продолжить →"}
+        </button>
+        {!isLast && (
+          <button style={s.onboardSkip} onClick={skip}>пропустить</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Access gate (replaces index.html prompt — works in Telegram WebApp) ────
 const ACCESS_CODE = process.env.REACT_APP_ACCESS_CODE || "919526";
 function AccessGate({ onUnlock }) {
@@ -535,6 +608,7 @@ function AccessGate({ onUnlock }) {
 // ── App ────────────────────────────────────────────────────────────────────
 export default function App() {
   const [unlocked, setUnlocked] = useState(() => localStorage.getItem("ll_access") === ACCESS_CODE);
+  const [onboarded, setOnboarded] = useState(() => !!localStorage.getItem(ONBOARDING_KEY));
   const [screen, setScreen]             = useState("home");
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedCat, setSelectedCat]   = useState(null);
@@ -646,7 +720,8 @@ export default function App() {
     ...districts.map(d => ({ value: d, label: d })),
   ];
 
-  if (!unlocked) return <AccessGate onUnlock={() => setUnlocked(true)} />;
+  if (!unlocked) return <AccessGate onUnlock={() => { setUnlocked(true); }} />;
+  if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 
   return (
     <div style={s.root}>
@@ -1030,6 +1105,45 @@ const s = {
   navActive: { color: "#3D2B1F" },
   toast: { position: "fixed", bottom: 88, left: "50%", transform: "translateX(-50%)", background: "#3D2B1F", color: "#F0EDE8", padding: "10px 22px", borderRadius: 3, fontSize: 12, fontWeight: 500, letterSpacing: "0.08em", zIndex: 200, whiteSpace: "nowrap" },
   empty: { textAlign: "center", color: "#8A7F78", padding: "64px 0", fontSize: 14, lineHeight: 1.7 },
+
+  // Onboarding
+  onboardWrap: {
+    display: "flex", flexDirection: "column", justifyContent: "space-between",
+    minHeight: "100vh", background: "#F0EDE8", padding: "0 32px 48px", boxSizing: "border-box",
+  },
+  onboardSlide: {
+    flex: 1, display: "flex", flexDirection: "column", justifyContent: "center",
+    paddingTop: 80, paddingBottom: 32,
+  },
+  onboardEmoji: {
+    fontSize: 48, color: "#C4956A", margin: "0 0 32px", fontWeight: 300, letterSpacing: "-0.02em",
+  },
+  onboardTitle: {
+    fontSize: 52, fontWeight: 800, lineHeight: 1.0, letterSpacing: "-0.03em",
+    color: "#3D2B1F", margin: "0 0 24px",
+  },
+  onboardText: {
+    fontSize: 16, lineHeight: 1.65, color: "#8A7F78", margin: 0, maxWidth: 320,
+  },
+  onboardDots: {
+    display: "flex", gap: 6, alignItems: "center", marginBottom: 32,
+  },
+  onboardDot: {
+    height: 6, borderRadius: 3, transition: "width 0.25s ease, background 0.25s ease",
+  },
+  onboardActions: {
+    display: "flex", flexDirection: "column", gap: 12,
+  },
+  onboardBtn: {
+    width: "100%", padding: "16px 0", background: "#3D2B1F", color: "#F0EDE8",
+    border: "none", borderRadius: 4, fontSize: 15, fontWeight: 600,
+    letterSpacing: "0.06em", cursor: "pointer", fontFamily: "inherit",
+  },
+  onboardSkip: {
+    background: "none", border: "none", color: "#B5ADA5", fontSize: 13,
+    cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em",
+    padding: "4px 0", alignSelf: "center",
+  },
 
   // Access gate
   gateWrap: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#F0EDE8", padding: 32, gap: 16 },
