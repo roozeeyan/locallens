@@ -502,126 +502,197 @@ function CultureModal({ cityId, onClose }) {
 const ONBOARDING_KEY = "ll_onboarded_v1";
 
 const OB_KF = `
-  @keyframes ob-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-  @keyframes ob-walkL{0%,100%{transform:rotate(0deg)}35%{transform:rotate(26deg)}70%{transform:rotate(-20deg)}}
-  @keyframes ob-walkR{0%,100%{transform:rotate(0deg)}35%{transform:rotate(-26deg)}70%{transform:rotate(20deg)}}
-  @keyframes ob-armWave{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(52deg)}}
-  @keyframes ob-blink{0%,88%,100%{transform:scaleY(1)}92%{transform:scaleY(0.06)}}
-  @keyframes ob-pulse{0%{transform:scale(1);opacity:0.7}100%{transform:scale(3.2);opacity:0}}
-  @keyframes ob-fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes ob-cityPop{0%{transform:scale(0)}65%{transform:scale(1.3)}100%{transform:scale(1)}}
-  @keyframes ob-planePath{0%{opacity:0;transform:translateX(-30px)}100%{opacity:1;transform:translateX(0)}}
+  @keyframes ob-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.022)}}
+  @keyframes ob-wave{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(44deg)}}
+  @keyframes ob-blink{0%,82%,100%{transform:scaleY(1)}88%{transform:scaleY(0.06)}}
+  @keyframes ob-ptcl{0%{opacity:0;transform:translate(0,0) scale(0.8)}15%{opacity:1}100%{opacity:0;transform:translate(var(--pdx),var(--pdy)) scale(0.2)}}
+  @keyframes ob-fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes ob-glowPulse{0%,100%{opacity:0.18;transform:scale(1)}50%{opacity:0.38;transform:scale(1.12)}}
+  @keyframes ob-mapIn{from{opacity:0;transform:translateY(18px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes ob-drawPath{from{stroke-dashoffset:360}to{stroke-dashoffset:0}}
+  @keyframes ob-cityPop{0%{transform:scale(0);opacity:0}65%{transform:scale(1.35)}100%{transform:scale(1);opacity:1}}
+  @keyframes ob-confetti{0%{opacity:1;transform:translate(0,0) rotate(0deg)}100%{opacity:0;transform:translate(var(--cx),var(--cy)) rotate(var(--cr))}}
+  @keyframes ob-excL{0%,100%{transform:rotate(-120deg)}50%{transform:rotate(-148deg)}}
+  @keyframes ob-excR{0%,100%{transform:rotate(120deg)}50%{transform:rotate(148deg)}}
 `;
 
-// City positions on SVG 375×220 canvas
-const OB_CITIES = [
-  { name: "Ереван",   x: 64,  y: 148 },
-  { name: "Бангкок",  x: 291, y: 130 },
-  { name: "Дананг",   x: 304, y: 118 },
-  { name: "Хой Ан",   x: 310, y: 125 },
-  { name: "Пхаган",   x: 297, y: 140 },
-  { name: "Самуи",    x: 303, y: 147 },
-  { name: "Сингапур", x: 308, y: 158 },
-  { name: "Бали",     x: 321, y: 164 },
+const OB_PTCL = [
+  { x:10, y:18, s:6, d:0,   c:"#D4956A", pdx:22,  pdy:-68 },
+  { x:82, y:8,  s:4, d:1.2, c:"#F0D0A0", pdx:-14, pdy:-58 },
+  { x:88, y:42, s:5, d:0.5, c:"#C4956A", pdx:26,  pdy:-76 },
+  { x:6,  y:62, s:3, d:3.0, c:"#E8C080", pdx:-10, pdy:-52 },
+  { x:92, y:70, s:4, d:0.8, c:"#D4956A", pdx:18,  pdy:-70 },
+  { x:72, y:80, s:3, d:2.0, c:"#F0C896", pdx:24,  pdy:-66 },
+  { x:16, y:80, s:5, d:1.4, c:"#D4956A", pdx:-22, pdy:-72 },
+  { x:48, y:5,  s:3, d:3.4, c:"#E8C080", pdx:10,  pdy:-60 },
+  { x:34, y:74, s:4, d:1.8, c:"#C4956A", pdx:-16, pdy:-78 },
+  { x:60, y:15, s:3, d:2.6, c:"#F0D0A0", pdx:14,  pdy:-63 },
 ];
 
-// Character anchor points per slide (feet position)
-const OB_CHAR_POS = [
-  { x: 64,  y: 148, waving: true,  walking: false },
-  { x: 178, y: 140, waving: false, walking: true  },
-  { x: 305, y: 147, waving: true,  walking: false },
-];
+const OB_CONFETTI = Array.from({length:14}, (_,i) => ({
+  x:  [10,25,40,55,70,85,18,32,48,62,78,92, 5,72][i],
+  c:  ["#D4956A","#F0D0A0","#E8B060","#C4956A","#F0C896","#D4956A","#E8C080","#C4956A","#D4956A","#F0D0A0","#E8C080","#C4956A","#D4956A","#F0C896"][i],
+  sz: [8,5,7,6,8,5,7,8,6,5,7,6,8,5][i],
+  dl: [0,0.08,0.16,0.24,0.12,0.32,0.06,0.2,0.28,0.04,0.18,0.36,0.1,0.22][i],
+  cx: [-30,15,-20,25,-35,20,-15,30,-25,12,-18,28,-10,22][i],
+  cy: [-90,-80,-110,-95,-85,-100,-75,-105,-88,-72,-115,-82,-98,-92][i],
+  cr: [180,270,360,90,450,225,315,135,270,180,360,90,240,300][i],
+}));
 
 const OB_SLIDES = [
-  {
-    title: "Привет!\nЯ — Roo",
-    text: "Это мой личный гид — только места, где я сама побывала",
-    activeCities: [0],
-  },
-  {
-    title: "8 городов,\n925 мест",
-    text: "Кафе, рестораны, природа — фильтры, геолокация и режим работы",
-    activeCities: [0, 1, 2, 3],
-  },
-  {
-    title: "Готова\nисследовать?",
-    text: "Плюс культурные факты перед каждой поездкой — факты, которые удивят",
-    activeCities: [0, 1, 2, 3, 4, 5, 6, 7],
-  },
+  { title:"Привет!\nЯ — Roo",      text:"Личный гид — только места, где я сама побывала",                              pose:"wave",    showMap:false },
+  { title:"8 городов,\n925 мест",   text:"Кафе, рестораны, природа — с фильтрами и геолокацией",                        pose:"neutral", showMap:true  },
+  { title:"Готова\nисследовать?",   text:"Плюс культурные факты перед каждой поездкой",                                 pose:"excited", showMap:false },
 ];
 
-// SVG character: girl with long medium-brown hair, big eyes, centered at (0,0) feet at +5
-function ObCharacter({ waving, walking }) {
-  const legL = { transformBox: "fill-box", transformOrigin: "50% 0%", animation: walking ? "ob-walkL 0.55s ease-in-out infinite" : "none" };
-  const legR = { transformBox: "fill-box", transformOrigin: "50% 0%", animation: walking ? "ob-walkR 0.55s ease-in-out infinite" : "none" };
-  const armLStyle = { transformBox: "fill-box", transformOrigin: "100% 50%", animation: walking ? "ob-walkR 0.55s ease-in-out infinite" : "none" };
-  const armRStyle = { transformBox: "fill-box", transformOrigin: "0% 50%", animation: waving ? "ob-armWave 0.7s ease-in-out infinite" : (walking ? "ob-walkL 0.55s ease-in-out infinite" : "none") };
-  const eyeL = { transformBox: "fill-box", transformOrigin: "50% 50%", animation: "ob-blink 3.8s 0.5s ease-in-out infinite" };
-  const eyeR = { transformBox: "fill-box", transformOrigin: "50% 50%", animation: "ob-blink 3.8s 0.5s ease-in-out infinite" };
+// Portrait of Roo: dark straight hair, olive skin, strong defined brows, light almond eyes
+function RooPortrait({ pose }) {
+  const waving  = pose === "wave";
+  const excited = pose === "excited";
+  const smiling = waving || excited;
+
+  const eyeAnim = (d) => ({
+    transformBox:"fill-box", transformOrigin:"50% 0%",
+    animation:`ob-blink 4.8s ${d}s ease-in-out infinite`,
+  });
 
   return (
-    <g style={{ animation: "ob-float 3s ease-in-out infinite" }}>
-      {/* Shadow */}
-      <ellipse cx="0" cy="7" rx="14" ry="3.5" fill="#2A1A10" opacity="0.12" />
+    <g style={{ transformBox:"fill-box", transformOrigin:"50% 100%", animation:"ob-breathe 4s ease-in-out infinite" }}>
 
-      {/* Hair — long flowing behind body (medium-brown) */}
-      <path d="M-8,-57 C-15,-38 -17,-8 -15,18" stroke="#8C5E34" strokeWidth="12" strokeLinecap="round" fill="none" />
-      <path d="M8,-57 C15,-38 17,-8 15,18" stroke="#8C5E34" strokeWidth="12" strokeLinecap="round" fill="none" />
+      {/* HAIR BACK — very dark, straight, long */}
+      <path d="M37,70 C20,110 14,168 18,230 L56,230 C48,168 46,110 54,78Z" fill="#170C04"/>
+      <path d="M123,70 C140,110 146,168 142,230 L104,230 C112,168 114,110 106,78Z" fill="#170C04"/>
 
-      {/* Body / dress */}
-      <path d="M-12,-38 C-15,-18 -13,-6 -11,5 L11,5 C13,-6 15,-18 12,-38Z" fill="#C4956A" />
-      {/* Belt detail */}
-      <rect x="-11" y="-21" width="22" height="3" rx="1.5" fill="#9E6E3C" />
+      {/* BODY */}
+      <path d="M16,205 Q20,180 80,172 Q140,180 144,205 L146,230 L14,230Z" fill="#2C1A10"/>
 
-      {/* Legs */}
-      <rect x="-10" y="-16" width="8" height="20" rx="4" fill="#F0C896" style={legL} />
-      <rect x="2"  y="-16" width="8" height="20" rx="4" fill="#F0C896" style={legR} />
-      {/* Shoes */}
-      <ellipse cx="-6"  cy="6" rx="7" ry="3" fill="#2A1A10" />
-      <ellipse cx="6"   cy="6" rx="7" ry="3" fill="#2A1A10" />
+      {/* HEAD — warm olive */}
+      <ellipse cx="80" cy="92" rx="47" ry="52" fill="#E5B282"/>
 
-      {/* Arms */}
-      <rect x="-24" y="-37" width="13" height="7" rx="3.5" fill="#C4956A" style={armLStyle} />
-      <rect x="11"  y="-37" width="13" height="7" rx="3.5" fill="#C4956A" style={armRStyle} />
+      {/* HAIR CAP */}
+      <path d="M35,82 Q40,44 80,32 Q120,44 125,82 Q118,74 80,70 Q42,74 35,82Z" fill="#170C04"/>
+      {/* Center part */}
+      <line x1="80" y1="32" x2="80" y2="70" stroke="#C8906A" strokeWidth="1.4" opacity="0.28"/>
 
-      {/* Backpack */}
-      <rect x="10" y="-36" width="8" height="14" rx="2" fill="#A37848" opacity="0.65" />
-      <rect x="11" y="-38" width="6" height="4" rx="1" fill="#8B6038" opacity="0.65" />
+      {/* HAIR SIDES framing face */}
+      <path d="M34,85 C25,112 22,150 26,182" stroke="#170C04" strokeWidth="15" strokeLinecap="round" fill="none"/>
+      <path d="M126,85 C135,112 138,150 134,182" stroke="#170C04" strokeWidth="15" strokeLinecap="round" fill="none"/>
 
-      {/* Head */}
-      <circle cx="0" cy="-52" r="14" fill="#F0C896" />
+      {/* NECK */}
+      <rect x="68" y="140" width="24" height="34" rx="5" fill="#E5B282"/>
 
-      {/* Hair sides (front) */}
-      <path d="M-14,-56 C-19,-46 -18,-35 -15,-26" stroke="#8C5E34" strokeWidth="7" strokeLinecap="round" fill="none" />
-      <path d="M14,-56 C19,-46 18,-35 15,-26" stroke="#8C5E34" strokeWidth="7" strokeLinecap="round" fill="none" />
+      {/* EYEBROWS — thick, defined, dark — KEY feature */}
+      <path d="M45,74 Q60,64 74,71" stroke="#0A0604" strokeWidth="4" fill="none" strokeLinecap="round"/>
+      <path d="M86,71 Q100,64 115,74" stroke="#0A0604" strokeWidth="4" fill="none" strokeLinecap="round"/>
+      <path d="M45,74 Q60,64 74,71 Q68,78 48,77Z" fill="#0A0604" opacity="0.55"/>
+      <path d="M86,71 Q100,64 115,74 Q112,78 92,77Z" fill="#0A0604" opacity="0.55"/>
 
-      {/* Hair top */}
-      <path d="M-13,-61 Q0,-74 13,-61 Q7,-67 0,-66 Q-7,-67 -13,-61Z" fill="#8C5E34" />
+      {/* EYES — white sclera */}
+      <ellipse cx="60" cy="90" rx="13" ry="13.5" fill="#F2ECE0"/>
+      <ellipse cx="100" cy="90" rx="13" ry="13.5" fill="#F2ECE0"/>
 
-      {/* Eyes — large almond */}
-      <ellipse cx="-5.5" cy="-52" rx="4.2" ry="5" fill="#1B0B03" style={eyeL} />
-      <ellipse cx=" 5.5" cy="-52" rx="4.2" ry="5" fill="#1B0B03" style={eyeR} />
-      {/* Iris gleam */}
-      <circle cx="-3.8" cy="-54" r="1.5" fill="white" />
-      <circle cx=" 7.2" cy="-54" r="1.5" fill="white" />
+      {/* Eye blink groups */}
+      <g style={eyeAnim(0)}>
+        <circle cx="60" cy="91" r="9.5" fill="#607068"/>
+        <circle cx="60" cy="91" r="5.5" fill="#100806"/>
+        <circle cx="63.5" cy="86" r="3"   fill="white"/>
+        <circle cx="57"   cy="93" r="1.5" fill="white" opacity="0.5"/>
+      </g>
+      <g style={eyeAnim(0.2)}>
+        <circle cx="100" cy="91" r="9.5" fill="#607068"/>
+        <circle cx="100" cy="91" r="5.5" fill="#100806"/>
+        <circle cx="103.5" cy="86" r="3"   fill="white"/>
+        <circle cx="97"    cy="93" r="1.5" fill="white" opacity="0.5"/>
+      </g>
 
-      {/* Eyebrows — thick arched */}
-      <path d="M-10,-59.5 Q-5.5,-62.5 -1,-59.5" stroke="#3A200E" strokeWidth="2.3" fill="none" strokeLinecap="round" />
-      <path d="M1,-59.5 Q5.5,-62.5 10,-59.5"    stroke="#3A200E" strokeWidth="2.3" fill="none" strokeLinecap="round" />
+      {/* LASH LINES */}
+      <path d="M47,83 Q60,78 73,83" stroke="#0A0604" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <path d="M87,83 Q100,78 113,83" stroke="#0A0604" strokeWidth="3" fill="none" strokeLinecap="round"/>
+      <path d="M48,102 Q60,107 72,102" stroke="#2A1808" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.3"/>
+      <path d="M88,102 Q100,107 112,102" stroke="#2A1808" strokeWidth="1" fill="none" strokeLinecap="round" opacity="0.3"/>
 
-      {/* Nose */}
-      <circle cx="0" cy="-47" r="1.8" fill="#D4906A" opacity="0.4" />
+      {/* NOSE */}
+      <path d="M76,115 Q80,122 84,115" stroke="#B07858" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
+      <circle cx="73" cy="116" r="2.5" fill="#C08868" opacity="0.28"/>
+      <circle cx="87" cy="116" r="2.5" fill="#C08868" opacity="0.28"/>
 
-      {/* Mouth */}
-      {waving
-        ? <path d="M-5,-43 Q0,-40 5,-43"    stroke="#B85040" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-        : <path d="M-3.5,-44 Q0,-42 3.5,-44" stroke="#B85040" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      {/* LIPS */}
+      {smiling
+        ? <path d="M65,128 Q74,121 80,124 Q86,121 95,128 Q86,140 80,143 Q74,140 65,128Z" fill="#C07060"/>
+        : <path d="M65,128 Q74,122 80,125 Q86,122 95,128 Q88,138 80,139 Q72,138 65,128Z" fill="#C07060"/>
       }
+      <path d="M71,125 Q80,122 89,125" stroke="rgba(255,220,195,0.4)" strokeWidth="1.5" fill="none"/>
+      <path d="M65,128 Q80,132 95,128" stroke="#904848" strokeWidth="0.8" fill="none"/>
 
-      {/* Cheeks */}
-      <circle cx="-9" cy="-47" r="4" fill="#E06858" opacity="0.16" />
-      <circle cx=" 9" cy="-47" r="4" fill="#E06858" opacity="0.16" />
+      {/* CHEEKS */}
+      <ellipse cx="42" cy="106" rx="15" ry="10" fill="#D05848" opacity="0.11"/>
+      <ellipse cx="118" cy="106" rx="15" ry="10" fill="#D05848" opacity="0.11"/>
+
+      {/* ARMS */}
+      {waving && (
+        <g style={{ transformBox:"fill-box", transformOrigin:"136px 174px", animation:"ob-wave 0.9s ease-in-out infinite" }}>
+          <path d="M136,176 L158,150" stroke="#2C1A10" strokeWidth="14" strokeLinecap="round"/>
+          <circle cx="158" cy="146" r="10" fill="#E5B282"/>
+        </g>
+      )}
+      {!waving && !excited && (
+        <>
+          <path d="M22,198 Q14,184 12,168" stroke="#2C1A10" strokeWidth="14" strokeLinecap="round"/>
+          <circle cx="10" cy="164" r="10" fill="#E5B282"/>
+          <path d="M138,198 Q146,184 148,168" stroke="#2C1A10" strokeWidth="14" strokeLinecap="round"/>
+          <circle cx="150" cy="164" r="10" fill="#E5B282"/>
+        </>
+      )}
+      {excited && (
+        <>
+          <g style={{ transformBox:"fill-box", transformOrigin:"22px 198px", animation:"ob-excL 0.6s ease-in-out infinite" }}>
+            <path d="M22,198 L4,166"  stroke="#2C1A10" strokeWidth="14" strokeLinecap="round"/>
+            <circle cx="2" cy="162" r="10" fill="#E5B282"/>
+          </g>
+          <g style={{ transformBox:"fill-box", transformOrigin:"138px 198px", animation:"ob-excR 0.6s ease-in-out infinite" }}>
+            <path d="M138,198 L156,166" stroke="#2C1A10" strokeWidth="14" strokeLinecap="round"/>
+            <circle cx="158" cy="162" r="10" fill="#E5B282"/>
+          </g>
+        </>
+      )}
     </g>
+  );
+}
+
+function ObMapCard() {
+  return (
+    <div style={{
+      margin:"0 24px",
+      background:"rgba(255,228,190,0.07)",
+      borderRadius:20, padding:"18px 20px",
+      border:"1px solid rgba(212,149,106,0.25)",
+      backdropFilter:"blur(10px)",
+      animation:"ob-mapIn 0.5s cubic-bezier(0.34,1.56,0.64,1)",
+    }}>
+      <svg viewBox="0 0 160 82" style={{ width:"100%", display:"block" }}>
+        {[40,80,120].map(x => <line key={x} x1={x} y1="0" x2={x} y2="82" stroke="rgba(212,149,106,0.14)" strokeWidth="0.5"/>)}
+        {[27,54].map(y => <line key={y} x1="0" y1={y} x2="160" y2={y} stroke="rgba(212,149,106,0.14)" strokeWidth="0.5"/>)}
+        <ellipse cx="26" cy="48" rx="22" ry="18" fill="rgba(212,149,106,0.2)"/>
+        <ellipse cx="80" cy="54" rx="20" ry="17" fill="rgba(212,149,106,0.16)"/>
+        <ellipse cx="128" cy="46" rx="22" ry="20" fill="rgba(212,149,106,0.2)"/>
+        <ellipse cx="124" cy="64" rx="14" ry="10" fill="rgba(212,149,106,0.16)"/>
+        <path d="M26,48 C58,28 96,62 122,46" fill="none" stroke="#D4956A" strokeWidth="1.6"
+          strokeDasharray="360" strokeDashoffset="360"
+          style={{ animation:"ob-drawPath 1.4s ease forwards" }}/>
+        {[
+          { x:26, y:48, label:"Ереван" },
+          { x:120, y:38 }, { x:126, y:33 }, { x:122, y:50 }, { x:127, y:57 }, { x:131, y:64 },
+        ].map((c, i) => (
+          <g key={i} style={{ transformBox:"fill-box", transformOrigin:"50% 50%", animation:`ob-cityPop 0.4s ${i*0.12}s ease both` }}>
+            <circle cx={c.x} cy={c.y} r={i===0?4.5:3.5} fill="#D4956A"/>
+            {c.label && <text x={c.x+6} y={c.y+4} style={{ fontSize:6, fill:"#F0D4A0", fontFamily:"inherit" }}>{c.label}</text>}
+          </g>
+        ))}
+      </svg>
+      <div style={{ color:"rgba(240,212,160,0.6)", fontSize:10, marginTop:10, textAlign:"center", letterSpacing:"0.1em", lineHeight:1.5 }}>
+        Ереван · Бали · Бангкок · Самуи · Пхаган · Дананг · Хой Ан · Сингапур
+      </div>
+    </div>
   );
 }
 
@@ -630,132 +701,86 @@ function Onboarding({ onDone }) {
   const [txtKey, setTxtKey] = useState(0);
   const swipeX = useRef(null);
 
-  const slide = OB_SLIDES[idx];
-  const char  = OB_CHAR_POS[idx];
+  const slide  = OB_SLIDES[idx];
   const isLast = idx === OB_SLIDES.length - 1;
-
-  const go = (next) => { setIdx(next); setTxtKey(k => k + 1); };
-
-  const advance = () => {
-    if (isLast) { localStorage.setItem(ONBOARDING_KEY, "1"); onDone(); }
-    else go(idx + 1);
-  };
-  const skip = () => { localStorage.setItem(ONBOARDING_KEY, "1"); onDone(); };
+  const go     = (n) => { setIdx(n); setTxtKey(k => k + 1); };
+  const advance = () => { if (isLast) { localStorage.setItem(ONBOARDING_KEY, "1"); onDone(); } else go(idx + 1); };
+  const skip   = () => { localStorage.setItem(ONBOARDING_KEY, "1"); onDone(); };
 
   const onTouchStart = e => { swipeX.current = e.touches[0].clientX; };
-  const onTouchEnd = e => {
-    if (swipeX.current === null) return;
+  const onTouchEnd   = e => {
+    if (!swipeX.current) return;
     const dx = e.changedTouches[0].clientX - swipeX.current;
     swipeX.current = null;
     if (dx < -50 && !isLast) go(idx + 1);
-    else if (dx > 50 && idx > 0) go(idx - 1);
+    if (dx > 50 && idx > 0)  go(idx - 1);
   };
 
   return (
     <div style={s.obWrap} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <style>{OB_KF}</style>
 
-      {/* ── MAP SCENE ── */}
-      <div style={s.obMapBox}>
-        <svg viewBox="0 0 375 220" style={{ width: "100%", height: "100%", display: "block" }}>
+      {/* Background radial top glow */}
+      <div style={s.obBgGlow}/>
 
-          {/* Grid lines (map feel) */}
-          {[75, 150, 225, 300].map(x => (
-            <line key={x} x1={x} y1="0" x2={x} y2="220" stroke="#DDD5CC" strokeWidth="0.5" strokeDasharray="3,7" />
-          ))}
-          {[55, 110, 165].map(y => (
-            <line key={y} x1="0" y1={y} x2="375" y2={y} stroke="#DDD5CC" strokeWidth="0.5" strokeDasharray="3,7" />
-          ))}
+      {/* Floating ambient particles */}
+      {OB_PTCL.map((p, i) => (
+        <div key={i} style={{
+          position:"absolute", left:`${p.x}%`, top:`${p.y}%`,
+          width:p.s, height:p.s, borderRadius:"50%", background:p.c,
+          "--pdx":`${p.pdx}px`, "--pdy":`${p.pdy}px`,
+          animation:`ob-ptcl 4.5s ${p.d}s ease-in-out infinite`,
+          opacity:0, pointerEvents:"none",
+        }}/>
+      ))}
 
-          {/* Landmass blobs */}
-          <ellipse cx="72"  cy="135" rx="58"  ry="44"  fill="#E5DDD4" opacity="0.75" />
-          <ellipse cx="48"  cy="162" rx="32"  ry="24"  fill="#E5DDD4" opacity="0.5"  />
-          <ellipse cx="182" cy="152" rx="42"  ry="36"  fill="#E5DDD4" opacity="0.55" />
-          <ellipse cx="178" cy="182" rx="22"  ry="26"  fill="#E5DDD4" opacity="0.4"  />
-          <ellipse cx="296" cy="138" rx="48"  ry="42"  fill="#E5DDD4" opacity="0.75" />
-          <ellipse cx="290" cy="176" rx="26"  ry="22"  fill="#E5DDD4" opacity="0.55" />
-          <ellipse cx="336" cy="170" rx="22"  ry="13"  fill="#E5DDD4" opacity="0.6"  />
-          <ellipse cx="362" cy="176" rx="13"  ry="8"   fill="#E5DDD4" opacity="0.4"  />
+      {/* Confetti burst (slide 3 only) */}
+      {slide.pose === "excited" && OB_CONFETTI.map((c, i) => (
+        <div key={i} style={{
+          position:"absolute", left:`${c.x}%`, top:"28%",
+          width:c.sz, height:c.sz*0.4, borderRadius:2, background:c.c,
+          "--cx":`${c.cx}px`, "--cy":`${c.cy}px`, "--cr":`${c.cr}deg`,
+          animation:`ob-confetti 1.3s ${c.dl}s ease-out infinite`,
+          opacity:0, pointerEvents:"none",
+        }}/>
+      ))}
 
-          {/* Route — dashed path Yerevan → SE Asia */}
-          <path d="M64,148 C115,106 222,178 291,148"
-            fill="none" stroke="#C4956A" strokeWidth="1.8" strokeDasharray="5,4" strokeLinecap="round" />
-
-          {/* Airplane emoji along the path (slide 1 — mid-journey) */}
-          {idx === 1 && (
-            <text x="174" y="134" style={{ fontSize: 14, animation: "ob-planePath 0.5s ease" }}>✈︎</text>
-          )}
-
-          {/* City dots */}
-          {OB_CITIES.map((city, i) => {
-            const active = slide.activeCities.includes(i);
-            return (
-              <g key={city.name}>
-                {active && (
-                  <circle cx={city.x} cy={city.y} r="5" fill="none" stroke="#C4956A" strokeWidth="1.4"
-                    style={{ transformBox: "fill-box", transformOrigin: "50% 50%", animation: "ob-pulse 2s ease-out infinite" }} />
-                )}
-                <circle cx={city.x} cy={city.y} r={active ? 4 : 2.5}
-                  fill={active ? "#C4956A" : "#C0B8B0"}
-                  style={active && i > 0 ? { transformBox: "fill-box", transformOrigin: "50% 50%", animation: "ob-cityPop 0.4s ease" } : {}} />
-                {i === 0 && (
-                  <text x={city.x + 7} y={city.y + 4} style={{ fontSize: 7, fill: "#8A7F78", fontFamily: "inherit" }}>
-                    {city.name}
-                  </text>
-                )}
-                {active && i === OB_CITIES.length - 1 && idx === 2 && (
-                  <text x={city.x + 7} y={city.y + 4} style={{ fontSize: 7, fill: "#8A7F78", fontFamily: "inherit" }}>
-                    {city.name}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-
-          {/* SE Asia label (slide 2+) */}
-          {idx >= 1 && (
-            <text x="297" y="110" textAnchor="middle"
-              style={{ fontSize: 7, fill: "#A09890", fontFamily: "inherit", animation: "ob-fadeUp 0.5s ease" }}>
-              SE Asia
-            </text>
-          )}
-
-          {/* Character */}
-          <g style={{
-            transform: `translate(${char.x}px, ${char.y}px)`,
-            transition: "transform 1.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
-          }}>
-            <ObCharacter waving={char.waving} walking={char.walking} />
-          </g>
-
+      {/* Character portrait */}
+      <div style={s.obCharArea}>
+        <div style={s.obCharGlow}/>
+        <svg viewBox="0 0 160 230" style={{
+          width:"min(175px,46vw)", height:"min(252px,66vw)",
+          position:"relative", zIndex:1, overflow:"visible",
+        }}>
+          <RooPortrait pose={slide.pose}/>
         </svg>
       </div>
 
-      {/* ── TEXT ── */}
+      {/* Map card (slide 2 only) */}
+      {slide.showMap && <div style={{ position:"relative", zIndex:1 }}><ObMapCard key={idx}/></div>}
+
+      {/* Text content */}
       <div key={txtKey} style={s.obContent}>
         <h1 style={s.obTitle}>
-          {slide.title.split("\n").map((l, i) => <span key={i}>{l}{i === 0 && <br />}</span>)}
+          {slide.title.split("\n").map((l, i) => <span key={i}>{l}{i===0&&<br/>}</span>)}
         </h1>
         <p style={s.obText}>{slide.text}</p>
       </div>
 
-      {/* ── PROGRESS DOTS ── */}
+      {/* Progress dots */}
       <div style={s.obDots}>
-        {OB_SLIDES.map((_, i) => (
+        {OB_SLIDES.map((_,i) => (
           <div key={i} onClick={() => go(i)} style={{
             ...s.obDot,
-            width: i === idx ? 22 : 6,
-            background: i === idx ? "#3D2B1F" : "#C8C0B8",
-            cursor: "pointer",
-          }} />
+            width: i===idx ? 24 : 7,
+            background: i===idx ? "#F0D0A0" : "rgba(240,208,160,0.28)",
+          }}/>
         ))}
       </div>
 
-      {/* ── ACTIONS ── */}
+      {/* Actions */}
       <div style={s.obActions}>
-        <button style={s.obBtn} onClick={advance}>
-          {isLast ? "Начать →" : "Продолжить →"}
-        </button>
+        <button style={s.obBtn} onClick={advance}>{isLast ? "Начать →" : "Продолжить →"}</button>
         {!isLast && <button style={s.obSkip} onClick={skip}>пропустить</button>}
       </div>
     </div>
@@ -1299,41 +1324,63 @@ const s = {
 
   // Onboarding
   obWrap: {
-    display: "flex", flexDirection: "column", minHeight: "100vh",
-    background: "#F0EDE8", boxSizing: "border-box", overflow: "hidden",
+    position:"relative", display:"flex", flexDirection:"column",
+    minHeight:"100vh", overflow:"hidden", boxSizing:"border-box",
+    background:"linear-gradient(160deg,#1E0C04 0%,#3A1C08 50%,#261006 100%)",
   },
-  obMapBox: {
-    width: "100%", height: 240, flexShrink: 0, background: "#F5F1EC",
-    borderBottom: "1px solid #E8E0D8",
+  obBgGlow: {
+    position:"absolute", top:"-18%", left:"50%", transform:"translateX(-50%)",
+    width:"130%", height:"65%",
+    background:"radial-gradient(ellipse at center,rgba(196,149,106,0.22) 0%,transparent 68%)",
+    pointerEvents:"none", animation:"ob-glowPulse 4s ease-in-out infinite",
+  },
+  obCharArea: {
+    display:"flex", justifyContent:"center", alignItems:"flex-end",
+    position:"relative", paddingTop:52, paddingBottom:12, flexShrink:0,
+  },
+  obCharGlow: {
+    position:"absolute", width:220, height:220, borderRadius:"50%",
+    background:"radial-gradient(circle,rgba(212,149,106,0.2),transparent 70%)",
+    bottom:0, left:"50%", transform:"translateX(-50%)",
+    animation:"ob-glowPulse 3s ease-in-out infinite",
   },
   obContent: {
-    flex: 1, padding: "28px 32px 16px", animation: "ob-fadeUp 0.45s ease",
+    flex:1, padding:"20px 32px 8px",
+    animation:"ob-fadeUp 0.42s ease",
+    position:"relative", zIndex:1,
   },
   obTitle: {
-    fontSize: 46, fontWeight: 800, lineHeight: 1.0, letterSpacing: "-0.03em",
-    color: "#3D2B1F", margin: "0 0 16px",
+    fontSize:44, fontWeight:800, lineHeight:1.02, letterSpacing:"-0.03em",
+    color:"#F5EDE0", margin:"0 0 10px",
   },
   obText: {
-    fontSize: 15, lineHeight: 1.65, color: "#8A7F78", margin: 0,
+    fontSize:15, lineHeight:1.65,
+    color:"rgba(245,237,224,0.58)", margin:0,
   },
   obDots: {
-    display: "flex", gap: 6, alignItems: "center", padding: "0 32px 20px",
+    display:"flex", gap:7, alignItems:"center",
+    padding:"6px 32px 14px", position:"relative", zIndex:1,
   },
   obDot: {
-    height: 6, borderRadius: 3, transition: "width 0.3s ease, background 0.3s ease",
+    height:6, borderRadius:3,
+    transition:"width 0.3s ease, background 0.3s ease",
+    cursor:"pointer",
   },
   obActions: {
-    display: "flex", flexDirection: "column", gap: 10, padding: "0 32px 40px",
+    display:"flex", flexDirection:"column", gap:10,
+    padding:"0 24px 44px", position:"relative", zIndex:1,
   },
   obBtn: {
-    width: "100%", padding: "16px 0", background: "#3D2B1F", color: "#F0EDE8",
-    border: "none", borderRadius: 4, fontSize: 15, fontWeight: 600,
-    letterSpacing: "0.06em", cursor: "pointer", fontFamily: "inherit",
+    width:"100%", padding:"16px 0",
+    background:"#D4956A", color:"#160C04",
+    border:"none", borderRadius:14, fontSize:15, fontWeight:700,
+    letterSpacing:"0.06em", cursor:"pointer", fontFamily:"inherit",
   },
   obSkip: {
-    background: "none", border: "none", color: "#B5ADA5", fontSize: 13,
-    cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.04em",
-    padding: "4px 0", alignSelf: "center",
+    background:"none", border:"none",
+    color:"rgba(245,237,224,0.32)", fontSize:13,
+    cursor:"pointer", fontFamily:"inherit",
+    letterSpacing:"0.04em", padding:"4px 0", alignSelf:"center",
   },
 
   // Access gate
