@@ -11,6 +11,11 @@ const empty = {
     theme: DEFAULT_PALETTE,
     hiddenBlocks: [], // id блоков, скрытых от всех связей
     premium: false,
+    onboarded: false,
+    situation: null, // together | choosing | engaged
+    together: null, // срок отношений
+    topics: [], // блоки, с которых хочет начать
+    reminder: "week", // week | twoweeks | off
   },
   answers: {}, // { [questionId]: { text, at } }
   connections: [], // до подключения Supabase живёт локально
@@ -65,6 +70,10 @@ export const actions = {
 
   setProfile(patch) {
     commit({ ...state, profile: { ...state.profile, ...patch } });
+  },
+
+  completeOnboarding(data) {
+    commit({ ...state, profile: { ...state.profile, ...data, onboarded: true } });
   },
 
   toggleHiddenBlock(catId) {

@@ -105,6 +105,39 @@ export function Field({ value, onChange, placeholder, rows = 5 }) {
   );
 }
 
+/** Геометрическая иллюстрация: фигура на коралловой подложке из точек. */
+export function Iso({ size = 92, shape = "square" }) {
+  const pad = Math.round(size * 0.34);
+  return (
+    <span style={{ display: "block", width: size * 1.06, height: size + pad, position: "relative" }}>
+      <span
+        style={{
+          position: "absolute",
+          left: -size * 0.06,
+          top: size * 0.8,
+          width: size * 1.12,
+          height: size * 0.42,
+          borderRadius: 10,
+          backgroundImage: `radial-gradient(${c.coral} 2px, transparent 2.1px)`,
+          backgroundSize: "7px 7px",
+        }}
+      />
+      <span
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: size,
+          height: size,
+          borderRadius: shape === "circle" ? "50%" : size * 0.18,
+          background: c.sage,
+          border,
+        }}
+      />
+    </span>
+  );
+}
+
 export function TabBar({ tabs, active, onChange }) {
   return (
     <nav style={s.tabbar}>

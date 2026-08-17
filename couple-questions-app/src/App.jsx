@@ -9,6 +9,7 @@ import ConnectionDetail from "./screens/ConnectionDetail.jsx";
 import Feed from "./screens/Feed.jsx";
 import Profile from "./screens/Profile.jsx";
 import InviteSheet from "./screens/InviteSheet.jsx";
+import Onboarding from "./screens/Onboarding.jsx";
 
 const TABS = [
   { id: "form", label: "Анкета" },
@@ -19,6 +20,7 @@ const TABS = [
 
 export default function App() {
   const theme = useStore((s) => s.profile.theme);
+  const onboarded = useStore((s) => s.profile.onboarded);
   const [tab, setTab] = useState("form");
   const [openBlock, setOpenBlock] = useState(null);
   const [openConn, setOpenConn] = useState(null);
@@ -27,6 +29,8 @@ export default function App() {
   useEffect(() => {
     applyPalette(theme);
   }, [theme]);
+
+  if (!onboarded) return <Onboarding />;
 
   return (
     <div style={shell}>

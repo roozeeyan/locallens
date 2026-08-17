@@ -5,7 +5,14 @@ import { useStore, CATEGORIES, blockProgress, totalProgress } from "../store.js"
 
 export default function Questionnaire({ onOpenBlock }) {
   const answers = useStore((s) => s.answers);
+  const picked = useStore((s) => s.profile.topics);
   const total = totalProgress(answers);
+
+  // Блоки, выбранные при знакомстве, показываем первыми — порядок внутри сохраняем.
+  const order = [
+    ...CATEGORIES.filter((cat) => picked.includes(cat.id)),
+    ...CATEGORIES.filter((cat) => !picked.includes(cat.id)),
+  ];
 
   return (
     <Screen title="Анкета" subtitle="Отвечаете только вы. Ответы партнёра откроются, когда он ответит на тот же вопрос.">
@@ -20,13 +27,15 @@ export default function Questionnaire({ onOpenBlock }) {
       </Card>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {CATEGORIES.map((cat, i) => {
+        {order.map((cat) => {
           const p = blockProgress(answers, cat.id);
           const done = p.done === p.total;
           return (
             <Card key={cat.id} onClick={() => onOpenBlock(cat.id)} pad={13}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ ...icon, background: done ? c.sage : c.paper }}>{i + 1}</span>
+                <span style={{ ...icon, background: done ? c.sage : c.paper }}>
+                  {CATEGORIES.findIndex((x) => x.id === cat.id) + 1}
+                </span>
                 <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 7 }}>
                   <span style={{ font: `700 14.5px ${font.sans}`, color: c.ink }}>{cat.ru.replace(/^Блок \d+\.\s*/, "")}</span>
                   <Progress value={p.pct} height={7} />
