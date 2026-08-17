@@ -8,6 +8,7 @@ import Connections from "./screens/Connections.jsx";
 import ConnectionDetail from "./screens/ConnectionDetail.jsx";
 import Feed from "./screens/Feed.jsx";
 import Profile from "./screens/Profile.jsx";
+import InviteSheet from "./screens/InviteSheet.jsx";
 
 const TABS = [
   { id: "form", label: "Анкета" },
@@ -21,6 +22,7 @@ export default function App() {
   const [tab, setTab] = useState("form");
   const [openBlock, setOpenBlock] = useState(null);
   const [openConn, setOpenConn] = useState(null);
+  const [invite, setInvite] = useState(false);
 
   useEffect(() => {
     applyPalette(theme);
@@ -30,7 +32,9 @@ export default function App() {
     <div style={shell}>
       <main style={main}>
         {tab === "form" && <Questionnaire onOpenBlock={setOpenBlock} />}
-        {tab === "links" && <Connections onOpen={setOpenConn} />}
+        {tab === "links" && (
+          <Connections onOpen={setOpenConn} onInvite={() => setInvite(true)} />
+        )}
         {tab === "feed" && (
           <Feed onOpenConn={setOpenConn} onGoForm={() => setTab("form")} />
         )}
@@ -41,6 +45,7 @@ export default function App() {
 
       {openBlock && <QuestionFlow catId={openBlock} onClose={() => setOpenBlock(null)} />}
       {openConn && <ConnectionDetail connId={openConn} onClose={() => setOpenConn(null)} />}
+      {invite && <InviteSheet onClose={() => setInvite(false)} />}
     </div>
   );
 }

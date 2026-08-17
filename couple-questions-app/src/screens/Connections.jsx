@@ -4,7 +4,7 @@ import { Screen, Card, Button, Progress, Label } from "../ui.jsx";
 import { useStore, actions, totalProgress, pending, matchStats } from "../store.js";
 import { demoConnection } from "../demo.js";
 
-export default function Connections({ onOpen }) {
+export default function Connections({ onOpen, onInvite }) {
   const { answers, connections } = useStore();
   const mine = totalProgress(answers);
 
@@ -20,7 +20,10 @@ export default function Connections({ onOpen }) {
             Пригласите партнёра или кандидата — он заполнит свою анкету, и вы увидите, где
             совпадаете, а где стоит поговорить.
           </p>
-          <Button full onClick={() => actions.addConnection(demoConnection())}>
+          <Button full onClick={onInvite}>
+            Пригласить
+          </Button>
+          <Button full variant="secondary" onClick={() => actions.addConnection(demoConnection())}>
             Добавить демо-связь
           </Button>
           <span style={{ font: `400 12px/1.4 ${font.sans}`, color: c.mute }}>
@@ -30,6 +33,9 @@ export default function Connections({ onOpen }) {
         </Card>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Button full onClick={onInvite}>
+            Пригласить ещё
+          </Button>
           {connections.map((conn) => {
             const p = pending(answers, conn);
             const m = matchStats(conn);
