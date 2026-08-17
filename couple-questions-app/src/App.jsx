@@ -1,9 +1,13 @@
-import React, { useState } from "react";
-import { c, font } from "./theme.js";
+import React, { useEffect, useState } from "react";
+import { c, font, applyPalette } from "./theme.js";
 import { TabBar } from "./ui.jsx";
+import { useStore } from "./store.js";
 import Questionnaire from "./screens/Questionnaire.jsx";
 import QuestionFlow from "./screens/QuestionFlow.jsx";
-import Placeholder from "./screens/Placeholder.jsx";
+import Connections from "./screens/Connections.jsx";
+import ConnectionDetail from "./screens/ConnectionDetail.jsx";
+import Feed from "./screens/Feed.jsx";
+import Profile from "./screens/Profile.jsx";
 
 const TABS = [
   { id: "form", label: "Анкета" },
@@ -13,56 +17,30 @@ const TABS = [
 ];
 
 export default function App() {
+  const theme = useStore((s) => s.profile.theme);
   const [tab, setTab] = useState("form");
   const [openBlock, setOpenBlock] = useState(null);
+  const [openConn, setOpenConn] = useState(null);
+
+  useEffect(() => {
+    applyPalette(theme);
+  }, [theme]);
 
   return (
     <div style={shell}>
       <main style={main}>
         {tab === "form" && <Questionnaire onOpenBlock={setOpenBlock} />}
-
-        {tab === "links" && (
-          <Placeholder
-            title="Связи"
-            subtitle="Люди, с которыми вы проходите анкету."
-            items={[
-              "Приглашение по ссылке — партнёр или кандидат",
-              "Процент заполнения по каждому блоку у обоих",
-              "Совпадения открываются только по взаимности",
-              "ИИ-заключение по завершённым блокам",
-            ]}
-          />
-        )}
-
+        {tab === "links" && <Connections onOpen={setOpenConn} />}
         {tab === "feed" && (
-          <Placeholder
-            title="Лента"
-            subtitle="Что открылось с последнего захода."
-            items={[
-              "Новые совпадения после ответов партнёра",
-              "Реакции на ваши ответы",
-              "Напоминание о незаполненных блоках",
-            ]}
-          />
+          <Feed onOpenConn={setOpenConn} onGoForm={() => setTab("form")} />
         )}
-
-        {tab === "me" && (
-          <Placeholder
-            title="Профиль"
-            subtitle="Настройки и доступ."
-            items={[
-              "Статус: в отношениях или свободен",
-              "Приватность: какие блоки скрыть",
-              "Темы оформления",
-              "Premium и покупки",
-            ]}
-          />
-        )}
+        {tab === "me" && <Profile />}
       </main>
 
       <TabBar tabs={TABS} active={tab} onChange={setTab} />
 
       {openBlock && <QuestionFlow catId={openBlock} onClose={() => setOpenBlock(null)} />}
+      {openConn && <ConnectionDetail connId={openConn} onClose={() => setOpenConn(null)} />}
     </div>
   );
 }
