@@ -10,6 +10,7 @@ import Feed from "./screens/Feed.jsx";
 import Profile from "./screens/Profile.jsx";
 import InviteSheet from "./screens/InviteSheet.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
+import Paywall from "./screens/Paywall.jsx";
 
 const TABS = [
   { id: "form", label: "Анкета" },
@@ -25,6 +26,7 @@ export default function App() {
   const [openBlock, setOpenBlock] = useState(null);
   const [openConn, setOpenConn] = useState(null);
   const [invite, setInvite] = useState(false);
+  const [paywall, setPaywall] = useState(null);
 
   useEffect(() => {
     applyPalette(theme);
@@ -35,14 +37,20 @@ export default function App() {
   return (
     <div style={shell}>
       <main style={main}>
-        {tab === "form" && <Questionnaire onOpenBlock={setOpenBlock} />}
+        {tab === "form" && (
+          <Questionnaire onOpenBlock={setOpenBlock} onPaywall={setPaywall} />
+        )}
         {tab === "links" && (
-          <Connections onOpen={setOpenConn} onInvite={() => setInvite(true)} />
+          <Connections
+            onOpen={setOpenConn}
+            onInvite={() => setInvite(true)}
+            onPaywall={setPaywall}
+          />
         )}
         {tab === "feed" && (
           <Feed onOpenConn={setOpenConn} onGoForm={() => setTab("form")} />
         )}
-        {tab === "me" && <Profile />}
+        {tab === "me" && <Profile onPaywall={() => setPaywall("blocks")} />}
       </main>
 
       <TabBar tabs={TABS} active={tab} onChange={setTab} />
@@ -50,6 +58,7 @@ export default function App() {
       {openBlock && <QuestionFlow catId={openBlock} onClose={() => setOpenBlock(null)} />}
       {openConn && <ConnectionDetail connId={openConn} onClose={() => setOpenConn(null)} />}
       {invite && <InviteSheet onClose={() => setInvite(false)} />}
+      {paywall && <Paywall reason={paywall} onClose={() => setPaywall(null)} />}
     </div>
   );
 }

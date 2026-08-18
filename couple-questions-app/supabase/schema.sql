@@ -42,6 +42,12 @@ create policy "профиль: создаю только свой"
   on profiles for insert
   with check (id = auth.uid());
 
+-- Поле premium пользователь себе выставить не может: правом на запись
+-- обладают только перечисленные колонки. Премиум ставит вебхук платежей,
+-- работающий под сервисным ключом в обход RLS.
+revoke update on profiles from authenticated;
+grant update (name, status, theme, hidden_blocks) on profiles to authenticated;
+
 -- ---------------------------------------------------------------- ответы
 
 create table if not exists answers (
@@ -186,3 +192,23 @@ create policy "отметки: ставлю только свои"
         and (c.a = auth.uid() or c.b = auth.uid())
     )
   );
+
+-- ---------------------------------------------------------------- платежи
+
+create table if not exists payments (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references profiles(id) on delete cascade,
+  product    text not null,
+  stars      int  not null,
+  charge_id  text unique,
+  created_at timestamptz not null default now()
+);
+
+alter table payments enable row level security;
+
+create policy "платежи: вижу свои"
+  on payments for select
+  using (user_id = auth.uid());
+
+-- Записывать платежи может только вебхук под сервисным ключом:
+-- политики на insert намеренно нет.

@@ -3,9 +3,11 @@ import { c, font } from "../theme.js";
 import { Screen, Card, Button, Progress, Label } from "../ui.jsx";
 import { useStore, actions, totalProgress, pending, matchStats } from "../store.js";
 import { demoConnection } from "../demo.js";
+import { canAddConnection } from "../limits.js";
 
-export default function Connections({ onOpen, onInvite }) {
-  const { answers, connections } = useStore();
+export default function Connections({ onOpen, onInvite, onPaywall }) {
+  const { answers, connections, profile } = useStore();
+  const canAdd = canAddConnection(profile, connections);
   const mine = totalProgress(answers);
 
   return (
@@ -33,8 +35,8 @@ export default function Connections({ onOpen, onInvite }) {
         </Card>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <Button full onClick={onInvite}>
-            Пригласить ещё
+          <Button full onClick={() => (canAdd ? onInvite() : onPaywall("connections"))}>
+            {canAdd ? "Пригласить ещё" : "Пригласить ещё · Premium"}
           </Button>
           {connections.map((conn) => {
             const p = pending(answers, conn);

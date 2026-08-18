@@ -3,7 +3,7 @@ import { c, font, palettes } from "../theme.js";
 import { Screen, Card, Button, Label } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress } from "../store.js";
 
-export default function Profile() {
+export default function Profile({ onPaywall }) {
   const { profile, answers } = useStore();
   const mine = totalProgress(answers);
 
@@ -96,13 +96,20 @@ export default function Profile() {
 
       <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Label>Premium</Label>
-        <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
-          Все 11 блоков, неограниченное число связей, ИИ-заключение и все темы оформления.
-          Оплата появится вместе с бэкендом.
-        </p>
-        <Button full disabled>
-          Пока недоступно
-        </Button>
+        {profile.premium ? (
+          <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
+            Доступ открыт. Все блоки, связи без ограничений и разбор от ИИ.
+          </p>
+        ) : (
+          <>
+            <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
+              Все 11 блоков, неограниченное число связей, разбор от ИИ и новые колоды.
+            </p>
+            <Button full onClick={onPaywall}>
+              Посмотреть, что входит
+            </Button>
+          </>
+        )}
       </Card>
 
       <Button

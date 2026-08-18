@@ -134,3 +134,42 @@ export async function saveReaction(connectionId, questionId, value) {
     updated_at: new Date().toISOString(),
   });
 }
+
+// ------------------------------------------------------------------ оплата
+
+/**
+ * Покупка Premium за Telegram Stars. Ссылку на счёт создаёт серверная функция —
+ * токен бота в приложение не попадает. Оплату проводит сам Telegram, а премиум
+ * проставляет вебхук после подтверждения платежа.
+ */
+export async function buyPremium() {
+  if (!isRemote) return { ok: false, reason: "local" };
+
+  const tg = window.Telegram?.WebApp;
+  if (!tg?.openInvoice) return { ok: false, reason: "no-telegram" };
+
+  const { data: session } = await supabase.auth.getSession();
+  const token = session.session?.access_token;
+  if (!token) return { ok: false, reason: "no-session" };
+
+  const res = await fetch(`${URL}/functions/v1/create-invoice`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      apikey: ANON,
+      authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ product: "premium" }),
+  });
+  if (!res.ok) return { ok: false, reason: "invoice-failed" };
+
+  const { link } = await res.json();
+
+  return new Promise((resolve) => {
+    tg.openInvoice(link, (status) => {
+      if (status === "paid") resolve({ ok: true });
+      else if (status === "cancelled") resolve({ ok: false, reason: "cancelled" });
+      else resolve({ ok: false, reason: status || "failed" });
+    });
+  });
+}
