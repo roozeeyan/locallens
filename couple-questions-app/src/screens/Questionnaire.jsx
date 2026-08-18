@@ -1,37 +1,65 @@
 import React from "react";
 import { c, font } from "../theme.js";
 import { Screen, Card, Progress, Label } from "../ui.jsx";
-import { useStore, CATEGORIES, blockProgress, totalProgress } from "../store.js";
+import {
+  useStore,
+  CATEGORIES,
+  DECKS,
+  blockProgress,
+  totalProgress,
+  setTitle,
+} from "../store.js";
 import { blockOrder, isBlockOpen, lockedQuestionCount } from "../limits.js";
+
+const T = {
+  ru: {
+    title: "Анкета",
+    subtitle: "Отвечаете только вы. Ответы партнёра откроются, когда он ответит на тот же вопрос.",
+    filled: "Заполнено",
+    of: "из",
+    course: "Основной курс",
+    decks: "Колоды",
+    decksNote: "Наборы под конкретный момент. Черновик — тексты ещё правятся.",
+    openRest: (n) => `Открыть остальные ${n}`,
+  },
+  en: {
+    title: "Questionnaire",
+    subtitle: "Only you answer. Your partner's answer opens once they answer the same question.",
+    filled: "Completed",
+    of: "of",
+    course: "Main course",
+    decks: "Decks",
+    decksNote: "Sets for a specific moment. Draft — wording still being edited.",
+    openRest: (n) => `Unlock the remaining ${n}`,
+  },
+};
 
 export default function Questionnaire({ onOpenBlock, onPaywall }) {
   const { answers, profile } = useStore();
+  const lang = profile.lang || "ru";
+  const t = T[lang];
   const total = totalProgress(answers);
   const order = blockOrder(profile.topics);
   const locked = lockedQuestionCount(profile);
 
-  // Перечисляем то, что действительно закрыто, — состав зависит от выбора
-  // тем при знакомстве.
   const lockedNames = order
     .filter((cat) => !isBlockOpen(cat.id, profile))
     .slice(0, 4)
-    .map((cat) => cat.ru.replace(/^Блок \d+\.\s*/, "").split(/\s+и\s+|,/)[0]);
+    .map((cat) => setTitle(cat.id, lang).split(/\s+и\s+|\s+&\s+|,/)[0]);
 
   return (
-    <Screen
-      title="Анкета"
-      subtitle="Отвечаете только вы. Ответы партнёра откроются, когда он ответит на тот же вопрос."
-    >
+    <Screen title={t.title} subtitle={t.subtitle}>
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <Label>Заполнено</Label>
+          <Label>{t.filled}</Label>
           <span style={{ font: `700 15px ${font.serif}` }}>
-            {total.done} из {total.total}
+            {total.done} {t.of} {total.total}
           </span>
         </div>
         <Progress value={total.pct} />
       </Card>
 
+      <Label>{t.course}</Label>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {order.map((cat) => {
           const p = blockProgress(answers, cat.id);
@@ -40,40 +68,15 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
           const num = CATEGORIES.findIndex((x) => x.id === cat.id) + 1;
 
           return (
-            <Card
+            <Row
               key={cat.id}
+              badge={num}
+              title={setTitle(cat.id, lang)}
+              open={open}
+              done={done}
+              progress={p}
               onClick={() => (open ? onOpenBlock(cat.id) : onPaywall("blocks"))}
-              pad={13}
-              style={open ? undefined : { opacity: 0.72 }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span
-                  style={{
-                    ...icon,
-                    background: !open ? c.coral : done ? c.sage : c.paper,
-                  }}
-                >
-                  {num}
-                </span>
-                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 7 }}>
-                  <span style={{ font: `700 14.5px ${font.sans}`, color: c.ink }}>
-                    {cat.ru.replace(/^Блок \d+\.\s*/, "")}
-                  </span>
-                  {open ? (
-                    <Progress value={p.pct} height={7} />
-                  ) : (
-                    <span style={{ font: `600 11.5px ${font.mono}`, color: c.mute }}>
-                      Premium
-                    </span>
-                  )}
-                </div>
-                <span
-                  style={{ font: `600 12px ${font.mono}`, color: c.mute, whiteSpace: "nowrap" }}
-                >
-                  {open ? `${p.done}/${p.total}` : `${p.total}`}
-                </span>
-              </div>
-            </Card>
+            />
           );
         })}
       </div>
@@ -86,7 +89,7 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
         >
           <div style={{ flex: 1 }}>
             <div style={{ font: `700 14.5px ${font.sans}`, color: c.ink }}>
-              Открыть остальные {locked}
+              {t.openRest(locked)}
             </div>
             <div style={{ font: `400 12.5px ${font.sans}`, color: c.ink, opacity: 0.75 }}>
               {lockedNames.join(", ")}
@@ -95,7 +98,57 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
           <span style={{ font: `600 18px ${font.sans}`, color: c.ink }}>›</span>
         </Card>
       )}
+
+      <div style={{ marginTop: 8 }}>
+        <Label>{t.decks}</Label>
+      </div>
+      <p style={{ margin: "-6px 0 2px", font: `400 12.5px/1.4 ${font.sans}`, color: c.mute }}>
+        {t.decksNote}
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {DECKS.map((deck) => {
+          const p = blockProgress(answers, deck.id);
+          const open = Boolean(profile.premium);
+          return (
+            <Row
+              key={deck.id}
+              badge="+"
+              title={setTitle(deck.id, lang)}
+              note={deck.note}
+              open={open}
+              done={p.done === p.total}
+              progress={p}
+              onClick={() => (open ? onOpenBlock(deck.id) : onPaywall("blocks"))}
+            />
+          );
+        })}
+      </div>
     </Screen>
+  );
+}
+
+function Row({ badge, title, note, open, done, progress, onClick }) {
+  return (
+    <Card onClick={onClick} pad={13} style={open ? undefined : { opacity: 0.72 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ ...icon, background: !open ? c.coral : done ? c.sage : c.paper }}>
+          {badge}
+        </span>
+        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 7 }}>
+          <span style={{ font: `700 14.5px ${font.sans}`, color: c.ink }}>{title}</span>
+          {open ? (
+            <Progress value={progress.pct} height={7} />
+          ) : (
+            <span style={{ font: `600 11.5px ${font.mono}`, color: c.mute }}>
+              {note ? `Premium · ${note}` : "Premium"}
+            </span>
+          )}
+        </div>
+        <span style={{ font: `600 12px ${font.mono}`, color: c.mute, whiteSpace: "nowrap" }}>
+          {open ? `${progress.done}/${progress.total}` : `${progress.total}`}
+        </span>
+      </div>
+    </Card>
   );
 }
 

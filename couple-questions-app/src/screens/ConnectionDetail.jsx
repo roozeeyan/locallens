@@ -9,6 +9,8 @@ import {
   pending,
   matchStats,
   connBlockProgress,
+  setTitle,
+  qText,
 } from "../store.js";
 
 const REACTIONS = [
@@ -20,6 +22,7 @@ const REACTIONS = [
 export default function ConnectionDetail({ connId, onClose }) {
   const { answers, connections, profile } = useStore();
   const hiddenBlocks = profile.hiddenBlocks;
+  const lang = profile.lang;
   const conn = connections.find((x) => x.id === connId);
   const [tab, setTab] = useState("open");
 
@@ -78,7 +81,7 @@ export default function ConnectionDetail({ connId, onClose }) {
 
             {open.map((q) => (
               <Card key={q.id} pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-                <p style={{ margin: 0, font: `600 17px/1.25 ${font.serif}`, color: c.ink }}>{q.ru}</p>
+                <p style={{ margin: 0, font: `600 17px/1.25 ${font.serif}`, color: c.ink }}>{qText(q, lang)}</p>
 
                 <Answer who="Вы" text={answers[q.id].text} accent={c.sage} />
                 <Answer who={conn.name} text={conn.answers[q.id].text} accent={c.coral} />
@@ -115,7 +118,7 @@ export default function ConnectionDetail({ connId, onClose }) {
                 <Card key={cat.id} pad={13} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                     <span style={{ font: `700 14px ${font.sans}`, color: c.ink }}>
-                      {cat.ru.replace(/^Блок \d+\.\s*/, "")}
+                      {setTitle(cat.id, lang)}
                     </span>
                     {hidden && (
                       <span style={{ font: `600 11px ${font.mono}`, color: c.mute }}>скрыт</span>

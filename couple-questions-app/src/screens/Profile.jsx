@@ -29,6 +29,24 @@ export default function Profile({ onPaywall }) {
       </Card>
 
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+        <Label>Язык вопросов</Label>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Toggle
+            active={(profile.lang || "ru") === "ru"}
+            onClick={() => actions.setProfile({ lang: "ru" })}
+          >
+            Русский
+          </Toggle>
+          <Toggle
+            active={profile.lang === "en"}
+            onClick={() => actions.setProfile({ lang: "en" })}
+          >
+            English
+          </Toggle>
+        </div>
+      </Card>
+
+      <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
         <Label>Статус</Label>
         <div style={{ display: "flex", gap: 8 }}>
           <Toggle

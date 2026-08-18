@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { CATEGORIES, QUESTIONS } from "./data.js";
 import { DEFAULT_PALETTE } from "./theme.js";
+import { DECKS, DECK_QUESTIONS, findDeck } from "./decks.js";
 
 const KEY = "rg_state_v2";
 
@@ -16,6 +17,7 @@ const empty = {
     together: null, // срок отношений
     topics: [], // блоки, с которых хочет начать
     reminder: "week", // week | twoweeks | off
+    lang: "ru", // ru | en
   },
   answers: {}, // { [questionId]: { text, at } }
   connections: [], // до подключения Supabase живёт локально
@@ -122,9 +124,29 @@ export const actions = {
 
 // --- производные данные ---
 
-export function questionsOf(catId) {
-  return QUESTIONS.filter((q) => q.cat === catId);
+/** Набор вопросов по id: это может быть блок основного курса или колода. */
+export function questionsOf(setId) {
+  const deck = findDeck(setId);
+  if (deck) return deck.questions;
+  return QUESTIONS.filter((q) => q.cat === setId);
 }
+
+/** Заголовок набора на нужном языке. */
+export function setTitle(setId, lang = "ru") {
+  const deck = findDeck(setId);
+  if (deck) return deck[lang] || deck.ru;
+  const cat = CATEGORIES.find((x) => x.id === setId);
+  if (!cat) return "";
+  return (cat[lang] || cat.ru).replace(/^(Блок|Block)\s*\d+\.\s*/, "");
+}
+
+/** Текст вопроса на нужном языке. */
+export function qText(q, lang = "ru") {
+  return (lang === "en" ? q.en : q.ru) || q.ru;
+}
+
+/** Все вопросы приложения — основной курс плюс колоды. */
+export const ALL_QUESTIONS = [...QUESTIONS, ...DECK_QUESTIONS];
 
 export function blockProgress(answers, catId) {
   const qs = questionsOf(catId);
@@ -184,4 +206,4 @@ export function connBlockProgress(myAnswers, conn, catId) {
   };
 }
 
-export { CATEGORIES, QUESTIONS };
+export { CATEGORIES, QUESTIONS, DECKS };

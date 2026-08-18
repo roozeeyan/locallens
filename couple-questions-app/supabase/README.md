@@ -49,7 +49,39 @@ supabase secrets set TELEGRAM_BOT_TOKEN=<токен от BotFather>
 
 После сохранения переменных сделать **Redeploy**.
 
-## 5. Проверить
+## 5. Оплата и напоминания
+
+Ещё три функции. Секреты задаются один раз:
+
+```
+supabase functions deploy create-invoice
+supabase functions deploy telegram-webhook --no-verify-jwt
+supabase functions deploy send-reminders
+supabase secrets set TELEGRAM_WEBHOOK_SECRET=<длинная случайная строка>
+supabase secrets set REMINDER_SECRET=<ещё одна длинная строка>
+```
+
+Подписать бота на вебхук платежей — открыть в браузере:
+
+```
+https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<project>.supabase.co/functions/v1/telegram-webhook&secret_token=<TELEGRAM_WEBHOOK_SECRET>
+```
+
+Расписание напоминаний — в SQL Editor:
+
+```sql
+select cron.schedule('rg-reminders', '0 15 * * *', $$
+  select net.http_post(
+    url := 'https://<project>.supabase.co/functions/v1/send-reminders',
+    headers := '{"x-reminder-secret": "<REMINDER_SECRET>"}'::jsonb
+  );
+$$);
+```
+
+Чтобы принимать звёзды, у бота должны быть включены платежи — это делается
+в BotFather, раздел **Payments**.
+
+## 6. Проверить
 
 Открыть мини-апп в Telegram. Если всё срослось, на экране «Связи» кнопка
 «Пригласить» создаёт рабочую ссылку, а принятое приглашение появляется у обоих.

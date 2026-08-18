@@ -1,13 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { c, font } from "../theme.js";
 import { Button, Field, Progress, Label } from "../ui.jsx";
-import { useStore, actions, CATEGORIES, questionsOf } from "../store.js";
+import { useStore, actions, questionsOf, setTitle, qText } from "../store.js";
 import { shareQuestion } from "../share.js";
+
+const T = {
+  ru: { back: "Назад", skip: "Пропустить", saved: "Ответ сохранён",
+        next: "Сохранить и дальше", last: "Сохранить и закрыть" },
+  en: { back: "Back", skip: "Skip", saved: "Answer saved",
+        next: "Save and continue", last: "Save and close" },
+};
 
 export default function QuestionFlow({ catId, onClose }) {
   const answers = useStore((s) => s.answers);
   const theme = useStore((s) => s.profile.theme);
-  const cat = CATEGORIES.find((x) => x.id === catId);
+  const lang = useStore((s) => s.profile.lang) || "ru";
+  const t = T[lang] || T.ru;
   const list = useMemo(() => questionsOf(catId), [catId]);
 
   const firstUnanswered = list.findIndex((q) => !answers[q.id]);
@@ -44,14 +52,14 @@ export default function QuestionFlow({ catId, onClose }) {
           ←
         </button>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
-          <Label>{cat.ru.replace(/^Блок \d+\.\s*/, "")}</Label>
+          <Label>{setTitle(catId, lang)}</Label>
           <Progress value={(doneCount / list.length) * 100} height={7} />
         </div>
         <span style={{ font: `600 12px ${font.mono}`, color: c.mute }}>
           {i + 1}/{list.length}
         </span>
         <button
-          onClick={() => shareQuestion(q.ru, theme)}
+          onClick={() => shareQuestion(qText(q, lang), theme)}
           style={share}
           aria-label="Поделиться вопросом"
           title="Поделиться вопросом"
@@ -61,31 +69,31 @@ export default function QuestionFlow({ catId, onClose }) {
       </div>
 
       <div style={body}>
-        <p style={question}>{q.ru}</p>
+        <p style={question}>{qText(q, lang)}</p>
 
         <Field
           value={draft}
           onChange={setDraft}
-          placeholder="Ваш ответ — его увидит партнёр, когда ответит сам"
+          placeholder={lang === "en" ? "Your answer — your partner sees it once they answer too" : "Ваш ответ — его увидит партнёр, когда ответит сам"}
           rows={6}
         />
 
         {saved && !dirty && (
-          <span style={{ font: `600 12px ${font.mono}`, color: c.mute }}>Ответ сохранён</span>
+          <span style={{ font: `600 12px ${font.mono}`, color: c.mute }}>{t.saved}</span>
         )}
       </div>
 
       <div style={footer}>
         <div style={{ display: "flex", gap: 9 }}>
           <Button variant="secondary" onClick={() => go(-1)} disabled={i === 0} style={{ flex: 1 }}>
-            Назад
+            {t.back}
           </Button>
           <Button variant="secondary" onClick={() => go(1)} style={{ flex: 1 }}>
-            Пропустить
+            {t.skip}
           </Button>
         </div>
         <Button full onClick={save} disabled={!draft.trim()}>
-          {i + 1 === list.length ? "Сохранить и закрыть" : "Сохранить и дальше"}
+          {i + 1 === list.length ? t.last : t.next}
         </Button>
       </div>
     </div>
