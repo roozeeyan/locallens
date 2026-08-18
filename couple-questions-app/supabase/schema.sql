@@ -15,6 +15,8 @@ create table if not exists profiles (
   theme         text not null default 'cream',
   hidden_blocks text[] not null default '{}',
   premium       boolean not null default false,
+  reminder      text not null default 'week' check (reminder in ('week', 'twoweeks', 'off')),
+  last_reminded_at timestamptz,
   created_at    timestamptz not null default now()
 );
 
@@ -46,7 +48,7 @@ create policy "профиль: создаю только свой"
 -- обладают только перечисленные колонки. Премиум ставит вебхук платежей,
 -- работающий под сервисным ключом в обход RLS.
 revoke update on profiles from authenticated;
-grant update (name, status, theme, hidden_blocks) on profiles to authenticated;
+grant update (name, status, theme, hidden_blocks, reminder) on profiles to authenticated;
 
 -- ---------------------------------------------------------------- ответы
 

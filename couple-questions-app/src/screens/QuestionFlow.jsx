@@ -2,9 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { c, font } from "../theme.js";
 import { Button, Field, Progress, Label } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, questionsOf } from "../store.js";
+import { shareQuestion } from "../share.js";
 
 export default function QuestionFlow({ catId, onClose }) {
   const answers = useStore((s) => s.answers);
+  const theme = useStore((s) => s.profile.theme);
   const cat = CATEGORIES.find((x) => x.id === catId);
   const list = useMemo(() => questionsOf(catId), [catId]);
 
@@ -48,6 +50,14 @@ export default function QuestionFlow({ catId, onClose }) {
         <span style={{ font: `600 12px ${font.mono}`, color: c.mute }}>
           {i + 1}/{list.length}
         </span>
+        <button
+          onClick={() => shareQuestion(q.ru, theme)}
+          style={share}
+          aria-label="Поделиться вопросом"
+          title="Поделиться вопросом"
+        >
+          ↑
+        </button>
       </div>
 
       <div style={body}>
@@ -91,6 +101,18 @@ const wrap = {
   zIndex: 20,
 };
 const top = { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 10px" };
+const share = {
+  width: 34,
+  height: 34,
+  flexShrink: 0,
+  background: c.paper,
+  border: `2px solid ${c.ink}`,
+  borderRadius: "50%",
+  boxShadow: `0 2px 0 ${c.ink}`,
+  font: "16px/1 sans-serif",
+  color: c.ink,
+  cursor: "pointer",
+};
 const back = {
   width: 36,
   height: 36,

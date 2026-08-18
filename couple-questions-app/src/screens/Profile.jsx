@@ -3,6 +3,12 @@ import { c, font, palettes } from "../theme.js";
 import { Screen, Card, Button, Label } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress } from "../store.js";
 
+const REMINDERS = [
+  { id: "week", label: "Раз в неделю" },
+  { id: "twoweeks", label: "Раз в 2 недели" },
+  { id: "off", label: "Выкл" },
+];
+
 export default function Profile({ onPaywall }) {
   const { profile, answers } = useStore();
   const mine = totalProgress(answers);
@@ -65,6 +71,25 @@ export default function Profile({ onPaywall }) {
             </button>
           ))}
         </div>
+      </Card>
+
+      <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+        <Label>Напоминания</Label>
+        <div style={{ display: "flex", gap: 8 }}>
+          {REMINDERS.map((r) => (
+            <Toggle
+              key={r.id}
+              active={profile.reminder === r.id}
+              onClick={() => actions.setProfile({ reminder: r.id })}
+            >
+              {r.label}
+            </Toggle>
+          ))}
+        </div>
+        <span style={{ font: `400 12px/1.4 ${font.sans}`, color: c.mute }}>
+          Бот напомнит о разговоре в выбранном ритме. Ежедневных напоминаний нет —
+          разговор вдвоём не бывает ежедневной привычкой.
+        </span>
       </Card>
 
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
