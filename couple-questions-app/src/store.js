@@ -2,6 +2,7 @@ import { useSyncExternalStore } from "react";
 import { CATEGORIES, QUESTIONS } from "./data.js";
 import { DEFAULT_PALETTE } from "./theme.js";
 import { DECKS, DECK_QUESTIONS, findDeck } from "./decks.js";
+import { pushAnswer, pushProfile, pushReaction } from "./sync.js";
 
 const KEY = "rg_state_v2";
 
@@ -68,20 +69,34 @@ export const actions = {
     if (t) answers[questionId] = { text: t, at: Date.now() };
     else delete answers[questionId];
     commit({ ...state, answers });
+    pushAnswer(questionId, t);
   },
 
   setProfile(patch) {
     commit({ ...state, profile: { ...state.profile, ...patch } });
+    pushProfile(patch);
   },
 
   completeOnboarding(data) {
     commit({ ...state, profile: { ...state.profile, ...data, onboarded: true } });
+    pushProfile(data);
+  },
+
+  /** Заменяет локальное состояние тем, что пришло с сервера. */
+  applyRemote({ profile, answers, connections }) {
+    commit({
+      ...state,
+      profile: { ...state.profile, ...profile },
+      answers,
+      connections,
+    });
   },
 
   toggleHiddenBlock(catId) {
     const h = state.profile.hiddenBlocks;
     const next = h.includes(catId) ? h.filter((x) => x !== catId) : [...h, catId];
     commit({ ...state, profile: { ...state.profile, hiddenBlocks: next } });
+    pushProfile({ hiddenBlocks: next });
   },
 
   addConnection(conn) {
@@ -111,6 +126,8 @@ export const actions = {
       return { ...c, reactions };
     });
     commit({ ...state, connections });
+    const cur = connections.find((c) => c.id === connId);
+    pushReaction(connId, questionId, cur?.reactions?.[questionId] || null);
   },
 
   markFeedSeen() {

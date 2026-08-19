@@ -1,0 +1,193 @@
+// Связка приложения с сервером.
+//
+// Пока ключей Supabase нет, все функции молча ничего не делают и приложение
+// работает локально. Как только ключи появились — состояние подтягивается
+// с сервера и каждое изменение уходит туда же.
+import { isRemote, supabase } from "./backend.js";
+import { QUESTIONS } from "./data.js";
+import { DECK_QUESTIONS } from "./decks.js";
+
+const ALL = [...QUESTIONS, ...DECK_QUESTIONS];
+const blockOf = (qid) => ALL.find((q) => q.id === qid)?.cat || "unknown";
+
+let me = null;
+
+/**
+ * Вход. Сначала пробуем Telegram — если серверная функция развёрнута.
+ * Если её нет, входим анонимно: для этого не нужен ни токен бота, ни консоль.
+ */
+export async function ensureSession() {
+  if (!isRemote) return null;
+
+  const { data: existing } = await supabase.auth.getSession();
+  if (existing.session) {
+    me = existing.session.user.id;
+    return me;
+  }
+
+  const initData = window.Telegram?.WebApp?.initData;
+  if (initData) {
+    try {
+      const url = import.meta.env.VITE_SUPABASE_URL;
+      const res = await fetch(`${url}/functions/v1/telegram-auth`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ initData }),
+      });
+      if (res.ok) {
+        const { token_hash, email } = await res.json();
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash,
+          type: "magiclink",
+          email,
+        });
+        if (!error) {
+          const { data } = await supabase.auth.getUser();
+          me = data.user?.id || null;
+          return me;
+        }
+      }
+    } catch {
+      // функции нет или она недоступна — идём обычным путём
+    }
+  }
+
+  const { data, error } = await supabase.auth.signInAnonymously();
+  if (error) return null;
+  me = data.user?.id || null;
+  return me;
+}
+
+/** Создаёт строку профиля при первом входе. */
+async function ensureProfile(name) {
+  if (!me) return null;
+  const { data } = await supabase.from("profiles").select("*").eq("id", me).maybeSingle();
+  if (data) return data;
+
+  const row = { id: me, name: name || "" };
+  const { data: created } = await supabase.from("profiles").insert(row).select().single();
+  return created || row;
+}
+
+/** Забирает с сервера всё, что положено видеть. */
+export async function pullAll(localName) {
+  if (!isRemote || !me) return null;
+
+  const profile = await ensureProfile(localName);
+
+  const [{ data: conns }, { data: rows }, { data: reacts }] = await Promise.all([
+    supabase.from("connections").select("id, a, b, kind, invite_code, status"),
+    supabase.from("answers").select("user_id, question_id, body, updated_at"),
+    supabase.from("reactions").select("connection_id, user_id, question_id, value"),
+  ]);
+
+  // Свои ответы отделяем от чужих: чужие сервер отдал только те,
+  // на которые мы уже ответили сами.
+  const mine = {};
+  const theirs = {};
+  for (const r of rows || []) {
+    const target = r.user_id === me ? mine : (theirs[r.user_id] ||= {});
+    target[r.question_id] = { text: r.body, at: Date.parse(r.updated_at) || Date.now() };
+  }
+
+  // Имена собеседников
+  const otherIds = (conns || [])
+    .map((c) => (c.a === me ? c.b : c.a))
+    .filter(Boolean);
+  const names = {};
+  if (otherIds.length) {
+    const { data: people } = await supabase
+      .from("profiles")
+      .select("id, name")
+      .in("id", otherIds);
+    for (const p of people || []) names[p.id] = p.name;
+  }
+
+  const connections = (conns || [])
+    .filter((c) => c.status === "active" && c.b)
+    .map((c) => {
+      const other = c.a === me ? c.b : c.a;
+      const reactions = {};
+      for (const r of reacts || []) {
+        if (r.connection_id === c.id && r.user_id === me) reactions[r.question_id] = r.value;
+      }
+      return {
+        id: c.id,
+        name: names[other] || "Партнёр",
+        kind: c.kind,
+        answers: theirs[other] || {},
+        reactions,
+      };
+    });
+
+  return {
+    profile: {
+      name: profile?.name || localName || "",
+      status: profile?.status || "taken",
+      theme: profile?.theme || "cream",
+      lang: profile?.lang || "ru",
+      hiddenBlocks: profile?.hidden_blocks || [],
+      premium: Boolean(profile?.premium),
+      reminder: profile?.reminder || "week",
+    },
+    answers: mine,
+    connections,
+  };
+}
+
+/* ------------------------------------------------------- отправка изменений */
+
+export async function pushAnswer(questionId, text) {
+  if (!isRemote || !me) return;
+  if (!text) {
+    await supabase.from("answers").delete().eq("user_id", me).eq("question_id", questionId);
+    return;
+  }
+  await supabase.from("answers").upsert({
+    user_id: me,
+    question_id: questionId,
+    block: blockOf(questionId),
+    body: text,
+    updated_at: new Date().toISOString(),
+  });
+}
+
+export async function pushProfile(patch) {
+  if (!isRemote || !me) return;
+  const row = {};
+  if ("name" in patch) row.name = patch.name;
+  if ("status" in patch) row.status = patch.status;
+  if ("theme" in patch) row.theme = patch.theme;
+  if ("lang" in patch) row.lang = patch.lang;
+  if ("reminder" in patch) row.reminder = patch.reminder;
+  if ("hiddenBlocks" in patch) row.hidden_blocks = patch.hiddenBlocks;
+  // premium сюда не попадает намеренно: его ставит только вебхук платежей
+  if (Object.keys(row).length) await supabase.from("profiles").update(row).eq("id", me);
+}
+
+export async function pushReaction(connectionId, questionId, value) {
+  if (!isRemote || !me) return;
+  if (!value) {
+    await supabase
+      .from("reactions")
+      .delete()
+      .eq("connection_id", connectionId)
+      .eq("user_id", me)
+      .eq("question_id", questionId);
+    return;
+  }
+  await supabase.from("reactions").upsert({
+    connection_id: connectionId,
+    user_id: me,
+    question_id: questionId,
+    value,
+    updated_at: new Date().toISOString(),
+  });
+}
+
+export function currentUser() {
+  return me;
+}

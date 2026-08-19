@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { c, font, applyPalette } from "./theme.js";
 import { TabBar } from "./ui.jsx";
-import { useStore } from "./store.js";
+import { useStore, actions } from "./store.js";
+import { isRemote } from "./backend.js";
+import { ensureSession, pullAll } from "./sync.js";
 import Questionnaire from "./screens/Questionnaire.jsx";
 import QuestionFlow from "./screens/QuestionFlow.jsx";
 import Connections from "./screens/Connections.jsx";
@@ -22,6 +24,7 @@ const TABS = [
 export default function App() {
   const theme = useStore((s) => s.profile.theme);
   const onboarded = useStore((s) => s.profile.onboarded);
+  const name = useStore((s) => s.profile.name);
   const [tab, setTab] = useState("form");
   const [openBlock, setOpenBlock] = useState(null);
   const [openConn, setOpenConn] = useState(null);
@@ -31,6 +34,21 @@ export default function App() {
   useEffect(() => {
     applyPalette(theme);
   }, [theme]);
+
+  // Первый заход: входим и подтягиваем всё, что есть на сервере.
+  useEffect(() => {
+    if (!isRemote) return;
+    let cancelled = false;
+    (async () => {
+      const uid = await ensureSession();
+      if (!uid || cancelled) return;
+      const remote = await pullAll(name);
+      if (remote && !cancelled) actions.applyRemote(remote);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!onboarded) return <Onboarding />;
 
