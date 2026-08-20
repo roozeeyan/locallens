@@ -23,6 +23,7 @@ const empty = {
   answers: {}, // { [questionId]: { text, at } }
   connections: [], // до подключения Supabase живёт локально
   seen: 0, // отметка времени последнего просмотра ленты
+  sync: "local", // local | connecting | online | error
 };
 
 function load() {
@@ -30,7 +31,12 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return empty;
     const parsed = JSON.parse(raw);
-    return { ...empty, ...parsed, profile: { ...empty.profile, ...(parsed.profile || {}) } };
+    return {
+      ...empty,
+      ...parsed,
+      sync: "local", // состояние связи определяется заново при каждом запуске
+      profile: { ...empty.profile, ...(parsed.profile || {}) },
+    };
   } catch {
     return empty;
   }
@@ -80,6 +86,10 @@ export const actions = {
   completeOnboarding(data) {
     commit({ ...state, profile: { ...state.profile, ...data, onboarded: true } });
     pushProfile(data);
+  },
+
+  setSync(value) {
+    if (state.sync !== value) commit({ ...state, sync: value });
   },
 
   /** Заменяет локальное состояние тем, что пришло с сервера. */

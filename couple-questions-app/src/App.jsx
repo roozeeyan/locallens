@@ -37,13 +37,23 @@ export default function App() {
 
   // Первый заход: входим и подтягиваем всё, что есть на сервере.
   useEffect(() => {
-    if (!isRemote) return;
+    if (!isRemote) {
+      actions.setSync("local");
+      return;
+    }
     let cancelled = false;
+    actions.setSync("connecting");
     (async () => {
       const uid = await ensureSession();
-      if (!uid || cancelled) return;
+      if (cancelled) return;
+      if (!uid) {
+        actions.setSync("error");
+        return;
+      }
       const remote = await pullAll(name);
-      if (remote && !cancelled) actions.applyRemote(remote);
+      if (cancelled) return;
+      if (remote) actions.applyRemote(remote);
+      actions.setSync("online");
     })();
     return () => {
       cancelled = true;

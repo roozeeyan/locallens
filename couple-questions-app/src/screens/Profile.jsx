@@ -9,9 +9,33 @@ const REMINDERS = [
   { id: "off", label: "Выкл" },
 ];
 
+const SYNC = {
+  local: {
+    color: "#9AA0A6",
+    title: "Только на этом устройстве",
+    hint: "Ответы хранятся в браузере. Приглашения и сравнение с партнёром не работают.",
+  },
+  connecting: {
+    color: "#E8B23A",
+    title: "Подключаемся…",
+    hint: "Секунду, забираем ваши данные с сервера.",
+  },
+  online: {
+    color: "#3FA860",
+    title: "Подключено",
+    hint: "Ответы сохраняются на сервере и доступны с любого устройства.",
+  },
+  error: {
+    color: "#D4553F",
+    title: "Сервер не отвечает",
+    hint: "Проверьте интернет и откройте приложение заново. Ответы пока сохраняются локально.",
+  },
+};
+
 export default function Profile({ onPaywall }) {
-  const { profile, answers } = useStore();
+  const { profile, answers, sync } = useStore();
   const mine = totalProgress(answers);
+  const syncInfo = SYNC[sync] || SYNC.local;
 
   return (
     <Screen title="Профиль" subtitle="Настройки, приватность и доступ.">
@@ -155,6 +179,15 @@ export default function Profile({ onPaywall }) {
         )}
       </Card>
 
+      <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <Label>Синхронизация</Label>
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <span style={{ ...dot, background: syncInfo.color }} />
+          <span style={{ font: `700 14px ${font.sans}`, color: c.ink }}>{syncInfo.title}</span>
+        </div>
+        <span style={{ font: `400 12px/1.45 ${font.sans}`, color: c.mute }}>{syncInfo.hint}</span>
+      </Card>
+
       <Button
         full
         variant="secondary"
@@ -213,6 +246,13 @@ const swatch = {
   justifyContent: "center",
   gap: 5,
   cursor: "pointer",
+};
+const dot = {
+  width: 12,
+  height: 12,
+  borderRadius: 999,
+  border: `2px solid ${c.ink}`,
+  flexShrink: 0,
 };
 const swDot = {
   width: 20,
