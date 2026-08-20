@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { c, font } from "../theme.js";
 import { Card, Button, Progress, Label } from "../ui.jsx";
+import { dropConnection } from "../sync.js";
 import {
   useStore,
   actions,
@@ -146,11 +147,16 @@ export default function ConnectionDetail({ connId, onClose }) {
         <Button
           full
           variant="secondary"
-          onClick={() => {
-            if (confirm(`Удалить связь с ${conn.name}? Доступ к вашим ответам пропадёт.`)) {
-              actions.removeConnection(conn.id);
-              onClose();
+          onClick={async () => {
+            if (!confirm(`Удалить связь с ${conn.name}? Вы перестанете видеть ответы друг друга.`))
+              return;
+            const res = await dropConnection(conn.id);
+            if (!res.ok) {
+              alert(`Не получилось: ${res.message}`);
+              return;
             }
+            actions.removeConnection(conn.id);
+            onClose();
           }}
         >
           Удалить связь

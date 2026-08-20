@@ -14,6 +14,7 @@ import Profile from "./screens/Profile.jsx";
 import InviteSheet from "./screens/InviteSheet.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
 import Paywall from "./screens/Paywall.jsx";
+import Legal from "./screens/Legal.jsx";
 
 const TABS = [
   { id: "form", label: "Анкета" },
@@ -31,6 +32,8 @@ export default function App() {
   const [openConn, setOpenConn] = useState(null);
   const [invite, setInvite] = useState(false);
   const [paywall, setPaywall] = useState(null);
+  const [legal, setLegal] = useState(null);
+  const lang = useStore((s) => s.profile.lang);
   const [restoring, setRestoring] = useState(() => hasCloud());
   const started = useRef(false);
 
@@ -118,7 +121,9 @@ export default function App() {
         {tab === "feed" && (
           <Feed onOpenConn={setOpenConn} onGoForm={() => setTab("form")} />
         )}
-        {tab === "me" && <Profile onPaywall={() => setPaywall("blocks")} />}
+        {tab === "me" && (
+          <Profile onPaywall={() => setPaywall("blocks")} onLegal={setLegal} />
+        )}
       </main>
 
       <TabBar tabs={TABS} active={tab} onChange={setTab} />
@@ -135,6 +140,7 @@ export default function App() {
         />
       )}
       {paywall && <Paywall reason={paywall} onClose={() => setPaywall(null)} />}
+      {legal && <Legal initial={legal} lang={lang} onClose={() => setLegal(null)} />}
     </div>
   );
 }

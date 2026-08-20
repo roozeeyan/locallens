@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { c, font, palettes } from "../theme.js";
 import { deleteAccount } from "../sync.js";
+import { exportAnswers } from "../export.js";
 import { Screen, Card, Button, Label } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress } from "../store.js";
 
@@ -33,7 +34,7 @@ const SYNC = {
   },
 };
 
-export default function Profile({ onPaywall }) {
+export default function Profile({ onPaywall, onLegal }) {
   const { profile, answers, sync, syncMsg } = useStore();
   const mine = totalProgress(answers);
   const syncInfo = SYNC[sync] || SYNC.local;
@@ -192,11 +193,34 @@ export default function Profile({ onPaywall }) {
       </Card>
 
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <Label>Документы</Label>
+        <Button full variant="secondary" onClick={() => onLegal("privacy")}>
+          Политика конфиденциальности
+        </Button>
+        <Button full variant="secondary" onClick={() => onLegal("terms")}>
+          Пользовательское соглашение
+        </Button>
+      </Card>
+
+      <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Label>Данные</Label>
         <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>
-          Удаление аккаунта стирает ваши ответы и на сервере. Партнёры перестанут их видеть.
-          Отменить нельзя.
+          Выгрузка соберёт ваши ответы в текст и скопирует его — можно вставить в заметки
+          или отправить себе. Удаление аккаунта стирает ответы и на сервере: партнёры
+          перестанут их видеть. Отменить нельзя.
         </span>
+        <Button
+          full
+          variant="secondary"
+          onClick={async () => {
+            const res = await exportAnswers(answers, profile);
+            if (res.copied) alert("Ответы скопированы. Вставьте их в заметки или в чат.");
+            else if (res.saved) alert("Файл с ответами сохранён.");
+            else alert("Не удалось выгрузить. Попробуйте открыть приложение в браузере.");
+          }}
+        >
+          Выгрузить мои ответы
+        </Button>
         <Button
           full
           variant="secondary"

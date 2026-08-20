@@ -20,6 +20,7 @@ create table if not exists profiles (
   hidden_blocks    text[] not null default '{}',
   premium          boolean not null default false,
   reminder         text not null default 'week' check (reminder in ('twice', 'week', 'off')),
+  consent_at       timestamptz,
   last_reminded_at timestamptz,
   created_at       timestamptz not null default now()
 );
@@ -137,7 +138,7 @@ create policy "профиль: создаю только свой"
 -- только по перечисленным колонкам. Премиум ставит вебхук платежей, который
 -- работает сервисным ключом в обход этих правил.
 revoke update on profiles from authenticated;
-grant update (name, status, theme, lang, hidden_blocks, reminder) on profiles to authenticated;
+grant update (name, status, theme, lang, hidden_blocks, reminder, consent_at) on profiles to authenticated;
 
 -- ============================================ 6. Вспомогательные проверки
 

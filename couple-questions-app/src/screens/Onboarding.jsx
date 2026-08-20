@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { c, font, palettes, applyPalette } from "../theme.js";
 import { Button, Progress, Iso } from "../ui.jsx";
 import { actions, CATEGORIES } from "../store.js";
+import Legal from "./Legal.jsx";
 
 const SITUATIONS = [
   { id: "together", label: "Мы вместе", note: "Пара, брак, отношения" },
@@ -17,13 +18,14 @@ const TOGETHER = [
 ];
 
 const REMINDERS = [
+  { id: "twice", label: "Два раза в неделю" },
   { id: "week", label: "Раз в неделю", note: "Спокойный ритм, хватает на разговор" },
-  { id: "twoweeks", label: "Раз в две недели" },
   { id: "off", label: "Без напоминаний" },
 ];
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
+  const [legal, setLegal] = useState(null);
   const [data, setData] = useState({
     situation: null,
     together: null,
@@ -31,6 +33,7 @@ export default function Onboarding() {
     reminder: "week",
     theme: "cream",
     name: "",
+    consentAt: null,
   });
 
   const set = (patch) => setData((d) => ({ ...d, ...patch }));
@@ -41,6 +44,16 @@ export default function Onboarding() {
     <Cover key="cover" onNext={() => setStep(1)} />,
 
     // 1
+    <Consent
+      key="consent"
+      onOpen={setLegal}
+      onAgree={() => {
+        set({ consentAt: Date.now() });
+        setStep(2);
+      }}
+    />,
+
+    // 2
     <Choice
       key="situation"
       title="С чего начнём?"
@@ -48,11 +61,11 @@ export default function Onboarding() {
       value={data.situation}
       onPick={(id) => {
         set({ situation: id });
-        setStep(id === "choosing" ? 3 : 2);
+        setStep(id === "choosing" ? 4 : 3);
       }}
     />,
 
-    // 2
+    // 3
     <Choice
       key="together"
       title="Как давно вы вместе?"
@@ -60,11 +73,11 @@ export default function Onboarding() {
       value={data.together}
       onPick={(id) => {
         set({ together: id });
-        setStep(3);
+        setStep(4);
       }}
     />,
 
-    // 3
+    // 4
     <Multi
       key="topics"
       title="Что важнее обсудить?"
@@ -75,27 +88,27 @@ export default function Onboarding() {
       }))}
       value={data.topics}
       onChange={(topics) => set({ topics })}
-      onNext={() => setStep(4)}
-    />,
-
-    // 4
-    <Promise
-      key="p1"
-      title="Каждый отвечает сам, со своего телефона"
-      body="Никто не подсматривает и не подстраивается. Вы видите, насколько заполнена анкета у другого — но не сами ответы."
       onNext={() => setStep(5)}
     />,
 
     // 5
     <Promise
-      key="p2"
-      shape="circle"
-      title="Ответы открываются только по взаимности"
-      body="Ответ другого человека вы увидите, когда ответите на тот же вопрос сами. Это правило работает на уровне базы данных, а не просто в интерфейсе."
+      key="p1"
+      title="Каждый отвечает сам, со своего телефона"
+      body="Никто не подсматривает и не подстраивается. Вы видите, насколько заполнена анкета у другого — но не сами ответы."
       onNext={() => setStep(6)}
     />,
 
     // 6
+    <Promise
+      key="p2"
+      shape="circle"
+      title="Ответы открываются только по взаимности"
+      body="Ответ другого человека вы увидите, когда ответите на тот же вопрос сами. Это правило работает на уровне базы данных, а не просто в интерфейсе."
+      onNext={() => setStep(7)}
+    />,
+
+    // 7
     <Choice
       key="reminder"
       title="Как часто напоминать?"
@@ -104,11 +117,11 @@ export default function Onboarding() {
       value={data.reminder}
       onPick={(id) => {
         set({ reminder: id });
-        setStep(7);
+        setStep(8);
       }}
     />,
 
-    // 7
+    // 8
     <Themes
       key="theme"
       value={data.theme}
@@ -116,13 +129,13 @@ export default function Onboarding() {
         set({ theme: id });
         applyPalette(id);
       }}
-      onNext={() => setStep(8)}
+      onNext={() => setStep(9)}
     />,
 
-    // 8
-    <Demo key="demo" onNext={() => setStep(9)} />,
-
     // 9
+    <Demo key="demo" onNext={() => setStep(10)} />,
+
+    // 10
     <Name
       key="name"
       value={data.name}
@@ -132,14 +145,14 @@ export default function Onboarding() {
   ];
 
   const total = steps.length - 1;
-  const shown = skipTogether && step > 2 ? step - 1 : step;
+  const shown = skipTogether && step > 3 ? step - 1 : step;
 
   return (
     <div style={wrap}>
       {step > 0 && (
         <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", gap: 10 }}>
           <button
-            onClick={() => setStep((s) => (skipTogether && s === 3 ? 1 : Math.max(0, s - 1)))}
+            onClick={() => setStep((s) => (skipTogether && s === 4 ? 2 : Math.max(0, s - 1)))}
             style={back}
             aria-label="Назад"
           >
@@ -151,6 +164,44 @@ export default function Onboarding() {
         </div>
       )}
       {steps[step]}
+      {legal && <Legal initial={legal} onClose={() => setLegal(null)} />}
+    </div>
+  );
+}
+
+function Consent({ onAgree, onOpen }) {
+  const [ok, setOk] = useState(false);
+  return (
+    <div style={page}>
+      <h1 style={h1}>Прежде чем начать</h1>
+      <p style={lede}>
+        Вопросы касаются близости, денег и семейных конфликтов. Сервис для совершеннолетних.
+      </p>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 20 }}>
+        <span style={ageBadge}>18+</span>
+        <button onClick={() => setOk(!ok)} style={row(ok)}>
+          <span style={{ flex: 1, textAlign: "left", font: `600 14px/1.4 ${font.sans}` }}>
+            Мне есть 18 лет. Я принимаю соглашение и политику конфиденциальности.
+          </span>
+          <span style={box(ok)} />
+        </button>
+
+        <div style={{ display: "flex", gap: 14 }}>
+          <button onClick={() => onOpen("terms")} style={linkBtn}>
+            Соглашение
+          </button>
+          <button onClick={() => onOpen("privacy")} style={linkBtn}>
+            Конфиденциальность
+          </button>
+        </div>
+      </div>
+
+      <div style={footer}>
+        <Button full onClick={onAgree} disabled={!ok}>
+          Согласен, дальше
+        </Button>
+      </div>
     </div>
   );
 }
@@ -305,7 +356,7 @@ function Demo({ onNext }) {
         </p>
         <DemoAnswer who="Вы" accent={c.sage} text="Что мы выбираем друг друга каждый день." />
         <DemoAnswer
-          who="Артур"
+          who="Владимир"
           accent={c.coral}
           text="Верность — это про выбор, а не про запрет."
         />
@@ -472,6 +523,25 @@ const box = (active) => ({
   border: `2px solid ${c.ink}`,
   background: active ? c.ink : "transparent",
 });
+const ageBadge = {
+  alignSelf: "flex-start",
+  background: c.coral,
+  border: `2px solid ${c.ink}`,
+  borderRadius: 999,
+  boxShadow: `0 2px 0 ${c.ink}`,
+  padding: "5px 14px",
+  font: `700 14px ${font.mono}`,
+  color: c.ink,
+};
+const linkBtn = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  font: `600 13px ${font.sans}`,
+  color: c.ink,
+  textDecoration: "underline",
+  cursor: "pointer",
+};
 const demoCard = {
   background: c.paper,
   border: `2px solid ${c.ink}`,

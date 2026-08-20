@@ -238,6 +238,7 @@ export async function pullAll(localName) {
       hiddenBlocks: profile?.hidden_blocks || [],
       premium: Boolean(profile?.premium),
       reminder: profile?.reminder || "week",
+      consentAt: profile?.consent_at ? Date.parse(profile.consent_at) : null,
     },
     answers: mine,
     connections,
@@ -270,6 +271,9 @@ export async function pushProfile(patch) {
   if ("lang" in patch) row.lang = patch.lang;
   if ("reminder" in patch) row.reminder = patch.reminder;
   if ("hiddenBlocks" in patch) row.hidden_blocks = patch.hiddenBlocks;
+  if ("consentAt" in patch && patch.consentAt) {
+    row.consent_at = new Date(patch.consentAt).toISOString();
+  }
   // premium сюда не попадает намеренно: его ставит только вебхук платежей
   if (Object.keys(row).length) await supabase.from("profiles").update(row).eq("id", me);
 }
@@ -292,6 +296,13 @@ export async function pushReaction(connectionId, questionId, value) {
     value,
     updated_at: new Date().toISOString(),
   });
+}
+
+/** Разрыв связи: пара расходится, но оба остаются в приложении. */
+export async function dropConnection(id) {
+  if (!isRemote || !me) return { ok: true };
+  const { error } = await supabase.from("connections").delete().eq("id", id);
+  return error ? { ok: false, message: error.message } : { ok: true };
 }
 
 /**

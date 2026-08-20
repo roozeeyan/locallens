@@ -21,6 +21,7 @@ const empty = {
     topics: [], // блоки, с которых хочет начать
     reminder: "week", // twice | week | off
     lang: "ru", // ru | en
+    consentAt: null, // когда принято соглашение
   },
   answers: {}, // { [questionId]: { text, at } }
   connections: [], // до подключения Supabase живёт локально
