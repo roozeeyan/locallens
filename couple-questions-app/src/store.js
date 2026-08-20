@@ -19,7 +19,7 @@ const empty = {
     situation: null, // together | choosing | engaged
     together: null, // срок отношений
     topics: [], // блоки, с которых хочет начать
-    reminder: "week", // week | twoweeks | off
+    reminder: "week", // twice | week | off
     lang: "ru", // ru | en
   },
   answers: {}, // { [questionId]: { text, at } }
@@ -34,12 +34,14 @@ function load() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return empty;
     const parsed = JSON.parse(raw);
+    const profile = { ...empty.profile, ...(parsed.profile || {}) };
+    if (profile.reminder === "twoweeks") profile.reminder = "week"; // старый вариант убран
     return {
       ...empty,
       ...parsed,
       sync: "local", // состояние связи определяется заново при каждом запуске
       syncMsg: "",
-      profile: { ...empty.profile, ...(parsed.profile || {}) },
+      profile,
     };
   } catch {
     return empty;

@@ -134,6 +134,19 @@ export async function createInviteRemote(kind, localName) {
   if (!me) return { ok: false, message: "Нет входа на сервер. Откройте приложение заново." };
 
   await ensureProfile(localName);
+
+  // Одно неиспользованное приглашение на тип связи: иначе каждое нажатие
+  // плодит новую ссылку, и человек не понимает, какую отправлять.
+  const { data: waiting } = await supabase
+    .from("connections")
+    .select("invite_code")
+    .eq("a", me)
+    .eq("kind", kind)
+    .eq("status", "pending")
+    .limit(1)
+    .maybeSingle();
+  if (waiting?.invite_code) return { ok: true, code: waiting.invite_code };
+
   const { data, error } = await supabase
     .from("connections")
     .insert({ a: me, kind, invite_code: makeInviteCode(), status: "pending" })

@@ -4,8 +4,8 @@ import { Screen, Card, Button, Label } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress } from "../store.js";
 
 const REMINDERS = [
+  { id: "twice", label: "2 раза в неделю" },
   { id: "week", label: "Раз в неделю" },
-  { id: "twoweeks", label: "Раз в 2 недели" },
   { id: "off", label: "Выкл" },
 ];
 

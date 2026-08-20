@@ -231,7 +231,7 @@ export const s = {
     position: "fixed",
     left: 0,
     right: 0,
-    bottom: "calc(10px + env(safe-area-inset-bottom))",
+    bottom: "calc(4px + env(safe-area-inset-bottom))",
     width: "min(100% - 24px, 536px)",
     margin: "0 auto",
     zIndex: 20,

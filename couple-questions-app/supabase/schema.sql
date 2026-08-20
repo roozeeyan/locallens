@@ -19,7 +19,7 @@ create table if not exists profiles (
   lang             text not null default 'ru' check (lang in ('ru', 'en')),
   hidden_blocks    text[] not null default '{}',
   premium          boolean not null default false,
-  reminder         text not null default 'week' check (reminder in ('week', 'twoweeks', 'off')),
+  reminder         text not null default 'week' check (reminder in ('twice', 'week', 'off')),
   last_reminded_at timestamptz,
   created_at       timestamptz not null default now()
 );
