@@ -3,8 +3,8 @@
 // Пока ключей Supabase нет, все функции молча ничего не делают и приложение
 // работает локально. Как только ключи появились — состояние подтягивается
 // с сервера и каждое изменение уходит туда же.
-import { isRemote, supabase, makeInviteCode } from "./backend.js";
-import { cloudGet, cloudSet, hasCloud } from "./cloud.js";
+import { isRemote, supabase, makeInviteCode, serverUrl, anonKey } from "./backend.js";
+import { hasCloud, cloudGet, cloudSet } from "./cloud.js";
 import { QUESTIONS } from "./data.js";
 import { DECK_QUESTIONS } from "./decks.js";
 
@@ -21,10 +21,6 @@ export function lastSyncError() {
   return lastError;
 }
 
-/**
- * Вход. Сначала пробуем Telegram — если серверная функция развёрнута.
- * Если её нет, входим анонимно: для этого не нужен ни токен бота, ни консоль.
- */
 /** Кладёт вход в облако Telegram, чтобы при следующем запуске узнать человека. */
 async function rememberSession() {
   if (!hasCloud()) return;
@@ -54,6 +50,10 @@ async function restoreSession() {
   }
 }
 
+/**
+ * Вход. Сначала продолжаем прошлую сессию, затем пробуем Telegram-функцию,
+ * и только потом входим анонимно — для этого не нужен ни токен бота, ни консоль.
+ */
 export async function ensureSession() {
   if (!isRemote) return null;
 
@@ -73,13 +73,9 @@ export async function ensureSession() {
   const initData = window.Telegram?.WebApp?.initData;
   if (initData) {
     try {
-      const url = import.meta.env.VITE_SUPABASE_URL;
-      const res = await fetch(`${url}/functions/v1/telegram-auth`, {
+      const res = await fetch(`${serverUrl}/functions/v1/telegram-auth`, {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
+        headers: { "content-type": "application/json", apikey: anonKey },
         body: JSON.stringify({ initData }),
       });
       if (res.ok) {

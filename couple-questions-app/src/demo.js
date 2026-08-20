@@ -23,5 +23,5 @@ export function demoConnection() {
   for (const [id, text] of Object.entries(ANSWERS)) {
     answers[Number(id)] = { text, at };
   }
-  return { name: "Артур", kind: "partner", answers };
+  return { name: "Владимир", kind: "partner", answers };
 }

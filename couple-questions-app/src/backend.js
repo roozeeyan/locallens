@@ -4,10 +4,27 @@
 // ровно как сейчас. Как только ключи появятся, те же вызовы уходят на сервер.
 import { createClient } from "@supabase/supabase-js";
 
-const URL = import.meta.env.VITE_SUPABASE_URL;
-const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY;
+/**
+ * Адрес проекта должен быть голым: https://xxxx.supabase.co
+ * Лишняя косая черта или путь в конце ломают все запросы к серверу
+ * с ошибкой «Invalid path specified in request URL», поэтому чистим сами.
+ */
+function cleanUrl(value) {
+  if (!value) return value;
+  const trimmed = value.trim();
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    return new globalThis.URL(withScheme).origin;
+  } catch {
+    return withScheme.replace(/\/+$/, "");
+  }
+}
+
+const URL = cleanUrl(import.meta.env.VITE_SUPABASE_URL);
+const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
 export const isRemote = Boolean(URL && ANON);
+export { URL as serverUrl, ANON as anonKey };
 
 export const supabase = isRemote
   ? createClient(URL, ANON, { auth: { persistSession: true, autoRefreshToken: true } })
