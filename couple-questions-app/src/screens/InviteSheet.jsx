@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { c, font } from "../theme.js";
 import { Card, Button, Label } from "../ui.jsx";
-import { isRemote, makeInviteCode, createInvite, acceptInvite } from "../backend.js";
+import { isRemote, makeInviteCode } from "../backend.js";
+import { createInviteRemote, joinByCode } from "../sync.js";
+import { useStore } from "../store.js";
 
 const BOT = "relationship_game_by_roo_bot";
 
 export default function InviteSheet({ onClose, onAccepted }) {
+  const name = useStore((s) => s.profile.name);
   const [kind, setKind] = useState("partner");
   const [code, setCode] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -18,9 +21,9 @@ export default function InviteSheet({ onClose, onAccepted }) {
     setBusy(true);
     setNote("");
     if (isRemote) {
-      const conn = await createInvite(kind);
-      setCode(conn ? conn.invite_code : null);
-      if (!conn) setNote("Не удалось создать приглашение. Попробуйте ещё раз.");
+      const res = await createInviteRemote(kind, name);
+      if (res.ok) setCode(res.code);
+      else setNote(res.message);
     } else {
       setCode(makeInviteCode());
     }
@@ -44,7 +47,7 @@ export default function InviteSheet({ onClose, onAccepted }) {
       return;
     }
     setBusy(true);
-    const res = await acceptInvite(v);
+    const res = await joinByCode(v, name);
     setBusy(false);
     if (res.ok) {
       onAccepted?.();
@@ -123,8 +126,7 @@ export default function InviteSheet({ onClose, onAccepted }) {
             <Label>Сервер не подключён</Label>
             <span style={{ font: `400 13px/1.45 ${font.sans}`, color: c.ink }}>
               Ссылку можно создать и посмотреть, но принять приглашение пока нельзя — для
-              этого нужен общий сервер. Он подключается ключами Supabase, инструкция лежит
-              в файле supabase/README.md.
+              этого нужен общий сервер.
             </span>
           </Card>
         )}

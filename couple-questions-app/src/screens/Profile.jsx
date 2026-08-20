@@ -33,7 +33,7 @@ const SYNC = {
 };
 
 export default function Profile({ onPaywall }) {
-  const { profile, answers, sync } = useStore();
+  const { profile, answers, sync, syncMsg } = useStore();
   const mine = totalProgress(answers);
   const syncInfo = SYNC[sync] || SYNC.local;
 
@@ -186,6 +186,7 @@ export default function Profile({ onPaywall }) {
           <span style={{ font: `700 14px ${font.sans}`, color: c.ink }}>{syncInfo.title}</span>
         </div>
         <span style={{ font: `400 12px/1.45 ${font.sans}`, color: c.mute }}>{syncInfo.hint}</span>
+        {syncMsg && <div style={errBox}>{syncMsg}</div>}
       </Card>
 
       <Button
@@ -246,6 +247,15 @@ const swatch = {
   justifyContent: "center",
   gap: 5,
   cursor: "pointer",
+};
+const errBox = {
+  background: c.bg,
+  border: `2px solid ${c.ink}`,
+  borderRadius: 10,
+  padding: "8px 10px",
+  font: `500 11.5px/1.4 ${font.mono}`,
+  color: c.ink,
+  wordBreak: "break-word",
 };
 const dot = {
   width: 12,

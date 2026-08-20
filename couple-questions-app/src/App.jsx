@@ -3,7 +3,7 @@ import { c, font, applyPalette } from "./theme.js";
 import { TabBar } from "./ui.jsx";
 import { useStore, actions } from "./store.js";
 import { isRemote } from "./backend.js";
-import { ensureSession, pullAll } from "./sync.js";
+import { ensureSession, pullAll, joinByCode, lastSyncError } from "./sync.js";
 import Questionnaire from "./screens/Questionnaire.jsx";
 import QuestionFlow from "./screens/QuestionFlow.jsx";
 import Connections from "./screens/Connections.jsx";
@@ -47,13 +47,19 @@ export default function App() {
       const uid = await ensureSession();
       if (cancelled) return;
       if (!uid) {
-        actions.setSync("error");
+        actions.setSync("error", lastSyncError());
         return;
       }
+
+      // Ссылка вида t.me/бот?startapp=КОД — принимаем приглашение сразу.
+      const code = inviteCodeFromLink();
+      if (code) await joinByCode(code, name);
+      if (cancelled) return;
+
       const remote = await pullAll(name);
       if (cancelled) return;
       if (remote) actions.applyRemote(remote);
-      actions.setSync("online");
+      actions.setSync(remote?.ok ? "online" : "error", remote?.ok ? "" : lastSyncError());
     })();
     return () => {
       cancelled = true;
@@ -85,10 +91,26 @@ export default function App() {
 
       {openBlock && <QuestionFlow catId={openBlock} onClose={() => setOpenBlock(null)} />}
       {openConn && <ConnectionDetail connId={openConn} onClose={() => setOpenConn(null)} />}
-      {invite && <InviteSheet onClose={() => setInvite(false)} />}
+      {invite && (
+        <InviteSheet
+          onClose={() => setInvite(false)}
+          onAccepted={async () => {
+            const remote = await pullAll(name);
+            if (remote) actions.applyRemote(remote);
+          }}
+        />
+      )}
       {paywall && <Paywall reason={paywall} onClose={() => setPaywall(null)} />}
     </div>
   );
+}
+
+/** Код приглашения приходит либо от Telegram, либо из адреса страницы. */
+function inviteCodeFromLink() {
+  const fromTg = window.Telegram?.WebApp?.initDataUnsafe?.start_param;
+  if (fromTg) return fromTg;
+  const params = new URLSearchParams(window.location.search);
+  return params.get("startapp") || params.get("invite") || null;
 }
 
 const shell = {

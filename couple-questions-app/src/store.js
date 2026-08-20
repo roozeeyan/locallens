@@ -24,6 +24,7 @@ const empty = {
   connections: [], // до подключения Supabase живёт локально
   seen: 0, // отметка времени последнего просмотра ленты
   sync: "local", // local | connecting | online | error
+  syncMsg: "", // текст ошибки сервера, если она была
 };
 
 function load() {
@@ -35,6 +36,7 @@ function load() {
       ...empty,
       ...parsed,
       sync: "local", // состояние связи определяется заново при каждом запуске
+      syncMsg: "",
       profile: { ...empty.profile, ...(parsed.profile || {}) },
     };
   } catch {
@@ -88,8 +90,9 @@ export const actions = {
     pushProfile(data);
   },
 
-  setSync(value) {
-    if (state.sync !== value) commit({ ...state, sync: value });
+  setSync(value, message = "") {
+    if (state.sync === value && state.syncMsg === message) return;
+    commit({ ...state, sync: value, syncMsg: message });
   },
 
   /** Заменяет локальное состояние тем, что пришло с сервера. */

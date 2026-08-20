@@ -3,7 +3,7 @@
 // Пока ключей Supabase нет, все функции молча ничего не делают и приложение
 // работает локально. Как только ключи появились — состояние подтягивается
 // с сервера и каждое изменение уходит туда же.
-import { isRemote, supabase } from "./backend.js";
+import { isRemote, supabase, makeInviteCode } from "./backend.js";
 import { QUESTIONS } from "./data.js";
 import { DECK_QUESTIONS } from "./decks.js";
 
@@ -11,6 +11,12 @@ const ALL = [...QUESTIONS, ...DECK_QUESTIONS];
 const blockOf = (qid) => ALL.find((q) => q.id === qid)?.cat || "unknown";
 
 let me = null;
+let lastError = "";
+
+/** Текст последней ошибки сервера — показывается в профиле. */
+export function lastSyncError() {
+  return lastError;
+}
 
 /**
  * Вход. Сначала пробуем Telegram — если серверная функция развёрнута.
@@ -55,10 +61,19 @@ export async function ensureSession() {
     }
   }
 
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (error) return null;
-  me = data.user?.id || null;
-  return me;
+  try {
+    const { data, error } = await supabase.auth.signInAnonymously();
+    if (error) {
+      lastError = error.message || "вход отклонён сервером";
+      return null;
+    }
+    me = data.user?.id || null;
+    if (!me) lastError = "сервер не вернул пользователя";
+    return me;
+  } catch (e) {
+    lastError = e?.message || "сервер недоступен";
+    return null;
+  }
 }
 
 /** Создаёт строку профиля при первом входе. */
@@ -68,8 +83,37 @@ async function ensureProfile(name) {
   if (data) return data;
 
   const row = { id: me, name: name || "" };
-  const { data: created } = await supabase.from("profiles").insert(row).select().single();
+  const { data: created, error } = await supabase.from("profiles").insert(row).select().single();
+  if (error) lastError = error.message;
   return created || row;
+}
+
+/**
+ * Создаёт приглашение. Профиль создаётся здесь же: без строки в profiles
+ * база не примет связь.
+ */
+export async function createInviteRemote(kind, localName) {
+  if (!isRemote) return { ok: false, message: "Сервер не подключён." };
+  if (!me) return { ok: false, message: "Нет входа на сервер. Откройте приложение заново." };
+
+  await ensureProfile(localName);
+  const { data, error } = await supabase
+    .from("connections")
+    .insert({ a: me, kind, invite_code: makeInviteCode(), status: "pending" })
+    .select()
+    .single();
+
+  return error ? { ok: false, message: error.message } : { ok: true, code: data.invite_code };
+}
+
+/** Принимает приглашение по коду. */
+export async function joinByCode(code, localName) {
+  if (!isRemote) return { ok: false, message: "Сервер не подключён." };
+  if (!me) return { ok: false, message: "Нет входа на сервер. Откройте приложение заново." };
+
+  await ensureProfile(localName);
+  const { data, error } = await supabase.rpc("accept_invite", { code });
+  return error ? { ok: false, message: error.message } : { ok: true, connection: data };
 }
 
 /** Забирает с сервера всё, что положено видеть. */
@@ -78,11 +122,18 @@ export async function pullAll(localName) {
 
   const profile = await ensureProfile(localName);
 
-  const [{ data: conns }, { data: rows }, { data: reacts }] = await Promise.all([
+  const [
+    { data: conns, error: connErr },
+    { data: rows, error: ansErr },
+    { data: reacts },
+  ] = await Promise.all([
     supabase.from("connections").select("id, a, b, kind, invite_code, status"),
     supabase.from("answers").select("user_id, question_id, body, updated_at"),
     supabase.from("reactions").select("connection_id, user_id, question_id, value"),
   ]);
+
+  const failed = connErr || ansErr;
+  if (failed) lastError = failed.message;
 
   // Свои ответы отделяем от чужих: чужие сервер отдал только те,
   // на которые мы уже ответили сами.
@@ -124,6 +175,7 @@ export async function pullAll(localName) {
     });
 
   return {
+    ok: !failed,
     profile: {
       name: profile?.name || localName || "",
       status: profile?.status || "taken",

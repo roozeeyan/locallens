@@ -4,6 +4,7 @@ import { Screen, Card, Button, Progress, Label } from "../ui.jsx";
 import { useStore, actions, totalProgress, pending, matchStats } from "../store.js";
 import { demoConnection } from "../demo.js";
 import { canAddConnection } from "../limits.js";
+import { isRemote } from "../backend.js";
 
 export default function Connections({ onOpen, onInvite, onPaywall }) {
   const { answers, connections, profile } = useStore();
@@ -25,13 +26,21 @@ export default function Connections({ onOpen, onInvite, onPaywall }) {
           <Button full onClick={onInvite}>
             Пригласить
           </Button>
-          <Button full variant="secondary" onClick={() => actions.addConnection(demoConnection())}>
-            Добавить демо-связь
-          </Button>
-          <span style={{ font: `400 12px/1.4 ${font.sans}`, color: c.mute }}>
-            Приглашение по ссылке появится вместе с бэкендом. Пока это демо-данные, чтобы
-            посмотреть, как всё устроено.
-          </span>
+          {!isRemote && (
+            <>
+              <Button
+                full
+                variant="secondary"
+                onClick={() => actions.addConnection(demoConnection())}
+              >
+                Добавить демо-связь
+              </Button>
+              <span style={{ font: `400 12px/1.4 ${font.sans}`, color: c.mute }}>
+                Сервер не подключён, поэтому приглашение по ссылке пока не сработает. Демо-связь
+                показывает, как всё будет выглядеть.
+              </span>
+            </>
+          )}
         </Card>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
