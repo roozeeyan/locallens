@@ -28,7 +28,7 @@ create table if not exists connections (
   id          uuid primary key default gen_random_uuid(),
   a           uuid not null references profiles(id) on delete cascade,
   b           uuid references profiles(id) on delete cascade,
-  kind        text not null default 'candidate' check (kind in ('partner', 'candidate')),
+  kind        text not null default 'candidate' check (kind in ('partner', 'candidate', 'friend')),
   invite_code text unique not null,
   status      text not null default 'pending' check (status in ('pending', 'active')),
   created_at  timestamptz not null default now(),
@@ -289,3 +289,34 @@ $$;
 
 revoke all on function accept_invite(text) from public;
 grant execute on function accept_invite(text) to authenticated;
+
+-- ============================================== 10. Удаление своего аккаунта
+
+-- Право на удаление: человек стирает свой профиль, а вместе с ним по цепочке
+-- ответы, связи, отметки и платежи. После этого партнёры перестают видеть
+-- его ответы. То, что они успели выгрузить в файл, остаётся у них.
+create or replace function delete_my_account()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid uuid := auth.uid();
+begin
+  if uid is null then
+    raise exception 'Нет входа';
+  end if;
+
+  delete from profiles where id = uid;
+
+  begin
+    delete from auth.users where id = uid;
+  exception when insufficient_privilege then
+    null; -- запись входа без личных данных; её удалит администратор
+  end;
+end;
+$$;
+
+revoke all on function delete_my_account() from public;
+grant execute on function delete_my_account() to authenticated;
