@@ -135,18 +135,8 @@ export async function createInviteRemote(kind, localName) {
 
   await ensureProfile(localName);
 
-  // Одно неиспользованное приглашение на тип связи: иначе каждое нажатие
-  // плодит новую ссылку, и человек не понимает, какую отправлять.
-  const { data: waiting } = await supabase
-    .from("connections")
-    .select("invite_code")
-    .eq("a", me)
-    .eq("kind", kind)
-    .eq("status", "pending")
-    .limit(1)
-    .maybeSingle();
-  if (waiting?.invite_code) return { ok: true, code: waiting.invite_code };
-
+  // Каждое нажатие даёт новую ссылку: одну можно отправить одному человеку,
+  // и приглашать следующих, не дожидаясь, пока предыдущий примет.
   const { data, error } = await supabase
     .from("connections")
     .insert({ a: me, kind, invite_code: makeInviteCode(), status: "pending" })
@@ -177,7 +167,7 @@ export async function pullAll(localName) {
     { data: rows, error: ansErr },
     { data: reacts },
   ] = await Promise.all([
-    supabase.from("connections").select("id, a, b, kind, invite_code, status"),
+    supabase.from("connections").select("id, a, b, kind, invite_code, status, created_at"),
     supabase.from("answers").select("user_id, question_id, body, updated_at"),
     supabase.from("reactions").select("connection_id, user_id, question_id, value"),
   ]);
@@ -224,8 +214,22 @@ export async function pullAll(localName) {
       };
     });
 
+  // История приглашений: всё, что отправила я сама, принятое и ещё ждущее.
+  const invites = (conns || [])
+    .filter((c) => c.a === me)
+    .map((c) => ({
+      id: c.id,
+      code: c.invite_code,
+      kind: c.kind,
+      accepted: c.status === "active" && Boolean(c.b),
+      name: c.b ? names[c.b] || "" : "",
+      at: Date.parse(c.created_at) || 0,
+    }))
+    .sort((x, y) => y.at - x.at);
+
   return {
     ok: !failed,
+    invites,
     profile: {
       name: profile?.name || localName || "",
       status: profile?.status || "taken",
@@ -288,6 +292,21 @@ export async function pushReaction(connectionId, questionId, value) {
     value,
     updated_at: new Date().toISOString(),
   });
+}
+
+/**
+ * Полное удаление: стирает профиль, ответы, связи и отметки, а затем сам
+ * аккаунт. После этого партнёры перестают видеть ответы этого человека —
+ * то, что они успели выгрузить в PDF, остаётся у них на устройстве.
+ */
+export async function deleteAccount() {
+  if (!isRemote || !me) return { ok: true }; // локальный режим — стирать нечего
+  const { error } = await supabase.rpc("delete_my_account");
+  if (error) return { ok: false, message: error.message };
+  await supabase.auth.signOut();
+  if (hasCloud()) await cloudSet(SESSION_KEY, "");
+  me = null;
+  return { ok: true };
 }
 
 export function currentUser() {

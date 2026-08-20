@@ -5,6 +5,8 @@
 // колоды можно было собрать и посмотреть. Заменяются целиком.
 //
 // Нумерация с 1001, чтобы не пересекаться с основным курсом.
+import { FRIEND_DECK, FRIEND_QUESTIONS } from "./friends.js";
+
 export const DECKS = [
   {
     id: "firstdate",
@@ -84,10 +86,12 @@ export const DECKS = [
   },
 ];
 
-export const DECK_QUESTIONS = DECKS.flatMap((d) =>
-  d.questions.map((q) => ({ ...q, cat: d.id }))
-);
+export const DECK_QUESTIONS = [
+  ...DECKS.flatMap((d) => d.questions.map((q) => ({ ...q, cat: d.id }))),
+  ...FRIEND_QUESTIONS,
+];
 
 export function findDeck(id) {
+  if (id === FRIEND_DECK.id) return FRIEND_DECK;
   return DECKS.find((d) => d.id === id) || null;
 }

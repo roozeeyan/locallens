@@ -24,6 +24,7 @@ const empty = {
   },
   answers: {}, // { [questionId]: { text, at } }
   connections: [], // до подключения Supabase живёт локально
+  invites: [], // отправленные мной приглашения: принятые и ожидающие
   seen: 0, // отметка времени последнего просмотра ленты
   sync: "local", // local | connecting | online | error
   syncMsg: "", // текст ошибки сервера, если она была
@@ -143,12 +144,13 @@ export const actions = {
   },
 
   /** Заменяет локальное состояние тем, что пришло с сервера. */
-  applyRemote({ profile, answers, connections }) {
+  applyRemote({ profile, answers, connections, invites }) {
     commit({
       ...state,
       profile: { ...state.profile, ...profile },
       answers,
       connections,
+      invites: invites || [],
     });
   },
 

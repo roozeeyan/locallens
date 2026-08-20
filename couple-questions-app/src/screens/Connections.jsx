@@ -6,10 +6,14 @@ import { demoConnection } from "../demo.js";
 import { canAddConnection } from "../limits.js";
 import { isRemote } from "../backend.js";
 
+export const KIND_LABEL = { partner: "партнёр", candidate: "кандидат", friend: "друг" };
+
 export default function Connections({ onOpen, onInvite, onPaywall }) {
-  const { answers, connections, profile } = useStore();
+  const { answers, connections, profile, invites } = useStore();
   const canAdd = canAddConnection(profile, connections);
   const mine = totalProgress(answers);
+  const sent = invites.length;
+  const joined = invites.filter((i) => i.accepted).length;
 
   return (
     <Screen
@@ -59,7 +63,7 @@ export default function Connections({ onOpen, onInvite, onPaywall }) {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ font: `700 15px ${font.sans}`, color: c.ink }}>{conn.name}</div>
                       <div style={{ font: `400 12px ${font.sans}`, color: c.mute }}>
-                        {conn.kind === "partner" ? "партнёр" : "кандидат"}
+                        {KIND_LABEL[conn.kind] || "связь"}
                         {m.pct !== null && ` · совпадений ${Math.round(m.pct)}%`}
                       </div>
                     </div>
@@ -83,7 +87,39 @@ export default function Connections({ onOpen, onInvite, onPaywall }) {
           })}
         </div>
       )}
+
+      {isRemote && sent > 0 && (
+        <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+          <Label>Мои приглашения</Label>
+          <div style={{ display: "flex", gap: 9 }}>
+            <Stat value={sent} caption="отправлено" />
+            <Stat value={joined} caption="присоединились" />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {invites.map((inv) => (
+              <div key={inv.id} style={inviteRow}>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  {inv.accepted ? inv.name || "Без имени" : "Ждёт ответа"}
+                  <span style={{ color: c.mute }}> · {KIND_LABEL[inv.kind] || "связь"}</span>
+                </span>
+                <span style={{ font: `600 11px ${font.mono}`, color: c.mute }}>
+                  {inv.at ? new Date(inv.at).toLocaleDateString("ru-RU") : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
     </Screen>
+  );
+}
+
+function Stat({ value, caption }) {
+  return (
+    <div style={statBox}>
+      <div style={{ font: `700 22px ${font.serif}`, color: c.ink }}>{value}</div>
+      <div style={{ font: `400 11.5px ${font.sans}`, color: c.mute }}>{caption}</div>
+    </div>
   );
 }
 
@@ -130,6 +166,22 @@ function Tag({ children, warm }) {
   );
 }
 
+const statBox = {
+  flex: 1,
+  background: c.bg,
+  border: `2px solid ${c.ink}`,
+  borderRadius: 12,
+  padding: "9px 12px",
+};
+const inviteRow = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  font: `600 12.5px ${font.sans}`,
+  color: c.ink,
+  borderTop: `1px solid ${c.mute}33`,
+  paddingTop: 6,
+};
 const avatar = {
   width: 38,
   height: 38,

@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { c, font, palettes } from "../theme.js";
+import { deleteAccount } from "../sync.js";
 import { Screen, Card, Button, Label } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress } from "../store.js";
 
@@ -36,6 +37,7 @@ export default function Profile({ onPaywall }) {
   const { profile, answers, sync, syncMsg } = useStore();
   const mine = totalProgress(answers);
   const syncInfo = SYNC[sync] || SYNC.local;
+  const [busy, setBusy] = useState(false);
 
   return (
     <Screen title="Профиль" subtitle="Настройки, приватность и доступ.">
@@ -189,17 +191,41 @@ export default function Profile({ onPaywall }) {
         {syncMsg && <div style={errBox}>{syncMsg}</div>}
       </Card>
 
-      <Button
-        full
-        variant="secondary"
-        onClick={() => {
-          if (confirm("Стереть все ответы, связи и настройки? Отменить будет нельзя.")) {
-            actions.reset();
-          }
-        }}
-      >
-        Сбросить все данные
-      </Button>
+      <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <Label>Данные</Label>
+        <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>
+          Удаление аккаунта стирает ваши ответы и на сервере. Партнёры перестанут их видеть.
+          Отменить нельзя.
+        </span>
+        <Button
+          full
+          variant="secondary"
+          onClick={() => {
+            if (confirm("Стереть данные на этом устройстве? На сервере они останутся.")) {
+              actions.reset();
+            }
+          }}
+        >
+          Сбросить на этом устройстве
+        </Button>
+        <Button
+          full
+          variant="secondary"
+          disabled={busy}
+          style={{ background: c.coral }}
+          onClick={async () => {
+            if (!confirm("Удалить аккаунт и все ответы навсегда? Отменить будет нельзя.")) return;
+            if (!confirm("Точно? Партнёры больше не увидят ваши ответы.")) return;
+            setBusy(true);
+            const res = await deleteAccount();
+            setBusy(false);
+            if (res.ok) actions.reset();
+            else alert(`Не получилось удалить: ${res.message}`);
+          }}
+        >
+          {busy ? "Удаляем…" : "Удалить аккаунт и все данные"}
+        </Button>
+      </Card>
     </Screen>
   );
 }

@@ -7,6 +7,12 @@ import { useStore } from "../store.js";
 
 const BOT = "relationship_game_by_roo_bot";
 
+const KIND_HINT = {
+  partner: "Человек, с которым вы уже вместе.",
+  candidate: "Человек, которого вы рассматриваете. Таких можно добавлять сколько угодно.",
+  friend: "Подруга, друг, кто угодно вне романтики. Для друзей — свой короткий набор вопросов.",
+};
+
 export default function InviteSheet({ onClose, onAccepted }) {
   const name = useStore((s) => s.profile.name);
   const [kind, setKind] = useState("partner");
@@ -76,11 +82,12 @@ export default function InviteSheet({ onClose, onAccepted }) {
             <Pick active={kind === "candidate"} onClick={() => setKind("candidate")}>
               Кандидата
             </Pick>
+            <Pick active={kind === "friend"} onClick={() => setKind("friend")}>
+              Друга
+            </Pick>
           </div>
           <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>
-            {kind === "partner"
-              ? "Человек, с которым вы уже вместе."
-              : "Человек, которого вы рассматриваете. Таких можно добавлять сколько угодно."}
+            {KIND_HINT[kind]}
           </span>
         </Card>
 

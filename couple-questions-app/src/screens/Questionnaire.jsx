@@ -10,6 +10,7 @@ import {
   setTitle,
 } from "../store.js";
 import { blockOrder, isBlockOpen, lockedQuestionCount } from "../limits.js";
+import { FRIEND_DECK } from "../friends.js";
 
 const T = {
   ru: {
@@ -21,6 +22,8 @@ const T = {
     decks: "Колоды",
     decksNote: "Наборы под конкретный момент. Черновик — тексты ещё правятся.",
     openRest: (n) => `Открыть остальные ${n}`,
+    friends: "Для друзей",
+    friendsNote: "Короткий набор для дружеских связей — без вопросов про пару.",
   },
   en: {
     title: "Questionnaire",
@@ -31,11 +34,15 @@ const T = {
     decks: "Decks",
     decksNote: "Sets for a specific moment. Draft — wording still being edited.",
     openRest: (n) => `Unlock the remaining ${n}`,
+    friends: "For friends",
+    friendsNote: "A short set for friendships — none of the couple questions.",
   },
 };
 
 export default function Questionnaire({ onOpenBlock, onPaywall }) {
-  const { answers, profile } = useStore();
+  const { answers, profile, connections } = useStore();
+  const hasFriends = connections.some((x) => x.kind === "friend");
+  const friendProgress = blockProgress(answers, FRIEND_DECK.id);
   const lang = profile.lang || "ru";
   const t = T[lang];
   const total = totalProgress(answers);
@@ -97,6 +104,25 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
           </div>
           <span style={{ font: `600 18px ${font.sans}`, color: c.ink }}>›</span>
         </Card>
+      )}
+
+      {hasFriends && (
+        <>
+          <div style={{ marginTop: 8 }}>
+            <Label>{t.friends}</Label>
+          </div>
+          <p style={{ margin: "-6px 0 2px", font: `400 12.5px/1.4 ${font.sans}`, color: c.mute }}>
+            {t.friendsNote}
+          </p>
+          <Row
+            badge="◇"
+            title={setTitle(FRIEND_DECK.id, lang)}
+            open
+            done={friendProgress.done === friendProgress.total}
+            progress={friendProgress}
+            onClick={() => onOpenBlock(FRIEND_DECK.id)}
+          />
+        </>
       )}
 
       <div style={{ marginTop: 8 }}>
