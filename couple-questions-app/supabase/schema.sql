@@ -66,7 +66,21 @@ create index if not exists connections_a_idx on connections(a);
 create index if not exists connections_b_idx on connections(b);
 create index if not exists answers_user_idx on answers(user_id);
 
--- ========================================================= 2. Защита включена
+-- ====================================================== 2. Доступ к таблицам
+
+-- Правила ниже решают, какие строки видно. Но сначала роли нужно вообще
+-- разрешить обращаться к таблице — без этого запрос падает с ошибкой
+-- «permission denied for table».
+
+grant usage on schema public to anon, authenticated;
+
+grant select, insert, update, delete on connections to authenticated;
+grant select, insert, update, delete on answers     to authenticated;
+grant select, insert, update, delete on reactions   to authenticated;
+grant select, insert                 on profiles    to authenticated;
+grant select                         on payments    to authenticated;
+
+-- ========================================================= 3. Защита включена
 
 alter table profiles    enable row level security;
 alter table connections enable row level security;
@@ -74,7 +88,7 @@ alter table answers     enable row level security;
 alter table reactions   enable row level security;
 alter table payments    enable row level security;
 
--- ========================================================== 3. Правила: связи
+-- ========================================================== 4. Правила: связи
 
 drop policy if exists "связи: вижу свои" on connections;
 create policy "связи: вижу свои"
@@ -91,7 +105,7 @@ create policy "связи: удаляю свои"
   on connections for delete
   using (a = auth.uid() or b = auth.uid());
 
--- ======================================================= 4. Правила: профили
+-- ======================================================= 5. Правила: профили
 
 drop policy if exists "профиль: читаю свой" on profiles;
 create policy "профиль: читаю свой"
@@ -125,7 +139,7 @@ create policy "профиль: создаю только свой"
 revoke update on profiles from authenticated;
 grant update (name, status, theme, lang, hidden_blocks, reminder) on profiles to authenticated;
 
--- ============================================ 5. Вспомогательные проверки
+-- ============================================ 6. Вспомогательные проверки
 
 -- Эти функции нужны, чтобы правило для ответов не обращалось к таблице
 -- ответов напрямую: иначе правило вызывает само себя и запрос падает
@@ -176,7 +190,7 @@ grant execute on function me_answered(int) to authenticated;
 grant execute on function connected_with(uuid) to authenticated;
 grant execute on function blocks_hidden_by(uuid) to authenticated;
 
--- ======================================================== 6. Правила: ответы
+-- ======================================================== 7. Правила: ответы
 
 
 drop policy if exists "ответы: свои вижу всегда" on answers;
@@ -203,7 +217,7 @@ create policy "ответы: пишу только свои"
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
 
--- ======================================================= 7. Правила: отметки
+-- ======================================================= 8. Правила: отметки
 
 -- Отметки видны обоим участникам связи: на них считается процент совпадений
 -- и на них же будет опираться разбор от ИИ.
@@ -230,7 +244,7 @@ create policy "отметки: ставлю только свои"
     )
   );
 
--- ======================================================= 8. Правила: платежи
+-- ======================================================= 9. Правила: платежи
 
 drop policy if exists "платежи: вижу свои" on payments;
 create policy "платежи: вижу свои"
@@ -240,7 +254,7 @@ create policy "платежи: вижу свои"
 -- Записывать платежи может только вебхук под сервисным ключом:
 -- правила на запись здесь намеренно нет.
 
--- ================================================== 9. Приём приглашения
+-- ================================================== 10. Приём приглашения
 
 -- Приглашение принимается только через эту функцию: код нельзя подобрать
 -- перебором по таблице, а чужую связь нельзя присвоить.

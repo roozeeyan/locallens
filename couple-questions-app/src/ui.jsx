@@ -227,9 +227,14 @@ export const s = {
     boxSizing: "border-box",
   },
   tabbar: {
-    position: "sticky",
-    bottom: 0,
-    margin: "0 12px 12px",
+    // Закреплено внизу экрана: меню видно всегда, а не только после прокрутки.
+    position: "fixed",
+    left: 0,
+    right: 0,
+    bottom: "calc(10px + env(safe-area-inset-bottom))",
+    width: "min(100% - 24px, 536px)",
+    margin: "0 auto",
+    zIndex: 20,
     background: c.paper,
     border,
     borderRadius: r.pill,

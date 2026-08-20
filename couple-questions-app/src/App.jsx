@@ -155,4 +155,11 @@ const shell = {
   color: c.ink,
   fontFamily: font.sans,
 };
-const main = { flex: 1, maxWidth: 560, width: "100%", margin: "0 auto" };
+const main = {
+  flex: 1,
+  maxWidth: 560,
+  width: "100%",
+  margin: "0 auto",
+  // место под закреплённое меню, чтобы оно не накрывало последнюю карточку
+  paddingBottom: "calc(84px + env(safe-area-inset-bottom))",
+};
