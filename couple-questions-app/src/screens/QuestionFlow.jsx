@@ -48,7 +48,7 @@ export default function QuestionFlow({ catId, onClose }) {
   return (
     <div style={wrap}>
       <div style={top}>
-        <button onClick={() => { if (dirty) actions.saveAnswer(q.id, draft); onClose(); }} style={back} aria-label="Назад">
+        <button onClick={() => { if (dirty) actions.saveAnswer(q.id, draft); onClose(); }} style={back} aria-label={t.back}>
           ←
         </button>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
@@ -59,7 +59,7 @@ export default function QuestionFlow({ catId, onClose }) {
           {i + 1}/{list.length}
         </span>
         <button
-          onClick={() => shareQuestion(qText(q, lang), theme)}
+          onClick={() => shareQuestion(qText(q, lang), theme, lang)}
           style={share}
           aria-label="Поделиться вопросом"
           title="Поделиться вопросом"

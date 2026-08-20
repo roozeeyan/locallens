@@ -5,16 +5,66 @@ import { useStore, actions } from "../store.js";
 import { PRICE_STARS, lockedQuestionCount } from "../limits.js";
 import { buyPremium, isRemote } from "../backend.js";
 
-const PERKS = [
-  "Все 11 блоков вместо трёх",
-  "Сколько угодно связей — партнёры и кандидаты",
-  "Разбор от ИИ по каждой связи",
-  "Все темы оформления",
-  "Новые колоды по мере выхода",
-];
+const T = {
+  ru: {
+    perks: [
+      "Все 11 блоков вместо трёх",
+      "Сколько угодно связей — партнёры и кандидаты",
+      "Разбор от ИИ по каждой связи",
+      "Все темы оформления",
+      "Новые колоды по мере выхода",
+    ],
+    close: "Закрыть",
+    titleConnections: "Добавляйте сколько угодно людей",
+    titleBlocks: (n) => `Ещё ${n} ${plural(n, "вопрос", "вопроса", "вопросов")} впереди`,
+    ledeConnections:
+      "Бесплатно доступна одна связь. Premium снимает ограничение — можно вести и партнёра, и кандидатов одновременно.",
+    ledeBlocks:
+      "Бесплатно открыты три блока. Остальные — про деньги, детей, конфликты и границы: то, из-за чего пары чаще всего расходятся, если не проговорили заранее.",
+    forever: "Навсегда",
+    oneTime: "Разовая покупка, без подписки",
+    buy: "Открыть доступ",
+    opening: "Открываем оплату…",
+    cancelled: "Покупка отменена",
+    localPay: "Оплата включится, когда подключим сервер и бота.",
+    payFailed: "Не получилось открыть оплату. Попробуйте ещё раз.",
+    devMode: "Режим разработки",
+    devNote:
+      "Оплата подключается вместе с сервером. Чтобы посмотреть, как выглядит приложение с Premium, можно включить его вручную.",
+    devCta: "Включить Premium локально",
+  },
+  en: {
+    perks: [
+      "All 11 blocks instead of three",
+      "As many connections as you like — partners and candidates",
+      "An AI summary for every connection",
+      "All appearance themes",
+      "New decks as they are released",
+    ],
+    close: "Close",
+    titleConnections: "Add as many people as you like",
+    titleBlocks: (n) => `${n} more ${n === 1 ? "question" : "questions"} ahead`,
+    ledeConnections:
+      "One connection is free. Premium removes the limit — you can keep a partner and candidates at the same time.",
+    ledeBlocks:
+      "Three blocks are free. The rest are about money, children, conflict and boundaries: the things couples most often break up over when they never talked them through.",
+    forever: "Forever",
+    oneTime: "One-time purchase, no subscription",
+    buy: "Unlock access",
+    opening: "Opening payment…",
+    cancelled: "Purchase cancelled",
+    localPay: "Payment turns on once the server and the bot are connected.",
+    payFailed: "Could not open payment. Please try again.",
+    devMode: "Development mode",
+    devNote:
+      "Payment arrives together with the server. To see how the app looks with Premium, you can switch it on manually.",
+    devCta: "Enable Premium locally",
+  },
+};
 
 export default function Paywall({ onClose, reason }) {
   const profile = useStore((s) => s.profile);
+  const t = T[profile.lang === "en" ? "en" : "ru"];
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
   const locked = lockedQuestionCount(profile);
@@ -29,17 +79,17 @@ export default function Paywall({ onClose, reason }) {
       actions.setProfile({ premium: true });
       onClose();
     } else if (res.reason === "cancelled") {
-      setNote("Покупка отменена");
+      setNote(t.cancelled);
     } else if (res.reason === "local") {
-      setNote("Оплата включится, когда подключим сервер и бота.");
+      setNote(t.localPay);
     } else {
-      setNote("Не получилось открыть оплату. Попробуйте ещё раз.");
+      setNote(t.payFailed);
     }
   };
 
   return (
     <div style={wrap}>
-      <button onClick={onClose} style={close} aria-label="Закрыть">
+      <button onClick={onClose} style={close} aria-label={t.close}>
         ✕
       </button>
 
@@ -50,30 +100,30 @@ export default function Paywall({ onClose, reason }) {
 
         <h1 style={h1}>
           {reason === "connections"
-            ? "Добавляйте сколько угодно людей"
-            : `Ещё ${locked} ${plural(locked, "вопрос", "вопроса", "вопросов")} впереди`}
+            ? t.titleConnections
+            : t.titleBlocks(locked)}
         </h1>
 
         <p style={lede}>
           {reason === "connections"
-            ? "Бесплатно доступна одна связь. Premium снимает ограничение — можно вести и партнёра, и кандидатов одновременно."
-            : "Бесплатно открыты три блока. Остальные — про деньги, детей, конфликты и границы: то, из-за чего пары чаще всего расходятся, если не проговорили заранее."}
+            ? t.ledeConnections
+            : t.ledeBlocks}
         </p>
 
         <div style={list}>
-          {PERKS.map((t) => (
-            <div key={t} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+          {t.perks.map((perk) => (
+            <div key={perk} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
               <span style={tick} />
-              <span style={{ font: `400 14px/1.45 ${font.sans}`, color: c.ink }}>{t}</span>
+              <span style={{ font: `400 14px/1.45 ${font.sans}`, color: c.ink }}>{perk}</span>
             </div>
           ))}
         </div>
 
         <div style={priceCard}>
           <div>
-            <div style={{ font: `700 15px ${font.sans}`, color: c.ink }}>Навсегда</div>
+            <div style={{ font: `700 15px ${font.sans}`, color: c.ink }}>{t.forever}</div>
             <div style={{ font: `400 12px ${font.sans}`, color: c.mute }}>
-              Разовая покупка, без подписки
+              {t.oneTime}
             </div>
           </div>
           <div style={{ font: `700 22px ${font.serif}`, color: c.ink, whiteSpace: "nowrap" }}>
@@ -82,7 +132,7 @@ export default function Paywall({ onClose, reason }) {
         </div>
 
         <Button full onClick={buy} disabled={busy}>
-          {busy ? "Открываем оплату…" : "Открыть доступ"}
+          {busy ? t.opening : t.buy}
         </Button>
 
         {note && (
@@ -93,10 +143,9 @@ export default function Paywall({ onClose, reason }) {
 
         {!isRemote && (
           <div style={devBox}>
-            <Label>Режим разработки</Label>
+            <Label>{t.devMode}</Label>
             <p style={{ margin: 0, font: `400 13px/1.45 ${font.sans}`, color: c.ink }}>
-              Оплата подключается вместе с сервером. Чтобы посмотреть, как выглядит
-              приложение с Premium, можно включить его вручную.
+              {t.devNote}
             </p>
             <Button
               full
@@ -106,7 +155,7 @@ export default function Paywall({ onClose, reason }) {
                 onClose();
               }}
             >
-              Включить Premium локально
+              {t.devCta}
             </Button>
           </div>
         )}

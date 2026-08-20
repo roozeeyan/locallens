@@ -7,14 +7,71 @@ import { useStore } from "../store.js";
 
 const BOT = "relationship_game_by_roo_bot";
 
-const KIND_HINT = {
-  partner: "Человек, с которым вы уже вместе.",
-  candidate: "Человек, которого вы рассматриваете. Таких можно добавлять сколько угодно.",
-  friend: "Подруга, друг, кто угодно вне романтики. Для друзей — свой короткий набор вопросов.",
+const T = {
+  ru: {
+    back: "Назад",
+    title: "Пригласить",
+    who: "Кого добавляете",
+    partner: "Партнёра",
+    candidate: "Кандидата",
+    friend: "Друга",
+    hints: {
+      partner: "Человек, с которым вы уже вместе.",
+      candidate: "Человек, которого вы рассматриваете. Таких можно добавлять сколько угодно.",
+      friend: "Подруга, друг, кто угодно вне романтики. Для друзей — свой короткий набор вопросов.",
+    },
+    create: "Создать приглашение",
+    creating: "Создаём…",
+    linkLabel: "Ссылка-приглашение",
+    copy: "Скопировать ссылку",
+    copied: "Ссылка скопирована",
+    copyManually: "Скопируйте ссылку вручную",
+    linkNote:
+      "Отправьте её в личном сообщении. Человек откроет приложение, заполнит свою анкету — и вы увидите, где совпадаете.",
+    haveCode: "У меня есть код",
+    codePlaceholder: "Код из приглашения",
+    accept: "Принять приглашение",
+    noServer: "Приглашения заработают, когда подключим сервер.",
+    badCode: "Код не подошёл",
+    offline: "Сервер не подключён",
+    offlineNote:
+      "Ссылку можно создать и посмотреть, но принять приглашение пока нельзя — для этого нужен общий сервер.",
+  },
+  en: {
+    back: "Back",
+    title: "Invite",
+    who: "Who are you adding",
+    partner: "Partner",
+    candidate: "Candidate",
+    friend: "Friend",
+    hints: {
+      partner: "Someone you are already with.",
+      candidate: "Someone you are considering. You can add as many as you like.",
+      friend: "A friend, anyone outside romance. Friends get their own short set of questions.",
+    },
+    create: "Create invitation",
+    creating: "Creating…",
+    linkLabel: "Invitation link",
+    copy: "Copy link",
+    copied: "Link copied",
+    copyManually: "Copy the link manually",
+    linkNote:
+      "Send it in a private message. They open the app, fill in their own answers — and you see where you agree.",
+    haveCode: "I have a code",
+    codePlaceholder: "Code from the invitation",
+    accept: "Accept invitation",
+    noServer: "Invitations will work once the server is connected.",
+    badCode: "That code did not work",
+    offline: "Server not connected",
+    offlineNote:
+      "You can create and view a link, but accepting an invitation needs a shared server.",
+  },
 };
 
 export default function InviteSheet({ onClose, onAccepted }) {
   const name = useStore((s) => s.profile.name);
+  const lang = useStore((s) => s.profile.lang);
+  const t = T[lang === "en" ? "en" : "ru"];
   const [kind, setKind] = useState("partner");
   const [code, setCode] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -39,9 +96,9 @@ export default function InviteSheet({ onClose, onAccepted }) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(link);
-      setNote("Ссылка скопирована");
+      setNote(t.copied);
     } catch {
-      setNote("Скопируйте ссылку вручную");
+      setNote(t.copyManually);
     }
   };
 
@@ -49,7 +106,7 @@ export default function InviteSheet({ onClose, onAccepted }) {
     const v = entered.trim();
     if (!v) return;
     if (!isRemote) {
-      setNote("Приглашения заработают, когда подключим сервер.");
+      setNote(t.noServer);
       return;
     }
     setBusy(true);
@@ -59,66 +116,65 @@ export default function InviteSheet({ onClose, onAccepted }) {
       onAccepted?.();
       onClose();
     } else {
-      setNote(res.message || "Код не подошёл");
+      setNote(res.message || t.badCode);
     }
   };
 
   return (
     <div style={wrap}>
       <div style={top}>
-        <button onClick={onClose} style={back} aria-label="Назад">
+        <button onClick={onClose} style={back} aria-label={t.back}>
           ←
         </button>
-        <div style={{ font: `700 19px ${font.serif}`, color: c.ink }}>Пригласить</div>
+        <div style={{ font: `700 19px ${font.serif}`, color: c.ink }}>{t.title}</div>
       </div>
 
       <div style={body}>
         <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-          <Label>Кого добавляете</Label>
+          <Label>{t.who}</Label>
           <div style={{ display: "flex", gap: 8 }}>
             <Pick active={kind === "partner"} onClick={() => setKind("partner")}>
-              Партнёра
+              {t.partner}
             </Pick>
             <Pick active={kind === "candidate"} onClick={() => setKind("candidate")}>
-              Кандидата
+              {t.candidate}
             </Pick>
             <Pick active={kind === "friend"} onClick={() => setKind("friend")}>
-              Друга
+              {t.friend}
             </Pick>
           </div>
           <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>
-            {KIND_HINT[kind]}
+            {t.hints[kind]}
           </span>
         </Card>
 
         {!code ? (
           <Button full onClick={generate} disabled={busy}>
-            {busy ? "Создаём…" : "Создать приглашение"}
+            {busy ? t.creating : t.create}
           </Button>
         ) : (
           <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-            <Label>Ссылка-приглашение</Label>
+            <Label>{t.linkLabel}</Label>
             <div style={codeBox}>{link}</div>
             <Button full onClick={copy}>
-              Скопировать ссылку
+              {t.copy}
             </Button>
             <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>
-              Отправьте её в личном сообщении. Человек откроет приложение, заполнит свою
-              анкету — и вы увидите, где совпадаете.
+              {t.linkNote}
             </span>
           </Card>
         )}
 
         <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-          <Label>У меня есть код</Label>
+          <Label>{t.haveCode}</Label>
           <input
             value={entered}
             onChange={(e) => setEntered(e.target.value)}
-            placeholder="Код из приглашения"
+            placeholder={t.codePlaceholder}
             style={input}
           />
           <Button full variant="secondary" onClick={accept} disabled={busy || !entered.trim()}>
-            Принять приглашение
+            {t.accept}
           </Button>
         </Card>
 
@@ -130,10 +186,9 @@ export default function InviteSheet({ onClose, onAccepted }) {
 
         {!isRemote && (
           <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <Label>Сервер не подключён</Label>
+            <Label>{t.offline}</Label>
             <span style={{ font: `400 13px/1.45 ${font.sans}`, color: c.ink }}>
-              Ссылку можно создать и посмотреть, но принять приглашение пока нельзя — для
-              этого нужен общий сервер.
+              {t.offlineNote}
             </span>
           </Card>
         )}

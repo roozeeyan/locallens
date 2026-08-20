@@ -3,8 +3,48 @@ import { c, font } from "../theme.js";
 import { Screen, Card, Label, Progress } from "../ui.jsx";
 import { useStore, revealed, pending, totalProgress } from "../store.js";
 
+const T = {
+  ru: {
+    title: "Лента",
+    subtitle: "Что изменилось с прошлого захода.",
+    empty: "Пусто",
+    emptyBody:
+      "Здесь появятся открытые сравнения и реакции, когда у вас будет хотя бы одна связь.",
+    yours: (done, total) => `Ваша анкета: ${done} из ${total}`,
+    unrated: (n) =>
+      `${n} ${plural(n, "сравнение", "сравнения", "сравнений")} ждут вашей отметки`,
+    unratedNote: (name) => `С ${name}. Отметьте, где совпадаете, а где стоит поговорить.`,
+    aheadOfYou: (name, n) =>
+      `${name} ответил на ${n} ${plural(n, "вопрос", "вопроса", "вопросов")} раньше вас`,
+    aheadNote: "Ответьте на те же — и увидите его ответы.",
+    waiting: (name, n) =>
+      `Ждём ${name}: ${n} ${plural(n, "вопрос", "вопроса", "вопросов")}`,
+    waitingNote: "Ваши ответы откроются, как только он ответит на те же.",
+    fill: (done, total) => `Заполнено ${done} из ${total}`,
+    fillNote: "Чем больше ответов, тем точнее сравнение.",
+  },
+  en: {
+    title: "Feed",
+    subtitle: "What changed since your last visit.",
+    empty: "Nothing yet",
+    emptyBody:
+      "Revealed comparisons and reactions will show up here once you have at least one connection.",
+    yours: (done, total) => `Your answers: ${done} of ${total}`,
+    unrated: (n) => `${n} ${n === 1 ? "comparison is" : "comparisons are"} waiting for your mark`,
+    unratedNote: (name) => `With ${name}. Mark where you agree and what is worth discussing.`,
+    aheadOfYou: (name, n) =>
+      `${name} answered ${n} ${n === 1 ? "question" : "questions"} before you`,
+    aheadNote: "Answer the same ones to see their answers.",
+    waiting: (name, n) => `Waiting for ${name}: ${n} ${n === 1 ? "question" : "questions"}`,
+    waitingNote: "Your answers open as soon as they answer the same ones.",
+    fill: (done, total) => `${done} of ${total} answered`,
+    fillNote: "The more you answer, the sharper the comparison.",
+  },
+};
+
 export default function Feed({ onOpenConn, onGoForm }) {
   const { answers, connections, profile } = useStore();
+  const t = T[profile.lang === "en" ? "en" : "ru"];
   const hiddenBlocks = profile.hiddenBlocks;
 
   const mine = totalProgress(answers);
@@ -18,8 +58,8 @@ export default function Feed({ onOpenConn, onGoForm }) {
     if (unrated > 0) {
       events.push({
         id: `${conn.id}-unrated`,
-        title: `${unrated} ${plural(unrated, "сравнение", "сравнения", "сравнений")} ждут вашей отметки`,
-        note: `С ${conn.name}. Отметьте, где совпадаете, а где стоит поговорить.`,
+        title: t.unrated(unrated),
+        note: t.unratedNote(conn.name),
         action: () => onOpenConn(conn.id),
         accent: true,
       });
@@ -27,16 +67,16 @@ export default function Feed({ onOpenConn, onGoForm }) {
     if (p.waitingMe > 0) {
       events.push({
         id: `${conn.id}-waiting-me`,
-        title: `${conn.name} ответил на ${p.waitingMe} ${plural(p.waitingMe, "вопрос", "вопроса", "вопросов")} раньше вас`,
-        note: "Ответьте на те же — и увидите его ответы.",
+        title: t.aheadOfYou(conn.name, p.waitingMe),
+        note: t.aheadNote,
         action: onGoForm,
       });
     }
     if (p.waitingThem > 0) {
       events.push({
         id: `${conn.id}-waiting-them`,
-        title: `Ждём ${conn.name}: ${p.waitingThem} ${plural(p.waitingThem, "вопрос", "вопроса", "вопросов")}`,
-        note: "Ваши ответы откроются, как только он ответит на те же.",
+        title: t.waiting(conn.name, p.waitingThem),
+        note: t.waitingNote,
       });
     }
   }
@@ -44,23 +84,23 @@ export default function Feed({ onOpenConn, onGoForm }) {
   if (mine.done < mine.total) {
     events.push({
       id: "fill",
-      title: `Заполнено ${mine.done} из ${mine.total}`,
-      note: "Чем больше ответов, тем точнее сравнение.",
+      title: t.fill(mine.done, mine.total),
+      note: t.fillNote,
       action: onGoForm,
     });
   }
 
   return (
-    <Screen title="Лента" subtitle="Что изменилось с прошлого захода.">
+    <Screen title={t.title} subtitle={t.subtitle}>
       {connections.length === 0 && (
         <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <Label>Пусто</Label>
+          <Label>{t.empty}</Label>
           <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
-            Здесь появятся открытые сравнения и реакции, когда у вас будет хотя бы одна связь.
+            {t.emptyBody}
           </p>
           <Progress value={mine.pct} height={8} />
           <span style={{ font: `400 12px ${font.sans}`, color: c.mute }}>
-            Ваша анкета: {mine.done} из {mine.total}
+            {t.yours(mine.done, mine.total)}
           </span>
         </Card>
       )}

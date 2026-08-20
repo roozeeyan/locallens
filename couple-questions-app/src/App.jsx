@@ -16,12 +16,20 @@ import Onboarding from "./screens/Onboarding.jsx";
 import Paywall from "./screens/Paywall.jsx";
 import Legal from "./screens/Legal.jsx";
 
-const TABS = [
-  { id: "form", label: "Анкета" },
-  { id: "links", label: "Связи" },
-  { id: "feed", label: "Лента", round: true },
-  { id: "me", label: "Профиль", round: true },
-];
+const TABS = {
+  ru: [
+    { id: "form", label: "Анкета" },
+    { id: "links", label: "Связи" },
+    { id: "feed", label: "Лента", round: true },
+    { id: "me", label: "Профиль", round: true },
+  ],
+  en: [
+    { id: "form", label: "Questions" },
+    { id: "links", label: "People" },
+    { id: "feed", label: "Feed", round: true },
+    { id: "me", label: "Profile", round: true },
+  ],
+};
 
 export default function App() {
   const theme = useStore((s) => s.profile.theme);
@@ -126,7 +134,7 @@ export default function App() {
         )}
       </main>
 
-      <TabBar tabs={TABS} active={tab} onChange={setTab} />
+      <TabBar tabs={TABS[lang] || TABS.ru} active={tab} onChange={setTab} />
 
       {openBlock && <QuestionFlow catId={openBlock} onClose={() => setOpenBlock(null)} />}
       {openConn && <ConnectionDetail connId={openConn} onClose={() => setOpenConn(null)} />}

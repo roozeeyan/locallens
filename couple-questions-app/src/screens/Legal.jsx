@@ -4,8 +4,8 @@ import { Card, Label } from "../ui.jsx";
 import { PRIVACY, TERMS, LEGAL_UPDATED } from "../legal.js";
 
 const T = {
-  ru: { privacy: "Конфиденциальность", terms: "Соглашение", updated: "Обновлено" },
-  en: { privacy: "Privacy", terms: "Terms", updated: "Updated" },
+  ru: { privacy: "Конфиденциальность", terms: "Соглашение", updated: "Обновлено", back: "Назад" },
+  en: { privacy: "Privacy", terms: "Terms", updated: "Updated", back: "Back" },
 };
 
 export default function Legal({ lang = "ru", initial = "privacy", onClose }) {
@@ -17,7 +17,7 @@ export default function Legal({ lang = "ru", initial = "privacy", onClose }) {
   return (
     <div style={wrap}>
       <div style={top}>
-        <button onClick={onClose} style={back} aria-label="Назад">
+        <button onClick={onClose} style={back} aria-label={t.back}>
           ←
         </button>
         <div style={{ font: `700 18px ${font.serif}`, color: c.ink }}>{text.title}</div>

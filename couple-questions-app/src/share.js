@@ -49,7 +49,7 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 /** Рисует карточку вопроса под сторис. Возвращает Blob с PNG. */
-export function renderStoryCard(questionText, themeId = DEFAULT_PALETTE) {
+export function renderStoryCard(questionText, themeId = DEFAULT_PALETTE, lang = "ru") {
   const p = palettes[themeId] || palettes[DEFAULT_PALETTE];
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -88,7 +88,7 @@ export function renderStoryCard(questionText, themeId = DEFAULT_PALETTE) {
   ctx.textAlign = "left";
   ctx.fillStyle = p.mute;
   ctx.font = `600 30px ${SANS}`;
-  ctx.fillText("ВОПРОС ДЛЯ ПАРЫ", cardX + 65, cardY + 95);
+  ctx.fillText(lang === "en" ? "A QUESTION FOR TWO" : "ВОПРОС ДЛЯ ПАРЫ", cardX + 65, cardY + 95);
 
   ctx.fillStyle = p.ink;
   ctx.font = `600 74px ${SERIF}`;
@@ -116,8 +116,8 @@ export function renderStoryCard(questionText, themeId = DEFAULT_PALETTE) {
  * Отдаёт карточку пользователю: системным «Поделиться», если оно есть,
  * иначе — обычным скачиванием.
  */
-export async function shareQuestion(questionText, themeId) {
-  const blob = await renderStoryCard(questionText, themeId);
+export async function shareQuestion(questionText, themeId, lang = "ru") {
+  const blob = await renderStoryCard(questionText, themeId, lang);
   if (!blob) return { ok: false };
 
   const file = new File([blob], "question.png", { type: "image/png" });

@@ -15,15 +15,65 @@ import {
 } from "../store.js";
 
 const REACTIONS = [
-  { id: "match", label: "Совпадаем" },
-  { id: "talk", label: "Обсудить" },
-  { id: "differ", label: "Расходимся" },
+  { id: "match", ru: "Совпадаем", en: "We match" },
+  { id: "talk", ru: "Обсудить", en: "Worth talking" },
+  { id: "differ", ru: "Расходимся", en: "We differ" },
 ];
+
+const T = {
+  ru: {
+    back: "Назад",
+    kinds: { partner: "партнёр", candidate: "кандидат", friend: "друг", other: "связь" },
+    opened: (n) => ` · открыто ${n}`,
+    marks: "Ваши отметки",
+    match: "совпадаем",
+    talk: "обсудить",
+    differ: "расходимся",
+    comparisons: (n) => `Сравнения (${n})`,
+    byBlocks: "По блокам",
+    nothingYet: "Пока нечего сравнивать",
+    nothingBody: "Ответ открывается, когда вы оба ответили на один и тот же вопрос.",
+    theirTurn: (name, n) => ` ${name} уже ответил на ${n} — очередь за вами.`,
+    you: "Вы",
+    hidden: "скрыт",
+    verdict: "Заключение",
+    verdictBody:
+      "Разбор по всем открытым ответам: где вы сходитесь, что стоит обсудить и на что обратить внимание. Появится в блоке про ИИ — он читает оба ответа и ваши отметки.",
+    soon: "Пока недоступно",
+    remove: "Удалить связь",
+    removeConfirm: (name) => `Удалить связь с ${name}? Вы перестанете видеть ответы друг друга.`,
+    failed: (msg) => `Не получилось: ${msg}`,
+  },
+  en: {
+    back: "Back",
+    kinds: { partner: "partner", candidate: "candidate", friend: "friend", other: "connection" },
+    opened: (n) => ` · ${n} revealed`,
+    marks: "Your marks",
+    match: "match",
+    talk: "discuss",
+    differ: "differ",
+    comparisons: (n) => `Comparisons (${n})`,
+    byBlocks: "By block",
+    nothingYet: "Nothing to compare yet",
+    nothingBody: "An answer opens when you have both answered the same question.",
+    theirTurn: (name, n) => ` ${name} has already answered ${n} — your turn.`,
+    you: "You",
+    hidden: "hidden",
+    verdict: "Summary",
+    verdictBody:
+      "A read of every revealed answer: where you agree, what is worth discussing, and what to watch out for. It arrives with the AI block, which reads both answers and your marks.",
+    soon: "Not available yet",
+    remove: "Remove connection",
+    removeConfirm: (name) => `Remove your connection with ${name}? You will stop seeing each other's answers.`,
+    failed: (msg) => `Did not work: ${msg}`,
+  },
+};
 
 export default function ConnectionDetail({ connId, onClose }) {
   const { answers, connections, profile } = useStore();
   const hiddenBlocks = profile.hiddenBlocks;
-  const lang = profile.lang;
+  const lang = profile.lang === "en" ? "en" : "ru";
+  const t = T[lang];
   const conn = connections.find((x) => x.id === connId);
   const [tab, setTab] = useState("open");
 
@@ -36,13 +86,14 @@ export default function ConnectionDetail({ connId, onClose }) {
   return (
     <div style={wrap}>
       <div style={top}>
-        <button onClick={onClose} style={back} aria-label="Назад">
+        <button onClick={onClose} style={back} aria-label={t.back}>
           ←
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ font: `700 19px ${font.serif}`, color: c.ink }}>{conn.name}</div>
           <div style={{ font: `400 12px ${font.sans}`, color: c.mute }}>
-            {conn.kind === "partner" ? "партнёр" : "кандидат"} · открыто {open.length}
+            {t.kinds[conn.kind] || t.kinds.other}
+            {t.opened(open.length)}
           </div>
         </div>
       </div>
@@ -50,21 +101,21 @@ export default function ConnectionDetail({ connId, onClose }) {
       <div style={body}>
         {m.rated > 0 && (
           <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <Label>Ваши отметки</Label>
+            <Label>{t.marks}</Label>
             <div style={{ display: "flex", gap: 8 }}>
-              <Stat n={m.match} label="совпадаем" bg={c.sage} />
-              <Stat n={m.talk} label="обсудить" bg={c.paper} />
-              <Stat n={m.differ} label="расходимся" bg={c.coral} />
+              <Stat n={m.match} label={t.match} bg={c.sage} />
+              <Stat n={m.talk} label={t.talk} bg={c.paper} />
+              <Stat n={m.differ} label={t.differ} bg={c.coral} />
             </div>
           </Card>
         )}
 
         <div style={{ display: "flex", gap: 8 }}>
           <Seg active={tab === "open"} onClick={() => setTab("open")}>
-            Сравнения ({open.length})
+            {t.comparisons(open.length)}
           </Seg>
           <Seg active={tab === "blocks"} onClick={() => setTab("blocks")}>
-            По блокам
+            {t.byBlocks}
           </Seg>
         </div>
 
@@ -72,10 +123,10 @@ export default function ConnectionDetail({ connId, onClose }) {
           <>
             {open.length === 0 && (
               <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-                <Label>Пока нечего сравнивать</Label>
+                <Label>{t.nothingYet}</Label>
                 <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
-                  Ответ открывается, когда вы оба ответили на один и тот же вопрос.
-                  {p.waitingMe > 0 && ` ${conn.name} уже ответил на ${p.waitingMe} — очередь за вами.`}
+                  {t.nothingBody}
+                  {p.waitingMe > 0 && t.theirTurn(conn.name, p.waitingMe)}
                 </p>
               </Card>
             )}
@@ -84,7 +135,7 @@ export default function ConnectionDetail({ connId, onClose }) {
               <Card key={q.id} pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
                 <p style={{ margin: 0, font: `600 17px/1.25 ${font.serif}`, color: c.ink }}>{qText(q, lang)}</p>
 
-                <Answer who="Вы" text={answers[q.id].text} accent={c.sage} />
+                <Answer who={t.you} text={answers[q.id].text} accent={c.sage} />
                 <Answer who={conn.name} text={conn.answers[q.id].text} accent={c.coral} />
 
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -100,7 +151,7 @@ export default function ConnectionDetail({ connId, onClose }) {
                         }}
                         aria-pressed={on}
                       >
-                        {rx.label}
+                        {rx[lang]}
                       </button>
                     );
                   })}
@@ -122,10 +173,10 @@ export default function ConnectionDetail({ connId, onClose }) {
                       {setTitle(cat.id, lang)}
                     </span>
                     {hidden && (
-                      <span style={{ font: `600 11px ${font.mono}`, color: c.mute }}>скрыт</span>
+                      <span style={{ font: `600 11px ${font.mono}`, color: c.mute }}>{t.hidden}</span>
                     )}
                   </div>
-                  <MiniRow label="Вы" pct={bp.minePct} n={bp.mine} total={bp.total} />
+                  <MiniRow label={t.you} pct={bp.minePct} n={bp.mine} total={bp.total} />
                   <MiniRow label={conn.name} pct={bp.theirsPct} n={bp.theirs} total={bp.total} />
                 </Card>
               );
@@ -134,13 +185,12 @@ export default function ConnectionDetail({ connId, onClose }) {
         )}
 
         <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <Label>Заключение</Label>
+          <Label>{t.verdict}</Label>
           <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
-            Разбор по всем открытым ответам: где вы сходитесь, что стоит обсудить и на что
-            обратить внимание. Появится в блоке про ИИ — он читает оба ответа и ваши отметки.
+            {t.verdictBody}
           </p>
           <Button full variant="secondary" disabled>
-            Пока недоступно
+            {t.soon}
           </Button>
         </Card>
 
@@ -148,18 +198,18 @@ export default function ConnectionDetail({ connId, onClose }) {
           full
           variant="secondary"
           onClick={async () => {
-            if (!confirm(`Удалить связь с ${conn.name}? Вы перестанете видеть ответы друг друга.`))
+            if (!confirm(t.removeConfirm(conn.name)))
               return;
             const res = await dropConnection(conn.id);
             if (!res.ok) {
-              alert(`Не получилось: ${res.message}`);
+              alert(t.failed(res.message));
               return;
             }
             actions.removeConnection(conn.id);
             onClose();
           }}
         >
-          Удалить связь
+          {t.remove}
         </Button>
       </div>
     </div>

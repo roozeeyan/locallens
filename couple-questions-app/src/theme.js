@@ -3,6 +3,7 @@
 export const palettes = {
   cream: {
     name: "Кремовая",
+    nameEn: "Cream",
     bg: "#EFEBE2",
     paper: "#FBFAF7",
     accent: "#A6C7C4",
@@ -12,6 +13,7 @@ export const palettes = {
   },
   night: {
     name: "Ночная",
+    nameEn: "Night",
     bg: "#1A1C1F",
     paper: "#25292D",
     accent: "#7FA9A6",
@@ -21,6 +23,7 @@ export const palettes = {
   },
   rose: {
     name: "Розовая",
+    nameEn: "Rose",
     bg: "#F4E7E4",
     paper: "#FDF8F7",
     accent: "#E0A69C",
