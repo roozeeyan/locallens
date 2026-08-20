@@ -3,8 +3,10 @@ import { CATEGORIES, QUESTIONS } from "./data.js";
 import { DEFAULT_PALETTE } from "./theme.js";
 import { DECKS, DECK_QUESTIONS, findDeck } from "./decks.js";
 import { pushAnswer, pushProfile, pushReaction } from "./sync.js";
+import { cloudSet, hasCloud } from "./cloud.js";
 
 const KEY = "rg_state_v2";
+const CLOUD_KEY = "rgstate";
 
 const empty = {
   profile: {
@@ -47,13 +49,28 @@ function load() {
 let state = load();
 const listeners = new Set();
 
+/** То, что стоит сохранять: состояние связи с сервером вычисляется заново. */
+function persistable(s) {
+  return { profile: s.profile, answers: s.answers, connections: s.connections, seen: s.seen };
+}
+
+let cloudTimer = null;
+function saveToCloud() {
+  if (!hasCloud()) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(() => {
+    cloudSet(CLOUD_KEY, JSON.stringify(persistable(state)));
+  }, 1000);
+}
+
 function commit(next) {
   state = next;
   try {
-    localStorage.setItem(KEY, JSON.stringify(state));
+    localStorage.setItem(KEY, JSON.stringify(persistable(state)));
   } catch {
     // приватный режим браузера — работаем без сохранения
   }
+  saveToCloud();
   listeners.forEach((l) => l());
 }
 
@@ -90,9 +107,37 @@ export const actions = {
     pushProfile(data);
   },
 
+  /** Записать копию в облако, даже если состояние не менялось. */
+  backupNow() {
+    saveToCloud();
+  },
+
   setSync(value, message = "") {
     if (state.sync === value && state.syncMsg === message) return;
     commit({ ...state, sync: value, syncMsg: message });
+  },
+
+  /**
+   * Восстановление из облака Telegram. Локальные правки не теряются:
+   * по каждому вопросу побеждает более свежий ответ.
+   */
+  applyBackup(saved) {
+    if (!saved) return;
+    const answers = { ...state.answers };
+    for (const [id, v] of Object.entries(saved.answers || {})) {
+      if (!answers[id] || (v.at || 0) > (answers[id].at || 0)) answers[id] = v;
+    }
+    const profile = state.profile.onboarded
+      ? { ...saved.profile, ...state.profile }
+      : { ...state.profile, ...saved.profile };
+
+    commit({
+      ...state,
+      profile,
+      answers,
+      connections: state.connections.length ? state.connections : saved.connections || [],
+      seen: Math.max(state.seen || 0, saved.seen || 0),
+    });
   },
 
   /** Заменяет локальное состояние тем, что пришло с сервера. */

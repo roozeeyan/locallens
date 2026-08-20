@@ -4,11 +4,14 @@
 // работает локально. Как только ключи появились — состояние подтягивается
 // с сервера и каждое изменение уходит туда же.
 import { isRemote, supabase, makeInviteCode } from "./backend.js";
+import { cloudGet, cloudSet, hasCloud } from "./cloud.js";
 import { QUESTIONS } from "./data.js";
 import { DECK_QUESTIONS } from "./decks.js";
 
 const ALL = [...QUESTIONS, ...DECK_QUESTIONS];
 const blockOf = (qid) => ALL.find((q) => q.id === qid)?.cat || "unknown";
+
+const SESSION_KEY = "rgsess";
 
 let me = null;
 let lastError = "";
@@ -22,12 +25,48 @@ export function lastSyncError() {
  * Вход. Сначала пробуем Telegram — если серверная функция развёрнута.
  * Если её нет, входим анонимно: для этого не нужен ни токен бота, ни консоль.
  */
+/** Кладёт вход в облако Telegram, чтобы при следующем запуске узнать человека. */
+async function rememberSession() {
+  if (!hasCloud()) return;
+  const { data } = await supabase.auth.getSession();
+  const s = data.session;
+  if (!s) return;
+  await cloudSet(
+    SESSION_KEY,
+    JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token })
+  );
+}
+
+/** Пробует продолжить прошлый вход, сохранённый в облаке Telegram. */
+async function restoreSession() {
+  if (!hasCloud()) return null;
+  const raw = await cloudGet(SESSION_KEY);
+  if (!raw) return null;
+  try {
+    const { access_token, refresh_token } = JSON.parse(raw);
+    if (!access_token || !refresh_token) return null;
+    const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
+    if (error || !data.session) return null;
+    await rememberSession(); // токен обновился — сохраняем новый
+    return data.session.user.id;
+  } catch {
+    return null;
+  }
+}
+
 export async function ensureSession() {
   if (!isRemote) return null;
 
   const { data: existing } = await supabase.auth.getSession();
   if (existing.session) {
     me = existing.session.user.id;
+    await rememberSession();
+    return me;
+  }
+
+  const restored = await restoreSession();
+  if (restored) {
+    me = restored;
     return me;
   }
 
@@ -53,6 +92,7 @@ export async function ensureSession() {
         if (!error) {
           const { data } = await supabase.auth.getUser();
           me = data.user?.id || null;
+          await rememberSession();
           return me;
         }
       }
@@ -69,6 +109,7 @@ export async function ensureSession() {
     }
     me = data.user?.id || null;
     if (!me) lastError = "сервер не вернул пользователя";
+    else await rememberSession();
     return me;
   } catch (e) {
     lastError = e?.message || "сервер недоступен";

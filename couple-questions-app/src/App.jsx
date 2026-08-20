@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { c, font, applyPalette } from "./theme.js";
 import { TabBar } from "./ui.jsx";
 import { useStore, actions } from "./store.js";
 import { isRemote } from "./backend.js";
 import { ensureSession, pullAll, joinByCode, lastSyncError } from "./sync.js";
+import { cloudGet, hasCloud } from "./cloud.js";
 import Questionnaire from "./screens/Questionnaire.jsx";
 import QuestionFlow from "./screens/QuestionFlow.jsx";
 import Connections from "./screens/Connections.jsx";
@@ -30,13 +31,45 @@ export default function App() {
   const [openConn, setOpenConn] = useState(null);
   const [invite, setInvite] = useState(false);
   const [paywall, setPaywall] = useState(null);
+  const [restoring, setRestoring] = useState(() => hasCloud());
+  const started = useRef(false);
 
   useEffect(() => {
     applyPalette(theme);
   }, [theme]);
 
-  // Первый заход: входим и подтягиваем всё, что есть на сервере.
+  // Память браузера внутри Telegram обнуляется между запусками,
+  // поэтому анкету и имя достаём из облака Telegram.
   useEffect(() => {
+    if (!hasCloud()) return;
+    let cancelled = false;
+    (async () => {
+      // Если Telegram не ответит, запускаемся без копии, а не висим на пустом экране.
+      const raw = await Promise.race([
+        cloudGet("rgstate"),
+        new Promise((r) => setTimeout(() => r(null), 3000)),
+      ]);
+      if (cancelled) return;
+      if (raw) {
+        try {
+          actions.applyBackup(JSON.parse(raw));
+        } catch {
+          // копия испорчена — остаёмся на том, что есть
+        }
+      }
+      actions.backupNow(); // первая копия, даже если пользователь ничего не менял
+      setRestoring(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Вход на сервер — после восстановления из облака, когда имя уже известно.
+  useEffect(() => {
+    if (restoring || started.current) return;
+    started.current = true;
+
     if (!isRemote) {
       actions.setSync("local");
       return;
@@ -64,8 +97,9 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [restoring]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  if (restoring) return <div style={shell} />;
   if (!onboarded) return <Onboarding />;
 
   return (
