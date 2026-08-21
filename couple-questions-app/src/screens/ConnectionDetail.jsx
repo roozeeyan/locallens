@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { c, font } from "../theme.js";
 import { Card, Button, Progress, Label } from "../ui.jsx";
-import { dropConnection } from "../sync.js";
+import { dropConnection, setExportConsent } from "../sync.js";
+import { exportPair } from "../export.js";
 import {
   useStore,
   actions,
@@ -13,6 +14,23 @@ import {
   setTitle,
   qText,
 } from "../store.js";
+
+function Tag({ children, warm }) {
+  return (
+    <span
+      style={{
+        font: `600 11px ${font.sans}`,
+        color: c.ink,
+        background: warm ? c.coral : c.sage,
+        border: `2px solid ${c.ink}`,
+        borderRadius: 999,
+        padding: "3px 9px",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
 
 const REACTIONS = [
   { id: "match", ru: "Совпадаем", en: "We match" },
@@ -43,6 +61,18 @@ const T = {
     remove: "Удалить связь",
     removeConfirm: (name) => `Удалить связь с ${name}? Вы перестанете видеть ответы друг друга.`,
     failed: (msg) => `Не получилось: ${msg}`,
+    pairExport: "Совместная выгрузка",
+    pairBody:
+      "Файл с ответами вас обоих собирается, только когда согласны оба. Ответы другого человека — его данные: без его разрешения они в файл не попадут.",
+    youAgreed: (ok) => `вы: ${ok ? "разрешили" : "не разрешили"}`,
+    theyAgreed: (name, ok) => `${name}: ${ok ? "разрешил" : "не разрешил"}`,
+    allow: "Разрешить совместную выгрузку",
+    revoke: "Отозвать разрешение",
+    doExport: "Выгрузить наши ответы",
+    waitBoth: "Ждём согласия обоих",
+    copiedPair: "Ответы пары скопированы. Вставьте их куда нужно.",
+    savedPair: "Файл с ответами пары сохранён.",
+    exportFailed: "Не удалось выгрузить. Попробуйте открыть приложение в браузере.",
   },
   en: {
     back: "Back",
@@ -66,6 +96,18 @@ const T = {
     remove: "Remove connection",
     removeConfirm: (name) => `Remove your connection with ${name}? You will stop seeing each other's answers.`,
     failed: (msg) => `Did not work: ${msg}`,
+    pairExport: "Joint export",
+    pairBody:
+      "A file with both of your answers is created only when you both agree. The other person's answers are their data: without their permission they stay out of the file.",
+    youAgreed: (ok) => `you: ${ok ? "agreed" : "not yet"}`,
+    theyAgreed: (name, ok) => `${name}: ${ok ? "agreed" : "not yet"}`,
+    allow: "Allow joint export",
+    revoke: "Withdraw permission",
+    doExport: "Export our answers",
+    waitBoth: "Waiting for both",
+    copiedPair: "Both sets of answers copied. Paste them wherever you need.",
+    savedPair: "File with both sets of answers saved.",
+    exportFailed: "Export did not work. Try opening the app in a browser.",
   },
 };
 
@@ -79,6 +121,8 @@ export default function ConnectionDetail({ connId, onClose }) {
 
   if (!conn) return null;
 
+  const consent = conn.exportConsent || { mine: false, theirs: false };
+  const bothAgreed = consent.mine && consent.theirs;
   const open = revealed(answers, conn, hiddenBlocks);
   const p = pending(answers, conn);
   const m = matchStats(conn);
@@ -191,6 +235,45 @@ export default function ConnectionDetail({ connId, onClose }) {
           </p>
           <Button full variant="secondary" disabled>
             {t.soon}
+          </Button>
+        </Card>
+
+        <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <Label>{t.pairExport}</Label>
+          <p style={{ margin: 0, font: `400 13px/1.5 ${font.sans}`, color: c.ink }}>{t.pairBody}</p>
+
+          <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
+            <Tag warm={!consent.mine}>{t.youAgreed(consent.mine)}</Tag>
+            <Tag warm={!consent.theirs}>{t.theyAgreed(conn.name, consent.theirs)}</Tag>
+          </div>
+
+          <Button
+            full
+            variant="secondary"
+            onClick={async () => {
+              const next = !consent.mine;
+              const res = await setExportConsent(conn.id, next);
+              if (!res.ok) {
+                alert(t.failed(res.message));
+                return;
+              }
+              actions.setExportConsent(conn.id, next);
+            }}
+          >
+            {consent.mine ? t.revoke : t.allow}
+          </Button>
+
+          <Button
+            full
+            disabled={!bothAgreed}
+            onClick={async () => {
+              const res = await exportPair(answers, conn, profile);
+              if (res.copied) alert(t.copiedPair);
+              else if (res.saved) alert(t.savedPair);
+              else alert(t.exportFailed);
+            }}
+          >
+            {bothAgreed ? t.doExport : t.waitBoth}
           </Button>
         </Card>
 

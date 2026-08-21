@@ -193,6 +193,15 @@ export const actions = {
     pushReaction(connId, questionId, cur?.reactions?.[questionId] || null);
   },
 
+  setExportConsent(connId, granted) {
+    const connections = state.connections.map((x) =>
+      x.id === connId
+        ? { ...x, exportConsent: { ...(x.exportConsent || {}), mine: granted } }
+        : x
+    );
+    commit({ ...state, connections });
+  },
+
   markFeedSeen() {
     commit({ ...state, seen: Date.now() });
   },

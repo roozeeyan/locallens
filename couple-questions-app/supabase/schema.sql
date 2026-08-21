@@ -321,3 +321,48 @@ $$;
 
 revoke all on function delete_my_account() from public;
 grant execute on function delete_my_account() to authenticated;
+
+-- ============================================ 10. Совместная выгрузка пары
+
+-- Файл с ответами обоих можно собрать, только если оба это разрешили.
+-- Ответы партнёра — его персональные данные: без такого правила один
+-- человек мог бы навсегда унести переписку другого, и право на удаление
+-- превратилось бы в формальность.
+
+create table if not exists export_consents (
+  connection_id uuid not null references connections(id) on delete cascade,
+  user_id       uuid not null references profiles(id) on delete cascade,
+  granted_at    timestamptz not null default now(),
+  primary key (connection_id, user_id)
+);
+
+alter table export_consents enable row level security;
+
+grant select, insert, delete on export_consents to authenticated;
+
+drop policy if exists "выгрузка: вижу по своей связи" on export_consents;
+create policy "выгрузка: вижу по своей связи"
+  on export_consents for select
+  using (exists (
+    select 1 from connections c
+    where c.id = export_consents.connection_id
+      and (c.a = auth.uid() or c.b = auth.uid())
+  ));
+
+drop policy if exists "выгрузка: разрешаю только за себя" on export_consents;
+create policy "выгрузка: разрешаю только за себя"
+  on export_consents for insert
+  with check (
+    user_id = auth.uid()
+    and exists (
+      select 1 from connections c
+      where c.id = export_consents.connection_id
+        and c.status = 'active'
+        and (c.a = auth.uid() or c.b = auth.uid())
+    )
+  );
+
+drop policy if exists "выгрузка: отзываю только своё" on export_consents;
+create policy "выгрузка: отзываю только своё"
+  on export_consents for delete
+  using (user_id = auth.uid());

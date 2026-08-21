@@ -56,11 +56,48 @@ export function answersToText(answers, profile) {
 }
 
 /**
- * Отдаёт текст пользователю: копирует в буфер и, где это разрешено,
- * дополнительно сохраняет файлом.
+ * Ответы пары рядом. Попадают только те вопросы, которые уже открыты обоим:
+ * оба ответили и блок не скрыт. Собирается только при согласии обоих —
+ * проверку делает вызывающий экран.
  */
-export async function exportAnswers(answers, profile) {
-  const text = answersToText(answers, profile);
+export function pairToText(answers, conn, profile) {
+  const lang = profile.lang === "en" ? "en" : "ru";
+  const hidden = profile.hiddenBlocks || [];
+  const w =
+    lang === "en"
+      ? { title: "Our answers", with: "With", when: "Exported", you: "You", none: "Nothing is open yet." }
+      : { title: "Наши ответы", with: "С кем", when: "Выгружено", you: "Вы", none: "Открытых ответов пока нет." };
+
+  const lines = [
+    w.title,
+    `${w.with}: ${conn.name}`,
+    `${w.when}: ${new Date().toLocaleString(lang === "en" ? "en-GB" : "ru-RU")}`,
+    "",
+  ];
+
+  let count = 0;
+  for (const set of setsFor(lang)) {
+    const open = set.questions.filter(
+      (q) => answers[q.id]?.text && conn.answers?.[q.id]?.text && !hidden.includes(q.cat)
+    );
+    if (!open.length) continue;
+
+    lines.push(`— ${set.title} —`, "");
+    for (const q of open) {
+      lines.push((lang === "en" ? q.en : q.ru) || q.ru);
+      lines.push(`${w.you}: ${answers[q.id].text}`);
+      lines.push(`${conn.name}: ${conn.answers[q.id].text}`);
+      lines.push("");
+      count++;
+    }
+  }
+
+  if (!count) lines.push(w.none);
+  return lines.join("\n");
+}
+
+/** Копирует текст и, где это разрешено, сохраняет его файлом. */
+export async function handOver(text, filename = "my-answers.txt") {
 
   let copied = false;
   try {
@@ -76,7 +113,7 @@ export async function exportAnswers(answers, profile) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "my-answers.txt";
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -87,4 +124,14 @@ export async function exportAnswers(answers, profile) {
   }
 
   return { copied, saved, text };
+}
+
+/** Выгрузка своих ответов. */
+export async function exportAnswers(answers, profile) {
+  return handOver(answersToText(answers, profile), "my-answers.txt");
+}
+
+/** Выгрузка ответов пары. Вызывается только при согласии обоих. */
+export async function exportPair(answers, conn, profile) {
+  return handOver(pairToText(answers, conn, profile), "our-answers.txt");
 }

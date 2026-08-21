@@ -166,10 +166,12 @@ export async function pullAll(localName) {
     { data: conns, error: connErr },
     { data: rows, error: ansErr },
     { data: reacts },
+    { data: consents },
   ] = await Promise.all([
     supabase.from("connections").select("id, a, b, kind, invite_code, status, created_at"),
     supabase.from("answers").select("user_id, question_id, body, updated_at"),
     supabase.from("reactions").select("connection_id, user_id, question_id, value"),
+    supabase.from("export_consents").select("connection_id, user_id"),
   ]);
 
   const failed = connErr || ansErr;
@@ -205,12 +207,20 @@ export async function pullAll(localName) {
       for (const r of reacts || []) {
         if (r.connection_id === c.id && r.user_id === me) reactions[r.question_id] = r.value;
       }
+      const mineOk = (consents || []).some(
+        (x) => x.connection_id === c.id && x.user_id === me
+      );
+      const theirOk = (consents || []).some(
+        (x) => x.connection_id === c.id && x.user_id === other
+      );
+
       return {
         id: c.id,
         name: names[other] || "Партнёр",
         kind: c.kind,
         answers: theirs[other] || {},
         reactions,
+        exportConsent: { mine: mineOk, theirs: theirOk },
       };
     });
 
@@ -296,6 +306,28 @@ export async function pushReaction(connectionId, questionId, value) {
     value,
     updated_at: new Date().toISOString(),
   });
+}
+
+/**
+ * Разрешение на совместную выгрузку. Каждый ставит его только за себя;
+ * файл с ответами обоих собирается, только когда согласились оба.
+ */
+export async function setExportConsent(connectionId, granted) {
+  if (!isRemote || !me) return { ok: false, message: "Нет связи с сервером." };
+
+  if (!granted) {
+    const { error } = await supabase
+      .from("export_consents")
+      .delete()
+      .eq("connection_id", connectionId)
+      .eq("user_id", me);
+    return error ? { ok: false, message: error.message } : { ok: true };
+  }
+
+  const { error } = await supabase
+    .from("export_consents")
+    .upsert({ connection_id: connectionId, user_id: me });
+  return error ? { ok: false, message: error.message } : { ok: true };
 }
 
 /** Разрыв связи: пара расходится, но оба остаются в приложении. */
