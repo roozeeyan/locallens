@@ -6,7 +6,7 @@ export const palettes = {
     nameEn: "Cream",
     bg: "#EFEBE2",
     paper: "#FBFAF7",
-    accent: "#CEDEE8",
+    accent: "#B6CDDD",
     warm: "#74362D",
     onWarm: "#F6F2EA",
     ink: "#452928",

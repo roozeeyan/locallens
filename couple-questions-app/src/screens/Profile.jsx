@@ -222,8 +222,8 @@ export default function Profile({ onPaywall, onLegal }) {
               style={{
                 ...swatch,
                 background: p.bg,
-                outline: profile.theme === id ? `3px solid ${c.coral}` : "none",
-                outlineOffset: 2,
+                border:
+                  profile.theme === id ? `3px solid ${c.coral}` : `2px solid ${c.ink}`,
               }}
               aria-label={lang === "en" ? p.nameEn : p.name}
               aria-pressed={profile.theme === id}
