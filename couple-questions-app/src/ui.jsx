@@ -89,11 +89,17 @@ export function Chip({ children, active, onClick }) {
   );
 }
 
+/**
+ * Полоса прогресса. Первый ответ из двенадцати — это несколько пикселей,
+ * которых не видно, поэтому у ненулевого прогресса есть минимальная
+ * заметная ширина.
+ */
 export function Progress({ value, height = 10 }) {
   const pct = Math.max(0, Math.min(100, value));
+  const shown = pct > 0 ? Math.max(pct, 7) : 0;
   return (
     <div style={{ ...s.prog, height }} role="progressbar" aria-valuenow={Math.round(pct)}>
-      <i style={{ ...s.progFill, width: `${pct}%` }} />
+      <i style={{ ...s.progFill, width: `${shown}%` }} />
     </div>
   );
 }
@@ -106,14 +112,25 @@ export function Lock() {
   return <span style={s.lock} aria-label="Premium" />;
 }
 
-export function Field({ value, onChange, placeholder, rows = 5 }) {
+/**
+ * Поле для ответа. С `grow` оно занимает всё свободное место экрана:
+ * иначе под коротким ответом остаётся полэкрана пустоты, а длинный
+ * приходится прокручивать внутри маленького окошка.
+ */
+export function Field({ value, onChange, placeholder, rows = 5, grow }) {
   return (
     <textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      rows={rows}
-      style={s.field}
+      rows={grow ? undefined : rows}
+      // Клавиатура появляется не мгновенно: подтягиваем поле к видимой
+      // части экрана уже после того, как она заняла своё место.
+      onFocus={(e) => {
+        const el = e.target;
+        setTimeout(() => el.scrollIntoView({ block: "nearest", behavior: "smooth" }), 320);
+      }}
+      style={grow ? { ...s.field, flex: "1 1 auto" } : s.field}
     />
   );
 }

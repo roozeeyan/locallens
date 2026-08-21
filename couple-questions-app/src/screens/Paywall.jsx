@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { c, font } from "../theme.js";
+import { screenHeight } from "../viewport.js";
 import { Button, Iso, Label } from "../ui.jsx";
 import { useStore, actions } from "../store.js";
 import { PRICE_STARS, lockedQuestionCount } from "../limits.js";
@@ -174,7 +175,10 @@ function plural(n, one, few, many) {
 
 const wrap = {
   position: "fixed",
-  inset: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  height: screenHeight,
   background: c.bg,
   zIndex: 50,
   overflowY: "auto",

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { c, font } from "../theme.js";
+import { screenHeight } from "../viewport.js";
 import { Card, Label } from "../ui.jsx";
 import { PRIVACY, TERMS, LEGAL_UPDATED } from "../legal.js";
 
@@ -76,7 +77,10 @@ function Tab({ children, active, onClick }) {
 
 const wrap = {
   position: "fixed",
-  inset: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  height: screenHeight,
   background: c.bg,
   display: "flex",
   flexDirection: "column",

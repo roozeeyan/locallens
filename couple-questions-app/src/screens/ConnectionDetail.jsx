@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { c, font } from "../theme.js";
+import { screenHeight } from "../viewport.js";
 import { Card, Button, Progress, Label } from "../ui.jsx";
 import { dropConnection, setExportConsent, fetchVerdict } from "../sync.js";
 import { exportPair } from "../export.js";
@@ -437,7 +438,10 @@ const verdictBox = {
 };
 const wrap = {
   position: "fixed",
-  inset: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  height: screenHeight,
   background: c.bg,
   display: "flex",
   flexDirection: "column",

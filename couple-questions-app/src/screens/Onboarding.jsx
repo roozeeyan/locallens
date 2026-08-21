@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { c, font, palettes, applyPalette } from "../theme.js";
+import { screenHeight } from "../viewport.js";
 import { Button, Progress, Iso } from "../ui.jsx";
 import { actions, CATEGORIES, setTitle } from "../store.js";
 import Legal from "./Legal.jsx";
@@ -594,7 +595,10 @@ function Name({ t, value, onChange, onDone }) {
 
 const wrap = {
   position: "fixed",
-  inset: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  height: screenHeight,
   background: c.bg,
   display: "flex",
   flexDirection: "column",
