@@ -12,7 +12,9 @@
       body { -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
       button { font: inherit; }
       textarea, input { font: inherit; }
-      :focus-visible { outline: 2px solid #EE8E79; outline-offset: 2px; }
+      /* Кольцо фокуса без отступа: с отступом оно не повторяет скругление
+         и на iOS расходится неровно. */
+      :focus-visible { outline: 3px solid var(--rg-accent, #B6CDDD); outline-offset: 0; }
     </style>
   </head>
   <body>

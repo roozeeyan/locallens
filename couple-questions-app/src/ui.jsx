@@ -24,6 +24,19 @@ export function Button({ children, onClick, variant = "primary", full, disabled,
     secondary: { background: c.paper },
     quiet: { background: "transparent", boxShadow: "none", border: "none" },
   }[variant];
+
+  // Неактивная кнопка гасится целиком, вместе с рамкой — от этого рамка
+  // выглядит сломанной. Вместо прозрачности приглушаем сами цвета.
+  const off = disabled
+    ? {
+        background: c.bg,
+        color: c.mute,
+        border: `2px solid ${c.mute}`,
+        boxShadow: `0 3px 0 ${c.mute}`,
+        cursor: "default",
+      }
+    : null;
+
   return (
     <button
       onClick={onClick}
@@ -32,7 +45,7 @@ export function Button({ children, onClick, variant = "primary", full, disabled,
         ...s.btn,
         ...v,
         width: full ? "100%" : undefined,
-        opacity: disabled ? 0.45 : 1,
+        ...off,
         ...style,
       }}
     >
@@ -216,6 +229,10 @@ export const s = {
   },
   field: {
     width: "100%",
+    // Клавиатура ужимает экран: без этого поле для ответа съёживается
+    // до одной строки прямо во время набора.
+    flexShrink: 0,
+    minHeight: 132,
     background: c.paper,
     border,
     borderRadius: r.md,
