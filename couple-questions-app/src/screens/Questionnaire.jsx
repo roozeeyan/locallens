@@ -157,7 +157,13 @@ function Row({ badge, title, note, open, done, progress, onClick }) {
   return (
     <Card onClick={onClick} pad={13} style={open ? undefined : { opacity: 0.72 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ ...icon, background: !open ? c.coral : done ? c.sage : c.paper }}>
+        <span
+          style={{
+            ...icon,
+            background: !open ? c.coral : done ? c.sage : c.paper,
+            color: !open ? c.onCoral : c.ink,
+          }}
+        >
           {badge}
         </span>
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 7 }}>

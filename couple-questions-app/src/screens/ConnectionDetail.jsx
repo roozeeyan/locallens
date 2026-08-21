@@ -22,6 +22,7 @@ function Tag({ children, warm }) {
         font: `600 11px ${font.sans}`,
         color: c.ink,
         background: warm ? c.coral : c.sage,
+        color: warm ? c.onCoral : c.ink,
         border: `2px solid ${c.ink}`,
         borderRadius: 999,
         padding: "3px 9px",
@@ -160,7 +161,7 @@ export default function ConnectionDetail({ connId, onClose }) {
             <div style={{ display: "flex", gap: 8 }}>
               <Stat n={m.match} label={t.match} bg={c.sage} />
               <Stat n={m.talk} label={t.talk} bg={c.paper} />
-              <Stat n={m.differ} label={t.differ} bg={c.coral} />
+              <Stat n={m.differ} label={t.differ} bg={c.coral} onBg={c.onCoral} />
             </div>
           </Card>
         )}
@@ -385,7 +386,7 @@ function MiniRow({ label, pct, n, total }) {
   );
 }
 
-function Stat({ n, label, bg }) {
+function Stat({ n, label, bg, onBg = c.ink }) {
   return (
     <div
       style={{
@@ -397,8 +398,8 @@ function Stat({ n, label, bg }) {
         textAlign: "center",
       }}
     >
-      <div style={{ font: `700 19px ${font.serif}`, color: c.ink }}>{n}</div>
-      <div style={{ font: `600 10.5px ${font.sans}`, color: c.ink, opacity: 0.7 }}>{label}</div>
+      <div style={{ font: `700 19px ${font.serif}`, color: onBg }}>{n}</div>
+      <div style={{ font: `600 10.5px ${font.sans}`, color: onBg, opacity: 0.75 }}>{label}</div>
     </div>
   );
 }

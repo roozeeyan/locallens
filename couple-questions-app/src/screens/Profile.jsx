@@ -265,7 +265,7 @@ export default function Profile({ onPaywall, onLegal }) {
               <button
                 key={cat.id}
                 onClick={() => actions.toggleHiddenBlock(cat.id)}
-                style={{ ...rowBtn, background: hidden ? c.coral : c.bg }}
+                style={{ ...rowBtn, background: hidden ? c.coral : c.bg, color: hidden ? c.onCoral : c.ink }}
                 aria-pressed={hidden}
               >
                 <span style={{ flex: 1, textAlign: "left" }}>
@@ -348,7 +348,7 @@ export default function Profile({ onPaywall, onLegal }) {
           full
           variant="secondary"
           disabled={busy}
-          style={{ background: c.coral }}
+          style={{ background: c.coral, color: c.onCoral }}
           onClick={async () => {
             if (!confirm(t.deleteConfirm1)) return;
             if (!confirm(t.deleteConfirm2)) return;

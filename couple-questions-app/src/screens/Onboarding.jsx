@@ -675,12 +675,12 @@ const box = (active) => ({
 const ageBadge = {
   alignSelf: "flex-start",
   background: c.coral,
+  color: c.onCoral,
   border: `2px solid ${c.ink}`,
   borderRadius: 999,
   boxShadow: `0 2px 0 ${c.ink}`,
   padding: "5px 14px",
   font: `700 14px ${font.mono}`,
-  color: c.ink,
 };
 const linkBtn = {
   background: "none",

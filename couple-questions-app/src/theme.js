@@ -6,18 +6,20 @@ export const palettes = {
     nameEn: "Cream",
     bg: "#EFEBE2",
     paper: "#FBFAF7",
-    accent: "#A6C7C4",
-    warm: "#EE8E79",
-    ink: "#15181A",
-    mute: "#8A8F8B",
+    accent: "#9DBCD1",
+    warm: "#74362D",
+    onWarm: "#F6F2EA",
+    ink: "#452928",
+    mute: "#8A7C76",
   },
   night: {
     name: "Ночная",
     nameEn: "Night",
     bg: "#1A1C1F",
     paper: "#25292D",
-    accent: "#7FA9A6",
-    warm: "#D97E68",
+    accent: "#9DBCD1",
+    warm: "#8E453A",
+    onWarm: "#F6F2EA",
     ink: "#F0EDE7",
     mute: "#8E9490",
   },
@@ -27,7 +29,8 @@ export const palettes = {
     bg: "#F4E7E4",
     paper: "#FDF8F7",
     accent: "#E0A69C",
-    warm: "#7FA9A6",
+    warm: "#74362D",
+    onWarm: "#F9F2EF",
     ink: "#2B1E1C",
     mute: "#9A8582",
   },
@@ -42,6 +45,7 @@ export function applyPalette(id) {
   root.style.setProperty("--rg-paper", p.paper);
   root.style.setProperty("--rg-accent", p.accent);
   root.style.setProperty("--rg-warm", p.warm);
+  root.style.setProperty("--rg-on-warm", p.onWarm || p.ink);
   root.style.setProperty("--rg-ink", p.ink);
   root.style.setProperty("--rg-mute", p.mute);
   document.body.style.background = p.bg;
@@ -54,6 +58,8 @@ export const c = {
   paper: "var(--rg-paper)",
   sage: "var(--rg-accent)",
   coral: "var(--rg-warm)",
+  // Текст поверх тёмной метки: на burgundy тёмное не читается.
+  onCoral: "var(--rg-on-warm)",
   ink: "var(--rg-ink)",
   mute: "var(--rg-mute)",
 };

@@ -206,6 +206,7 @@ function Tag({ children, warm }) {
         font: `600 11px ${font.sans}`,
         color: c.ink,
         background: warm ? c.coral : c.bg,
+        color: warm ? c.onCoral : c.ink,
         border: `2px solid ${c.ink}`,
         borderRadius: 999,
         padding: "3px 9px",
