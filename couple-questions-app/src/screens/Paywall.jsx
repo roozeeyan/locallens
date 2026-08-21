@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { c, font } from "../theme.js";
-import { screenHeight } from "../viewport.js";
+import { screenHeight, screenTop, lockScroll } from "../viewport.js";
 import { Button, Iso, Label } from "../ui.jsx";
 import { useStore, actions } from "../store.js";
 import { PRICE_STARS, lockedQuestionCount } from "../limits.js";
@@ -64,6 +64,8 @@ const T = {
 };
 
 export default function Paywall({ onClose, reason }) {
+  useEffect(lockScroll, []);
+
   const profile = useStore((s) => s.profile);
   const t = T[profile.lang === "en" ? "en" : "ru"];
   const [busy, setBusy] = useState(false);
@@ -175,7 +177,7 @@ function plural(n, one, few, many) {
 
 const wrap = {
   position: "fixed",
-  top: 0,
+  top: screenTop,
   left: 0,
   right: 0,
   height: screenHeight,
@@ -196,7 +198,7 @@ const close = {
   font: "13px/1 sans-serif",
   color: c.ink,
   cursor: "pointer",
-  zIndex: 1,
+  zIndex: 35,
 };
 const body = {
   maxWidth: 520,

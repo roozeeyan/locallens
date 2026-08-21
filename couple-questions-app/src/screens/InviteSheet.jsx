@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { c, font } from "../theme.js";
-import { screenHeight } from "../viewport.js";
+import { screenHeight, screenTop, lockScroll } from "../viewport.js";
 import { Card, Button, Label } from "../ui.jsx";
 import { isRemote, makeInviteCode } from "../backend.js";
 import { createInviteRemote, joinByCode } from "../sync.js";
@@ -70,6 +70,8 @@ const T = {
 };
 
 export default function InviteSheet({ onClose, onAccepted }) {
+  useEffect(lockScroll, []);
+
   const name = useStore((s) => s.profile.name);
   const lang = useStore((s) => s.profile.lang);
   const t = T[lang === "en" ? "en" : "ru"];
@@ -222,14 +224,14 @@ function Pick({ children, active, onClick }) {
 
 const wrap = {
   position: "fixed",
-  top: 0,
+  top: screenTop,
   left: 0,
   right: 0,
   height: screenHeight,
   background: c.bg,
   display: "flex",
   flexDirection: "column",
-  zIndex: 25,
+  zIndex: 30,
 };
 const top = { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 8px" };
 const back = {

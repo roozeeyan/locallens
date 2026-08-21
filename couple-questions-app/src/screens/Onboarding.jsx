@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { c, font, palettes, applyPalette } from "../theme.js";
-import { screenHeight } from "../viewport.js";
+import { screenHeight, screenTop, lockScroll } from "../viewport.js";
 import { Button, Progress, Iso } from "../ui.jsx";
 import { actions, CATEGORIES, setTitle } from "../store.js";
 import Legal from "./Legal.jsx";
@@ -144,6 +144,8 @@ export default function Onboarding() {
     consentAt: null,
     lang: "ru",
   });
+
+  useEffect(lockScroll, []);
 
   const t = T[lang];
 
@@ -595,14 +597,14 @@ function Name({ t, value, onChange, onDone }) {
 
 const wrap = {
   position: "fixed",
-  top: 0,
+  top: screenTop,
   left: 0,
   right: 0,
   height: screenHeight,
   background: c.bg,
   display: "flex",
   flexDirection: "column",
-  zIndex: 40,
+  zIndex: 50,
 };
 const page = {
   flex: 1,

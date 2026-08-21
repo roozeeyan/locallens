@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { c, font } from "../theme.js";
-import { screenHeight } from "../viewport.js";
+import { screenHeight, screenTop, lockScroll } from "../viewport.js";
 import { Card, Button, Progress, Label } from "../ui.jsx";
 import { dropConnection, setExportConsent, fetchVerdict } from "../sync.js";
 import { exportPair } from "../export.js";
@@ -122,6 +122,8 @@ const T = {
 };
 
 export default function ConnectionDetail({ connId, onClose }) {
+  useEffect(lockScroll, []);
+
   const { answers, connections, profile } = useStore();
   const hiddenBlocks = profile.hiddenBlocks;
   const lang = profile.lang === "en" ? "en" : "ru";
@@ -438,14 +440,14 @@ const verdictBox = {
 };
 const wrap = {
   position: "fixed",
-  top: 0,
+  top: screenTop,
   left: 0,
   right: 0,
   height: screenHeight,
   background: c.bg,
   display: "flex",
   flexDirection: "column",
-  zIndex: 20,
+  zIndex: 30,
 };
 const top = { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 8px" };
 const back = {

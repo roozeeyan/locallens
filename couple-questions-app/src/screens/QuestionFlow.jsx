@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { c, font } from "../theme.js";
-import { screenHeight } from "../viewport.js";
+import { screenHeight, screenTop, lockScroll } from "../viewport.js";
 import { Button, Field, Progress } from "../ui.jsx";
 import { useStore, actions, questionsOf, setTitle, qText } from "../store.js";
 import { shareQuestion } from "../share.js";
@@ -13,6 +13,8 @@ const T = {
 };
 
 export default function QuestionFlow({ catId, onClose }) {
+  useEffect(lockScroll, []);
+
   const answers = useStore((s) => s.answers);
   const theme = useStore((s) => s.profile.theme);
   const lang = useStore((s) => s.profile.lang) || "ru";
@@ -117,20 +119,23 @@ function ShareIcon() {
 
 const wrap = {
   position: "fixed",
-  top: 0,
+  top: screenTop,
   left: 0,
   right: 0,
   height: screenHeight,
   background: c.bg,
   display: "flex",
   flexDirection: "column",
-  zIndex: 20,
+  zIndex: 30,
 };
 const top = {
   display: "flex",
   flexDirection: "column",
   gap: 10,
   padding: "16px 16px 10px",
+  background: c.bg,
+  flexShrink: 0,
+  zIndex: 1,
 };
 const blockName = {
   font: `600 10.5px/1.35 ${font.mono}`,
