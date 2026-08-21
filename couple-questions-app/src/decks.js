@@ -13,6 +13,7 @@ export const DECKS = [
     ru: "Первое свидание",
     en: "First Date",
     note: "Лёгкие, но не пустые",
+    noteEn: "Light, but not empty",
     draft: true,
     questions: [
       { id: 1001, ru: "Что ты делаешь, когда у тебя свободный вечер и никаких планов?", en: "What do you do when you have a free evening and no plans?" },
@@ -32,6 +33,7 @@ export const DECKS = [
     ru: "После ссоры",
     en: "After a Fight",
     note: "Когда уже остыли",
+    noteEn: "Once you have both cooled down",
     draft: true,
     questions: [
       { id: 1101, ru: "Что ты на самом деле хотел(а) сказать, но сказал(а) по-другому?", en: "What did you actually want to say, but said differently?" },
@@ -49,6 +51,7 @@ export const DECKS = [
     ru: "На расстоянии",
     en: "Long Distance",
     note: "Когда вы в разных городах",
+    noteEn: "When you live in different cities",
     draft: true,
     questions: [
       { id: 1201, ru: "Сколько времени мы готовы жить в разных городах?", en: "How long are we willing to live in different cities?" },
@@ -68,6 +71,7 @@ export const DECKS = [
     ru: "Перед свадьбой",
     en: "Before the Wedding",
     note: "Практика, о которой забывают",
+    noteEn: "The practical side people forget",
     draft: true,
     questions: [
       { id: 1301, ru: "Зачем нам официальный брак — что он меняет?", en: "Why do we want a legal marriage — what does it change?" },

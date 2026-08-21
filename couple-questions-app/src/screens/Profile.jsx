@@ -320,11 +320,7 @@ export default function Profile({ onPaywall, onLegal }) {
 
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Label>{t.data}</Label>
-        <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>
-          Выгрузка соберёт ваши ответы в текст и скопирует его — можно вставить в заметки
-          или отправить себе. Удаление аккаунта стирает ответы и на сервере: партнёры
-          перестанут их видеть. Отменить нельзя.
-        </span>
+        <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>{t.dataNote}</span>
         <Button
           full
           variant="secondary"

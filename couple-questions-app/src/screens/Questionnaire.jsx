@@ -140,7 +140,7 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
               key={deck.id}
               badge="+"
               title={setTitle(deck.id, lang)}
-              note={deck.note}
+              note={lang === "en" ? deck.noteEn || deck.note : deck.note}
               open={open}
               done={p.done === p.total}
               progress={p}
