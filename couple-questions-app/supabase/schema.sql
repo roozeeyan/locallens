@@ -366,3 +366,33 @@ drop policy if exists "выгрузка: отзываю только своё" o
 create policy "выгрузка: отзываю только своё"
   on export_consents for delete
   using (user_id = auth.uid());
+
+-- =================================================== 11. Разбор от ИИ
+
+-- Готовый разбор хранится, чтобы не гонять модель заново при каждом
+-- открытии экрана. Пишет его только серверная функция под сервисным
+-- ключом — правила на запись здесь намеренно нет.
+
+create table if not exists verdicts (
+  id            uuid primary key default gen_random_uuid(),
+  connection_id uuid not null references connections(id) on delete cascade,
+  lang          text not null default 'ru' check (lang in ('ru', 'en')),
+  body          text not null,
+  pairs_used    int  not null default 0,
+  created_at    timestamptz not null default now()
+);
+
+create index if not exists verdicts_conn_idx on verdicts(connection_id, lang, created_at desc);
+
+alter table verdicts enable row level security;
+
+grant select on verdicts to authenticated;
+
+drop policy if exists "разбор: вижу по своей связи" on verdicts;
+create policy "разбор: вижу по своей связи"
+  on verdicts for select
+  using (exists (
+    select 1 from connections c
+    where c.id = verdicts.connection_id
+      and (c.a = auth.uid() or c.b = auth.uid())
+  ));

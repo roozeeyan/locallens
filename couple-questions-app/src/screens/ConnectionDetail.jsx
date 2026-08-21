@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { c, font } from "../theme.js";
 import { Card, Button, Progress, Label } from "../ui.jsx";
-import { dropConnection, setExportConsent } from "../sync.js";
+import { dropConnection, setExportConsent, fetchVerdict } from "../sync.js";
 import { exportPair } from "../export.js";
 import {
   useStore,
@@ -58,6 +58,10 @@ const T = {
     verdictBody:
       "Разбор по всем открытым ответам: где вы сходитесь, что стоит обсудить и на что обратить внимание. Появится в блоке про ИИ — он читает оба ответа и ваши отметки.",
     soon: "Пока недоступно",
+    build: "Собрать разбор",
+    again: "Собрать заново",
+    thinking: "Читаю ваши ответы…",
+    needMore: (n) => `Нужно хотя бы 5 открытых пар ответов, сейчас ${n}.`,
     remove: "Удалить связь",
     removeConfirm: (name) => `Удалить связь с ${name}? Вы перестанете видеть ответы друг друга.`,
     failed: (msg) => `Не получилось: ${msg}`,
@@ -93,6 +97,10 @@ const T = {
     verdictBody:
       "A read of every revealed answer: where you agree, what is worth discussing, and what to watch out for. It arrives with the AI block, which reads both answers and your marks.",
     soon: "Not available yet",
+    build: "Build the summary",
+    again: "Build again",
+    thinking: "Reading your answers…",
+    needMore: (n) => `At least 5 revealed answer pairs are needed, you have ${n}.`,
     remove: "Remove connection",
     removeConfirm: (name) => `Remove your connection with ${name}? You will stop seeing each other's answers.`,
     failed: (msg) => `Did not work: ${msg}`,
@@ -118,6 +126,9 @@ export default function ConnectionDetail({ connId, onClose }) {
   const t = T[lang];
   const conn = connections.find((x) => x.id === connId);
   const [tab, setTab] = useState("open");
+  const [verdict, setVerdict] = useState("");
+  const [verdictNote, setVerdictNote] = useState("");
+  const [busy, setBusy] = useState(false);
 
   if (!conn) return null;
 
@@ -233,9 +244,44 @@ export default function ConnectionDetail({ connId, onClose }) {
           <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
             {t.verdictBody}
           </p>
-          <Button full variant="secondary" disabled>
-            {t.soon}
+
+          {verdict && (
+            <div style={verdictBox}>
+              {verdict.split("\n").map((line, i) =>
+                line.trim() ? (
+                  <p key={i} style={{ margin: 0, font: `400 13.5px/1.55 ${font.sans}` }}>
+                    {line}
+                  </p>
+                ) : null
+              )}
+            </div>
+          )}
+
+          {verdictNote && (
+            <span style={{ font: `500 12px/1.4 ${font.mono}`, color: c.mute }}>{verdictNote}</span>
+          )}
+
+          <Button
+            full
+            variant={verdict ? "secondary" : "primary"}
+            disabled={busy || open.length < 5}
+            onClick={async () => {
+              setBusy(true);
+              setVerdictNote("");
+              const res = await fetchVerdict(conn.id, lang, Boolean(verdict));
+              setBusy(false);
+              if (res.ok) setVerdict(res.body);
+              else setVerdictNote(res.message);
+            }}
+          >
+            {busy ? t.thinking : verdict ? t.again : t.build}
           </Button>
+
+          {open.length < 5 && (
+            <span style={{ font: `400 12px/1.4 ${font.sans}`, color: c.mute }}>
+              {t.needMore(open.length)}
+            </span>
+          )}
         </Card>
 
         <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -378,6 +424,16 @@ function Seg({ children, active, onClick }) {
   );
 }
 
+const verdictBox = {
+  background: c.bg,
+  border: `2px solid ${c.ink}`,
+  borderRadius: 12,
+  padding: 13,
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+  color: c.ink,
+};
 const wrap = {
   position: "fixed",
   inset: 0,

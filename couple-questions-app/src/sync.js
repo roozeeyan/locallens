@@ -309,6 +309,38 @@ export async function pushReaction(connectionId, questionId, value) {
 }
 
 /**
+ * Разбор от ИИ. Считает его серверная функция: ключ модели не должен
+ * попадать в приложение, а отбор ответов нельзя доверять клиенту.
+ */
+export async function fetchVerdict(connectionId, lang, refresh = false) {
+  if (!isRemote || !me) return { ok: false, message: "Нет связи с сервером." };
+
+  const { data: session } = await supabase.auth.getSession();
+  const token = session.session?.access_token;
+  if (!token) return { ok: false, message: "Нет входа. Откройте приложение заново." };
+
+  try {
+    const res = await fetch(`${serverUrl}/functions/v1/verdict`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        apikey: anonKey,
+        authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ connectionId, lang, refresh }),
+    });
+
+    const payload = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, message: payload.error || "Разбор пока недоступен.", info: payload };
+    }
+    return { ok: true, body: payload.body, cached: payload.cached };
+  } catch (e) {
+    return { ok: false, message: e?.message || "Сервер не ответил." };
+  }
+}
+
+/**
  * Разрешение на совместную выгрузку. Каждый ставит его только за себя;
  * файл с ответами обоих собирается, только когда согласились оба.
  */
