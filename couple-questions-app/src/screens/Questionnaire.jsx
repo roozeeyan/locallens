@@ -155,7 +155,7 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
 
 function Row({ badge, title, note, open, done, progress, onClick }) {
   return (
-    <Card onClick={onClick} pad={13} style={open ? undefined : { opacity: 0.72 }}>
+    <Card onClick={onClick} pad={13} style={open ? undefined : lockedCard}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span
           style={{
@@ -183,6 +183,10 @@ function Row({ badge, title, note, open, done, progress, onClick }) {
     </Card>
   );
 }
+
+// Закрытый блок раньше просто гасился прозрачностью — на подложке сквозь
+// него просвечивала картинка. Гасим цветом, карточка остаётся непрозрачной.
+const lockedCard = { background: "color-mix(in srgb, var(--rg-paper) 82%, var(--rg-mute))" };
 
 const icon = {
   width: 34,

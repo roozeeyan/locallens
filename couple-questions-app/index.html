@@ -12,7 +12,8 @@
     <link rel="stylesheet" href="/fonts.css" />
     <style>
       *, *::before, *::after { box-sizing: border-box; }
-      html, body { margin: 0; padding: 0; overflow-x: hidden; background: #EFEBE2; }
+      html { background: #EFEBE2; }
+      html, body { margin: 0; padding: 0; overflow-x: hidden; }
       /* Двойное касание и щипок больше не масштабируют приложение. */
       html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
       body { -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
@@ -20,10 +21,35 @@
       textarea, input { font: inherit; }
       /* Кольцо фокуса без отступа: с отступом оно не повторяет скругление
          и на iOS расходится неровно. */
+      #backdrop, #backdrop-grain {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+      }
+      #backdrop {
+        background-image: var(--rg-backdrop, none);
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      #backdrop-grain {
+        opacity: var(--rg-grain, 0);
+        background-image:
+          radial-gradient(rgba(255, 255, 255, 0.5) 0.6px, transparent 0.7px),
+          radial-gradient(rgba(0, 0, 0, 0.42) 0.6px, transparent 0.7px);
+        background-size: 3px 3px, 4px 4px;
+        background-position: 0 0, 1px 2px;
+      }
       :focus-visible { outline: 3px solid var(--rg-accent, #B6CDDD); outline-offset: 0; }
     </style>
   </head>
   <body>
+    <!-- Подложка страницы: лежит под всем содержимым и не прокручивается.
+         Зерно возвращается отдельным слоем — в самой картинке его нет,
+         иначе она весила бы в десять раз больше. -->
+    <div id="backdrop"></div>
+    <div id="backdrop-grain"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

@@ -184,6 +184,10 @@ export function TabBar({ tabs, active, onChange }) {
   );
 }
 
+// Ореол под текстом, который лежит прямо на подложке: без него надпись
+// пропадает на тёмных участках картинки.
+const halo = "0 1px 3px var(--rg-bg), 0 0 10px var(--rg-bg)";
+
 export const s = {
   screen: {
     display: "flex",
@@ -192,8 +196,21 @@ export const s = {
     padding: "14px 16px 24px",
   },
   header: { display: "flex", alignItems: "flex-start", gap: 12, paddingTop: 6 },
-  h1: { font: `700 30px/1.08 ${font.serif}`, letterSpacing: "-0.01em", margin: 0, color: c.ink },
-  sub: { margin: "6px 0 0", fontSize: 13.5, color: c.mute, lineHeight: 1.4 },
+  h1: {
+    font: `700 30px/1.08 ${font.serif}`,
+    letterSpacing: "-0.01em",
+    margin: 0,
+    color: c.ink,
+    textShadow: halo,
+  },
+  sub: {
+    margin: "6px 0 0",
+    fontSize: 13.5,
+    color: c.ink,
+    opacity: 0.72,
+    lineHeight: 1.4,
+    textShadow: halo,
+  },
 
   btn: {
     border,
@@ -234,6 +251,7 @@ export const s = {
     letterSpacing: "0.12em",
     textTransform: "uppercase",
     color: c.mute,
+    textShadow: halo,
   },
   lock: {
     display: "inline-block",

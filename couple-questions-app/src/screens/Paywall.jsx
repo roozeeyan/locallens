@@ -181,7 +181,9 @@ const wrap = {
   left: 0,
   right: 0,
   height: screenHeight,
-  background: c.bg,
+  background: c.veil,
+  backdropFilter: "blur(2px)",
+  WebkitBackdropFilter: "blur(2px)",
   zIndex: 50,
   overflowY: "auto",
 };

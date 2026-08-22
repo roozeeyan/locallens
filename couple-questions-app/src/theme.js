@@ -11,15 +11,11 @@ export const palettes = {
     onWarm: "#F6F2EA",
     ink: "#452928",
     mute: "#8A7C76",
-    // Подложка страницы: размытое бордовое пятно на холодном светлом поле.
-    // Держим её приглушённой — поверх лежит текст, и он должен читаться.
-    backdrop: [
-      "radial-gradient(54% 36% at 50% 40%, rgba(116,54,45,0.38) 0%, rgba(116,54,45,0.19) 48%, rgba(116,54,45,0) 76%)",
-      "radial-gradient(64% 42% at 16% 12%, rgba(141,178,205,0.46) 0%, rgba(150,183,206,0) 62%)",
-      "radial-gradient(58% 40% at 88% 82%, rgba(141,178,205,0.40) 0%, rgba(150,183,206,0) 64%)",
-      "radial-gradient(70% 48% at 78% 22%, rgba(247,244,238,0.55) 0%, rgba(247,244,238,0) 60%)",
-      "linear-gradient(180deg, #F2EEE7 0%, #EFEBE2 55%, #F1EDE6 100%)",
-    ].join(", "),
+    backdrop: "url('/backdrop.jpg')",
+    grain: 0.22,
+    // Полупрозрачная вуаль для полноэкранных слоёв: картинка просвечивает,
+    // но текст поверх неё остаётся читаемым.
+    veil: "rgba(240, 236, 228, 0.74)",
   },
   night: {
     name: "Ночная",
@@ -31,6 +27,7 @@ export const palettes = {
     onWarm: "#F6F2EA",
     ink: "#F0EDE7",
     mute: "#8E9490",
+    veil: "rgba(26, 28, 31, 0.86)",
   },
   rose: {
     name: "Розовая",
@@ -42,6 +39,7 @@ export const palettes = {
     onWarm: "#F9F2EF",
     ink: "#2B1E1C",
     mute: "#9A8582",
+    veil: "rgba(244, 231, 228, 0.8)",
   },
 };
 
@@ -57,8 +55,13 @@ export function applyPalette(id) {
   root.style.setProperty("--rg-on-warm", p.onWarm || p.ink);
   root.style.setProperty("--rg-ink", p.ink);
   root.style.setProperty("--rg-mute", p.mute);
-  document.body.style.background = p.backdrop || p.bg;
-  document.body.style.backgroundAttachment = p.backdrop ? "fixed" : "";
+  root.style.setProperty("--rg-veil", p.veil || p.bg);
+  root.style.setProperty("--rg-backdrop", p.backdrop || "none");
+  root.style.setProperty("--rg-grain", p.grain ? String(p.grain) : "0");
+  // Цвет держим на корне страницы: непрозрачный фон body закрыл бы собой
+  // слой с подложкой, который лежит под содержимым.
+  root.style.background = p.bg;
+  document.body.style.background = "transparent";
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute("content", p.bg);
 }
@@ -72,6 +75,7 @@ export const c = {
   onCoral: "var(--rg-on-warm)",
   ink: "var(--rg-ink)",
   mute: "var(--rg-mute)",
+  veil: "var(--rg-veil)",
 };
 
 export const font = {
