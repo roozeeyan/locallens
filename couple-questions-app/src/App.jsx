@@ -17,7 +17,7 @@ import Paywall from "./screens/Paywall.jsx";
 import Legal from "./screens/Legal.jsx";
 import Splash from "./screens/Splash.jsx";
 
-const SPLASH_HOLD_MS = 620; // сколько держим кадр после последнего символа
+const SPLASH_HOLD_MS = 1240; // сколько держим кадр после последнего символа
 const SPLASH_FADE_MS = 400;
 
 const TABS = {

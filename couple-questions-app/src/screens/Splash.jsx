@@ -30,7 +30,7 @@ const COPY = {
 
 // Набор идёт посимвольно, паузы между строками считаются в тех же
 // «символах» — так одна скорость управляет и печатью, и остановками.
-const SPEED_MS = 8;
+const SPEED_MS = 16;
 const GAP_LINE = 5;
 const GAP_BLOCK = 14;
 const GAP_FOOTER = 14;
@@ -121,7 +121,7 @@ export default function Splash({ leaving = false, onDone, onTyped }) {
           {typing(0) && <Caret />}
         </div>
 
-        <div style={{ ...scriptLine, ...fade(shownHead, 260) }}>{COPY.script}</div>
+        <div style={{ ...scriptLine, ...fade(shownHead, 400) }}>{COPY.script}</div>
 
         <div style={blocks}>
           {COPY.blocks.map((lines, b) => (
@@ -157,7 +157,7 @@ function fade(on, delayMs) {
   return {
     opacity: on ? 1 : 0,
     transform: on ? "none" : "translateY(4px)",
-    transition: `opacity 520ms ease ${delayMs}ms, transform 520ms ease ${delayMs}ms`,
+    transition: `opacity 700ms ease ${delayMs}ms, transform 700ms ease ${delayMs}ms`,
   };
 }
 
