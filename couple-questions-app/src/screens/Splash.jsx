@@ -8,20 +8,18 @@ import { screenHeight, screenTop } from "../viewport.js";
 // голубым по краю — те же цвета, что и во всём приложении.
 //
 // Курсивная строка набрана латиницей намеренно: каллиграфических шрифтов
-// такого рисунка с кириллицей не существует. Вариант `script="ru"`
-// показывает кириллический рукописный шрифт — рисунок другой, мягче.
+// такого рисунка с кириллицей не существует, а смысл несут строки под ней.
 
 const FONTS = {
   mark: '"Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   mono: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
-  scriptEn: '"Pinyon Script", "Snell Roundhand", cursive',
-  scriptRu: '"Marck Script", cursive',
+  script: '"Pinyon Script", "Snell Roundhand", cursive',
 };
 
 const COPY = {
   mark: "RELATIONSHIP GAME",
   kicker: "119 ВОПРОСОВ — RU + EN",
-  script: { en: "Know each other", ru: "Узнать друг друга" },
+  script: "Know each other",
   blocks: [
     ["ВДВОЁМ", "КАЖДЫЙ ОТВЕЧАЕТ САМ", "СО СВОЕГО ТЕЛЕФОНА"],
     ["ЧЕСТНО", "ОТВЕТ ПАРТНЁРА ОТКРОЕТСЯ,", "КОГДА ОТВЕТИТЕ ВЫ"],
@@ -30,9 +28,14 @@ const COPY = {
   footer: "РАЗГОВОР, КОТОРЫЙ ОБЫЧНО ОТКЛАДЫВАЮТ",
 };
 
-export default function Splash({ script = "en", onDone }) {
+export default function Splash({ leaving = false, onDone }) {
   return (
-    <div style={wrap} onClick={onDone}>
+    <div
+      style={{ ...wrap, opacity: leaving ? 0 : 1 }}
+      onClick={onDone}
+      role="button"
+      aria-label="Пропустить заставку"
+    >
       <div style={aura} aria-hidden="true" />
       <div style={grain} aria-hidden="true" />
 
@@ -40,19 +43,7 @@ export default function Splash({ script = "en", onDone }) {
         <div style={mark}>{COPY.mark}</div>
         <div style={kicker}>{COPY.kicker}</div>
 
-        <div
-          style={{
-            ...scriptLine,
-            // Кириллический рукописный шире латинской каллиграфии,
-            // поэтому кегль под него свой.
-            fontFamily: script === "ru" ? FONTS.scriptRu : FONTS.scriptEn,
-            fontSize: script === "ru" ? 31 : 41,
-            marginTop: script === "ru" ? 6 : 0,
-            marginBottom: script === "ru" ? 4 : 0,
-          }}
-        >
-          {COPY.script[script] || COPY.script.en}
-        </div>
+        <div style={scriptLine}>{COPY.script}</div>
 
         <div style={blocks}>
           {COPY.blocks.map((lines) => (
@@ -84,6 +75,7 @@ const wrap = {
   alignItems: "flex-end",
   justifyContent: "center",
   zIndex: 60,
+  transition: "opacity 380ms ease",
 };
 
 // Ядро свечения смещено вверх, как в референсе: текст ложится на самую
@@ -150,6 +142,8 @@ const kicker = {
 };
 
 const scriptLine = {
+  fontFamily: FONTS.script,
+  fontSize: 41,
   whiteSpace: "nowrap",
   lineHeight: 1.2,
   color: "#F6F2EA",

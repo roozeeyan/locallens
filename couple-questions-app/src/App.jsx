@@ -17,6 +17,9 @@ import Paywall from "./screens/Paywall.jsx";
 import Legal from "./screens/Legal.jsx";
 import Splash from "./screens/Splash.jsx";
 
+const SPLASH_MS = 2300;
+const SPLASH_FADE_MS = 400;
+
 const TABS = {
   ru: [
     { id: "form", label: "Анкета" },
@@ -42,9 +45,10 @@ export default function App() {
   const [invite, setInvite] = useState(false);
   const [paywall, setPaywall] = useState(null);
   const [legal, setLegal] = useState(null);
-  // Заставка: пока показывается статично, анимация появится отдельно.
-  const [splash, setSplash] = useState(true);
-  const splashScript = new URLSearchParams(window.location.search).get("script") || "en";
+  // Заставка показывается при каждом открытии и заодно прикрывает
+  // восстановление данных: гаснет, только когда всё уже загружено.
+  const [splashDone, setSplashDone] = useState(false);
+  const [splashFading, setSplashFading] = useState(false);
   const lang = useStore((s) => s.profile.lang);
   const [restoring, setRestoring] = useState(() => hasCloud());
   const started = useRef(false);
@@ -80,6 +84,19 @@ export default function App() {
     };
   }, []);
 
+  // Гасить заставку начинаем только когда данные восстановлены.
+  useEffect(() => {
+    if (restoring) return undefined;
+    const t = setTimeout(() => setSplashFading(true), SPLASH_MS);
+    return () => clearTimeout(t);
+  }, [restoring]);
+
+  useEffect(() => {
+    if (!splashFading) return undefined;
+    const t = setTimeout(() => setSplashDone(true), SPLASH_FADE_MS);
+    return () => clearTimeout(t);
+  }, [splashFading]);
+
   // Вход на сервер — после восстановления из облака, когда имя уже известно.
   useEffect(() => {
     if (restoring || started.current) return;
@@ -114,8 +131,9 @@ export default function App() {
     };
   }, [restoring]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (restoring) return <div style={shell} />;
-  if (splash) return <Splash script={splashScript} onDone={() => setSplash(false)} />;
+  if (!splashDone || restoring) {
+    return <Splash leaving={splashFading} onDone={() => setSplashFading(true)} />;
+  }
 
   if (!onboarded) return <Onboarding />;
 
