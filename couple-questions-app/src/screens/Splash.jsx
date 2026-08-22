@@ -46,9 +46,9 @@ export default function Splash({ script = "en", onDone }) {
             // Кириллический рукописный шире латинской каллиграфии,
             // поэтому кегль под него свой.
             fontFamily: script === "ru" ? FONTS.scriptRu : FONTS.scriptEn,
-            fontSize: script === "ru" ? 37 : 52,
-            marginTop: script === "ru" ? 10 : 0,
-            marginBottom: script === "ru" ? 8 : 0,
+            fontSize: script === "ru" ? 31 : 41,
+            marginTop: script === "ru" ? 6 : 0,
+            marginBottom: script === "ru" ? 4 : 0,
           }}
         >
           {COPY.script[script] || COPY.script.en}
@@ -81,7 +81,7 @@ const wrap = {
   overflow: "hidden",
   background: "linear-gradient(180deg, #DFE4E5 0%, #D3DADC 50%, #DADEDE 100%)",
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-end",
   justifyContent: "center",
   zIndex: 60,
 };
@@ -93,10 +93,10 @@ const aura = {
   inset: "5% 11% 4%",
   borderRadius: "26% / 12%",
   background: [
-    "radial-gradient(64% 46% at 50% 30%, #100A09 0%, #170F0D 40%, rgba(23,15,13,0) 76%)",
-    "radial-gradient(80% 62% at 50% 42%, #2E1815 0%, rgba(46,24,21,0.9) 46%, rgba(46,24,21,0) 82%)",
-    "radial-gradient(96% 82% at 50% 52%, #61291F 0%, rgba(97,41,31,0.7) 50%, rgba(97,41,31,0) 88%)",
-    "radial-gradient(110% 98% at 50% 62%, #9A5233 0%, rgba(154,82,51,0.42) 54%, rgba(154,82,51,0) 92%)",
+    "radial-gradient(66% 50% at 50% 44%, #100A09 0%, #170F0D 44%, rgba(23,15,13,0) 78%)",
+    "radial-gradient(82% 66% at 50% 52%, #2E1815 0%, rgba(46,24,21,0.9) 48%, rgba(46,24,21,0) 84%)",
+    "radial-gradient(96% 84% at 50% 60%, #61291F 0%, rgba(97,41,31,0.7) 52%, rgba(97,41,31,0) 88%)",
+    "radial-gradient(112% 100% at 50% 70%, #9A5233 0%, rgba(154,82,51,0.42) 54%, rgba(154,82,51,0) 92%)",
   ].join(", "),
   filter: "blur(52px)",
 };
@@ -113,23 +113,27 @@ const grain = {
   backgroundPosition: "0 0, 1px 2px",
 };
 
+// В референсе весь набор занимает нижнюю треть кадра и держится плотно:
+// мелкий кегль, короткие интервалы, между блоками — одна пустая строка.
 const content = {
   position: "relative",
   width: "100%",
-  maxWidth: 380,
-  padding: "0 26px",
+  maxWidth: 360,
+  // Отступ снизу считаем от высоты кадра: проценты в padding берутся
+  // от ширины, и на телефоне стек уезжал бы вниз.
+  padding: "0 24px",
+  paddingBottom: "calc(var(--rg-vh, 100vh) * 0.13)",
   textAlign: "center",
   color: "#F2EEE7",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  transform: "translateY(11%)",
 };
 
 const mark = {
   fontFamily: FONTS.mark,
   fontWeight: 600,
-  fontSize: 16.5,
+  fontSize: 15,
   letterSpacing: "0.3em",
   textIndent: "0.3em",
   lineHeight: 1,
@@ -137,53 +141,53 @@ const mark = {
 };
 
 const kicker = {
-  marginTop: 16,
+  marginTop: 13,
   fontFamily: FONTS.mono,
   fontWeight: 400,
-  fontSize: 12.5,
-  letterSpacing: "0.12em",
+  fontSize: 11.5,
+  letterSpacing: "0.1em",
   color: "#E7E0D6",
 };
 
 const scriptLine = {
-  marginTop: 0,
-  fontSize: 52,
   whiteSpace: "nowrap",
-  lineHeight: 1.15,
+  lineHeight: 1.2,
   color: "#F6F2EA",
   textShadow: "0 1px 18px rgba(0,0,0,0.35)",
 };
 
 const blocks = {
-  marginTop: 6,
+  marginTop: 4,
   display: "flex",
   flexDirection: "column",
-  gap: 22,
+  gap: 15,
 };
 
-const block = { display: "flex", flexDirection: "column", gap: 3 };
+const block = { display: "flex", flexDirection: "column" };
 
 const blockHead = {
   fontFamily: FONTS.mono,
   fontWeight: 500,
-  fontSize: 13.5,
-  letterSpacing: "0.16em",
+  fontSize: 11.5,
+  lineHeight: 1.55,
+  letterSpacing: "0.14em",
   color: "#F2EEE7",
 };
 
 const blockLine = {
   fontFamily: FONTS.mono,
   fontWeight: 400,
-  fontSize: 13.5,
-  letterSpacing: "0.06em",
-  color: "#D8D0C6",
+  fontSize: 11.5,
+  lineHeight: 1.55,
+  letterSpacing: "0.05em",
+  color: "#D6CEC4",
 };
 
 const footer = {
-  marginTop: 30,
+  marginTop: 17,
   fontFamily: FONTS.mono,
   fontWeight: 400,
-  fontSize: 12.5,
-  letterSpacing: "0.06em",
-  color: "#CFC7BC",
+  fontSize: 11,
+  letterSpacing: "0.05em",
+  color: "#C8C0B5",
 };
