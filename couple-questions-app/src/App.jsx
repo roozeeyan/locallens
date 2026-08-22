@@ -15,6 +15,7 @@ import InviteSheet from "./screens/InviteSheet.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
 import Paywall from "./screens/Paywall.jsx";
 import Legal from "./screens/Legal.jsx";
+import Splash from "./screens/Splash.jsx";
 
 const TABS = {
   ru: [
@@ -41,6 +42,9 @@ export default function App() {
   const [invite, setInvite] = useState(false);
   const [paywall, setPaywall] = useState(null);
   const [legal, setLegal] = useState(null);
+  // Заставка: пока показывается статично, анимация появится отдельно.
+  const [splash, setSplash] = useState(true);
+  const splashScript = new URLSearchParams(window.location.search).get("script") || "en";
   const lang = useStore((s) => s.profile.lang);
   const [restoring, setRestoring] = useState(() => hasCloud());
   const started = useRef(false);
@@ -111,6 +115,8 @@ export default function App() {
   }, [restoring]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (restoring) return <div style={shell} />;
+  if (splash) return <Splash script={splashScript} onDone={() => setSplash(false)} />;
+
   if (!onboarded) return <Onboarding />;
 
   return (
