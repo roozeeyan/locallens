@@ -17,7 +17,7 @@ import Paywall from "./screens/Paywall.jsx";
 import Legal from "./screens/Legal.jsx";
 import Splash from "./screens/Splash.jsx";
 
-const SPLASH_MS = 2300;
+const SPLASH_HOLD_MS = 620; // сколько держим кадр после последнего символа
 const SPLASH_FADE_MS = 400;
 
 const TABS = {
@@ -49,6 +49,7 @@ export default function App() {
   // восстановление данных: гаснет, только когда всё уже загружено.
   const [splashDone, setSplashDone] = useState(false);
   const [splashFading, setSplashFading] = useState(false);
+  const [splashTyped, setSplashTyped] = useState(false);
   const lang = useStore((s) => s.profile.lang);
   const [restoring, setRestoring] = useState(() => hasCloud());
   const started = useRef(false);
@@ -84,12 +85,12 @@ export default function App() {
     };
   }, []);
 
-  // Гасить заставку начинаем только когда данные восстановлены.
+  // Гасим, когда строки набраны и данные восстановлены.
   useEffect(() => {
-    if (restoring) return undefined;
-    const t = setTimeout(() => setSplashFading(true), SPLASH_MS);
+    if (restoring || !splashTyped) return undefined;
+    const t = setTimeout(() => setSplashFading(true), SPLASH_HOLD_MS);
     return () => clearTimeout(t);
-  }, [restoring]);
+  }, [restoring, splashTyped]);
 
   useEffect(() => {
     if (!splashFading) return undefined;
@@ -132,7 +133,13 @@ export default function App() {
   }, [restoring]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!splashDone || restoring) {
-    return <Splash leaving={splashFading} onDone={() => setSplashFading(true)} />;
+    return (
+      <Splash
+        leaving={splashFading}
+        onTyped={() => setSplashTyped(true)}
+        onDone={() => setSplashFading(true)}
+      />
+    );
   }
 
   if (!onboarded) return <Onboarding />;
@@ -189,7 +196,8 @@ const shell = {
   minHeight: "100vh",
   display: "flex",
   flexDirection: "column",
-  background: c.bg,
+  // Подложку рисует страница целиком, иначе она обрывалась бы по краю блока.
+  background: "transparent",
   color: c.ink,
   fontFamily: font.sans,
 };

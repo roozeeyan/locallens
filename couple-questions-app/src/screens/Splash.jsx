@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { screenHeight, screenTop } from "../viewport.js";
 
 // Заставка при открытии приложения.
@@ -28,7 +28,81 @@ const COPY = {
   footer: "РАЗГОВОР, КОТОРЫЙ ОБЫЧНО ОТКЛАДЫВАЮТ",
 };
 
-export default function Splash({ leaving = false, onDone }) {
+// Набор идёт посимвольно, паузы между строками считаются в тех же
+// «символах» — так одна скорость управляет и печатью, и остановками.
+const SPEED_MS = 8;
+const GAP_LINE = 5;
+const GAP_BLOCK = 14;
+const GAP_FOOTER = 14;
+
+const TYPED = [
+  { text: COPY.kicker, gap: 18 },
+  ...COPY.blocks.flatMap((lines, b) =>
+    lines.map((text, i) => ({
+      text,
+      gap: i === 2 ? (b === 2 ? GAP_FOOTER : GAP_BLOCK) : GAP_LINE,
+    }))
+  ),
+  { text: COPY.footer, gap: 0 },
+];
+
+const TOTAL = TYPED.reduce((sum, item) => sum + item.text.length + item.gap, 0);
+
+const OFFSETS = TYPED.reduce((acc, item) => {
+  const prev = acc[acc.length - 1];
+  acc.push(prev === undefined ? 0 : prev + TYPED[acc.length - 1].text.length + TYPED[acc.length - 1].gap);
+  return acc;
+}, []);
+
+const reduceMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+/** Сколько символов строки уже набрано. */
+function shown(index, cursor) {
+  const done = cursor - OFFSETS[index];
+  if (done <= 0) return 0;
+  return Math.min(done, TYPED[index].text.length);
+}
+
+export default function Splash({ leaving = false, onDone, onTyped }) {
+  const instant = reduceMotion();
+  const [cursor, setCursor] = useState(instant ? TOTAL : 0);
+
+  // Курсивная строка и название не печатаются, а проявляются: печатная
+  // машинка на каллиграфии выглядит неряшливо.
+  const [shownHead, setShownHead] = useState(instant);
+
+  useEffect(() => {
+    if (instant) {
+      onTyped?.();
+      return undefined;
+    }
+    const head = setTimeout(() => setShownHead(true), 60);
+    const id = setInterval(() => {
+      setCursor((n) => {
+        if (n >= TOTAL) {
+          clearInterval(id);
+          return n;
+        }
+        return n + 1;
+      });
+    }, SPEED_MS);
+    return () => {
+      clearTimeout(head);
+      clearInterval(id);
+    };
+  }, [instant]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (cursor >= TOTAL) onTyped?.();
+  }, [cursor]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const typing = (index) => {
+    const done = shown(index, cursor);
+    return done > 0 && done < TYPED[index].text.length;
+  };
+
   return (
     <div
       style={{ ...wrap, opacity: leaving ? 0 : 1 }}
@@ -40,28 +114,62 @@ export default function Splash({ leaving = false, onDone }) {
       <div style={grain} aria-hidden="true" />
 
       <div style={content}>
-        <div style={mark}>{COPY.mark}</div>
-        <div style={kicker}>{COPY.kicker}</div>
+        <div style={{ ...mark, ...fade(shownHead, 0) }}>{COPY.mark}</div>
 
-        <div style={scriptLine}>{COPY.script}</div>
+        <div style={kicker}>
+          {TYPED[0].text.slice(0, shown(0, cursor))}
+          {typing(0) && <Caret />}
+        </div>
+
+        <div style={{ ...scriptLine, ...fade(shownHead, 260) }}>{COPY.script}</div>
 
         <div style={blocks}>
-          {COPY.blocks.map((lines) => (
+          {COPY.blocks.map((lines, b) => (
             <div key={lines[0]} style={block}>
-              {lines.map((line, i) => (
-                <div key={line} style={i === 0 ? blockHead : blockLine}>
-                  {line}
-                </div>
-              ))}
+              {lines.map((line, i) => {
+                const index = 1 + b * 3 + i;
+                return (
+                  <div key={line} style={i === 0 ? blockHead : blockLine}>
+                    {line.slice(0, shown(index, cursor))}
+                    {typing(index) && <Caret />}
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
 
-        <div style={footer}>{COPY.footer}</div>
+        <div style={footer}>
+          {COPY.footer.slice(0, shown(TYPED.length - 1, cursor))}
+          {typing(TYPED.length - 1) && <Caret />}
+        </div>
       </div>
     </div>
   );
 }
+
+function Caret() {
+  return <span style={caret} aria-hidden="true" />;
+}
+
+/** Плавное проявление: непечатаемые строки не должны возникать рывком. */
+function fade(on, delayMs) {
+  return {
+    opacity: on ? 1 : 0,
+    transform: on ? "none" : "translateY(4px)",
+    transition: `opacity 520ms ease ${delayMs}ms, transform 520ms ease ${delayMs}ms`,
+  };
+}
+
+const caret = {
+  display: "inline-block",
+  width: "0.55em",
+  height: "1em",
+  marginLeft: 1,
+  verticalAlign: "-0.12em",
+  background: "currentColor",
+  opacity: 0.75,
+};
 
 const wrap = {
   position: "fixed",
@@ -133,6 +241,7 @@ const mark = {
 };
 
 const kicker = {
+  minHeight: "1.2em",
   marginTop: 13,
   fontFamily: FONTS.mono,
   fontWeight: 400,
@@ -160,6 +269,7 @@ const blocks = {
 const block = { display: "flex", flexDirection: "column" };
 
 const blockHead = {
+  minHeight: "1.55em",
   fontFamily: FONTS.mono,
   fontWeight: 500,
   fontSize: 11.5,
@@ -169,6 +279,7 @@ const blockHead = {
 };
 
 const blockLine = {
+  minHeight: "1.55em",
   fontFamily: FONTS.mono,
   fontWeight: 400,
   fontSize: 11.5,
@@ -178,6 +289,7 @@ const blockLine = {
 };
 
 const footer = {
+  minHeight: "1.3em",
   marginTop: 17,
   fontFamily: FONTS.mono,
   fontWeight: 400,

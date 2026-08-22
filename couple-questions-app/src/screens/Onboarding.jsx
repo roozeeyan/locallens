@@ -601,7 +601,7 @@ const wrap = {
   left: 0,
   right: 0,
   height: screenHeight,
-  background: c.bg,
+  background: "transparent",
   display: "flex",
   flexDirection: "column",
   zIndex: 50,
