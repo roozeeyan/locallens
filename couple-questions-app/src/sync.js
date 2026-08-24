@@ -394,10 +394,15 @@ export async function setExportConsent(connectionId, granted) {
     return error ? { ok: false, message: error.message } : { ok: true };
   }
 
+  // Обычная вставка, а не upsert: upsert требует права на изменение строки,
+  // а разрешение менять нечего — оно либо есть, либо его нет. Повторное
+  // нажатие упирается в уникальный ключ, и это нормальный исход.
   const { error } = await supabase
     .from("export_consents")
-    .upsert({ connection_id: connectionId, user_id: me });
-  return error ? { ok: false, message: error.message } : { ok: true };
+    .insert({ connection_id: connectionId, user_id: me });
+
+  if (error && error.code !== "23505") return { ok: false, message: error.message };
+  return { ok: true };
 }
 
 /** Разрыв связи: пара расходится, но оба остаются в приложении. */
