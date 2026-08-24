@@ -262,7 +262,7 @@ const body = {
 const codeBox = {
   background: c.bg,
   border: `2px solid ${c.ink}`,
-  borderRadius: 12,
+  borderRadius: 24,
   padding: "11px 13px",
   font: `500 12.5px/1.4 ${font.mono}`,
   color: c.ink,
@@ -272,7 +272,7 @@ const input = {
   width: "100%",
   background: c.bg,
   border: `2px solid ${c.ink}`,
-  borderRadius: 12,
+  borderRadius: 24,
   padding: "11px 13px",
   font: `400 15px ${font.sans}`,
   color: c.ink,

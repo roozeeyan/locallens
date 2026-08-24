@@ -221,7 +221,7 @@ const statBox = {
   flex: 1,
   background: c.bg,
   border: `2px solid ${c.ink}`,
-  borderRadius: 12,
+  borderRadius: 24,
   padding: "9px 12px",
 };
 const inviteRow = {

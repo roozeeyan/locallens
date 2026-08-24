@@ -352,7 +352,7 @@ export default function ConnectionDetail({ connId, onClose }) {
 function Answer({ who, text, accent }) {
   return (
     <div style={{ display: "flex", gap: 9 }}>
-      <span style={{ width: 4, borderRadius: 4, background: accent, flexShrink: 0 }} />
+      <span style={{ width: 4, borderRadius: 8, background: accent, flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ font: `600 11px ${font.mono}`, letterSpacing: "0.1em", textTransform: "uppercase", color: c.mute }}>
           {who}
@@ -396,7 +396,7 @@ function Stat({ n, label, bg, onBg = c.ink }) {
         flex: 1,
         background: bg,
         border: `2px solid ${c.ink}`,
-        borderRadius: 12,
+        borderRadius: 24,
         padding: "9px 6px",
         textAlign: "center",
       }}
@@ -431,7 +431,7 @@ function Seg({ children, active, onClick }) {
 const verdictBox = {
   background: c.bg,
   border: `2px solid ${c.ink}`,
-  borderRadius: 12,
+  borderRadius: 24,
   padding: 13,
   display: "flex",
   flexDirection: "column",

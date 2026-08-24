@@ -229,7 +229,7 @@ const list = {
   gap: 10,
   background: c.paper,
   border: `2px solid ${c.ink}`,
-  borderRadius: 16,
+  borderRadius: 32,
   boxShadow: `0 3px 0 ${c.ink}`,
   padding: 16,
 };
@@ -238,7 +238,7 @@ const tick = {
   height: 14,
   marginTop: 3,
   flexShrink: 0,
-  borderRadius: 4,
+  borderRadius: 8,
   background: c.sage,
   border: `2px solid ${c.ink}`,
 };
@@ -249,7 +249,7 @@ const priceCard = {
   gap: 12,
   background: c.paper,
   border: `2px solid ${c.ink}`,
-  borderRadius: 16,
+  borderRadius: 32,
   boxShadow: `0 3px 0 ${c.ink}`,
   padding: "14px 16px",
 };
@@ -258,6 +258,6 @@ const devBox = {
   flexDirection: "column",
   gap: 10,
   border: `2px dashed ${c.mute}`,
-  borderRadius: 14,
+  borderRadius: 28,
   padding: 14,
 };

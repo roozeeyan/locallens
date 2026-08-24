@@ -464,7 +464,7 @@ function Themes({ t, lang, value, onPick, onNext }) {
               height: 128,
               background: p.bg,
               border: `2px solid ${c.ink}`,
-              borderRadius: 16,
+              borderRadius: 32,
               boxShadow: `0 3px 0 ${c.ink}`,
               border: value === id ? `3px solid ${c.coral}` : `2px solid ${c.ink}`,
               display: "flex",
@@ -481,7 +481,7 @@ function Themes({ t, lang, value, onPick, onNext }) {
               style={{
                 width: 40,
                 height: 40,
-                borderRadius: 10,
+                borderRadius: 20,
                 background: p.accent,
                 border: `2px solid ${p.ink}`,
               }}
@@ -543,7 +543,7 @@ function Demo({ t, onNext }) {
 function DemoAnswer({ who, text, accent }) {
   return (
     <div style={{ display: "flex", gap: 9 }}>
-      <span style={{ width: 4, borderRadius: 4, background: accent, flexShrink: 0 }} />
+      <span style={{ width: 4, borderRadius: 8, background: accent, flexShrink: 0 }} />
       <div>
         <div
           style={{
@@ -577,7 +577,7 @@ function Name({ t, value, onChange, onDone }) {
           width: "100%",
           background: c.paper,
           border: `2px solid ${c.ink}`,
-          borderRadius: 14,
+          borderRadius: 28,
           boxShadow: `0 3px 0 ${c.ink}`,
           padding: "14px 15px",
           font: `400 16px ${font.sans}`,
@@ -656,7 +656,7 @@ const row = (active) => ({
   gap: 12,
   background: active ? c.sage : c.paper,
   border: `2px solid ${c.ink}`,
-  borderRadius: 14,
+  borderRadius: 28,
   boxShadow: `0 3px 0 ${c.ink}`,
   padding: "14px 15px",
   color: c.ink,
@@ -675,7 +675,7 @@ const box = (active) => ({
   width: 20,
   height: 20,
   flexShrink: 0,
-  borderRadius: 6,
+  borderRadius: 12,
   border: `2px solid ${c.ink}`,
   background: active ? c.ink : "transparent",
 });
@@ -701,7 +701,7 @@ const linkBtn = {
 const demoCard = {
   background: c.paper,
   border: `2px solid ${c.ink}`,
-  borderRadius: 16,
+  borderRadius: 32,
   boxShadow: `0 3px 0 ${c.ink}`,
   padding: 15,
   display: "flex",

@@ -193,7 +193,7 @@ const icon = {
   height: 34,
   flexShrink: 0,
   border: `2px solid ${c.ink}`,
-  borderRadius: 9,
+  borderRadius: 18,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",

@@ -147,7 +147,7 @@ export function Iso({ size = 92, shape = "square" }) {
           top: size * 0.8,
           width: size * 1.12,
           height: size * 0.42,
-          borderRadius: 10,
+          borderRadius: 20,
           backgroundImage: `radial-gradient(${c.coral} 2px, transparent 2.1px)`,
           backgroundSize: "7px 7px",
         }}
@@ -175,7 +175,7 @@ export function TabBar({ tabs, active, onChange }) {
         const on = t.id === active;
         return (
           <button key={t.id} onClick={() => onChange(t.id)} style={s.tab} aria-current={on}>
-            <span style={{ ...s.tabIcon, background: on ? c.sage : "transparent", borderRadius: t.round ? "50%" : 6 }} />
+            <span style={{ ...s.tabIcon, background: on ? c.sage : "transparent", borderRadius: t.round ? "50%" : 12 }} />
             <span style={{ ...s.tabText, opacity: on ? 1 : 0.45 }}>{t.label}</span>
           </button>
         );
@@ -259,7 +259,7 @@ export const s = {
     height: 14,
     background: c.coral,
     border,
-    borderRadius: 4,
+    borderRadius: 8,
     verticalAlign: "-2px",
   },
   field: {

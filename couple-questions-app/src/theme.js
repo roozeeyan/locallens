@@ -84,7 +84,7 @@ export const font = {
   mono: "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
 };
 
-export const r = { sm: 10, md: 14, lg: 18, xl: 24, pill: 999 };
+export const r = { sm: 20, md: 28, lg: 36, xl: 48, pill: 999 };
 
 export const hard = (n = 3) => `0 ${n}px 0 ${c.ink}`;
 
