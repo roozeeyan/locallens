@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { c, font, palettes } from "../theme.js";
 import { deleteAccount } from "../sync.js";
 import { exportAnswers } from "../export.js";
-import { Screen, Card, Button, Label, LockSwitch } from "../ui.jsx";
+import { Screen, Card, Button, Label, Switch } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress, setTitle } from "../store.js";
 
 const REMINDERS = {
@@ -264,8 +264,8 @@ export default function Profile({ onPaywall, onLegal }) {
             return (
               <div key={cat.id} style={{ ...blockRow, opacity: hidden ? 0.45 : 1 }}>
                 <span style={{ flex: 1, minWidth: 0 }}>{setTitle(cat.id, lang)}</span>
-                <LockSwitch
-                  on={hidden}
+                <Switch
+                  on={!hidden}
                   onClick={() => actions.toggleHiddenBlock(cat.id)}
                   label={setTitle(cat.id, lang)}
                 />

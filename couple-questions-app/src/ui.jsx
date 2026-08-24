@@ -113,10 +113,10 @@ export function Label({ children, light }) {
 }
 
 /**
- * Переключатель как в настройках iOS, в наших цветах. На бегунке — замок:
- * без него плашка не объясняет, что именно она делает.
+ * Переключатель как в настройках iOS, в наших цветах. Включён — бегунок
+ * справа, дорожка горит; выключен — бегунок слева, цвета нет.
  */
-export function LockSwitch({ on, onClick, label }) {
+export function Switch({ on, onClick, label }) {
   return (
     <button
       onClick={onClick}
@@ -129,19 +129,7 @@ export function LockSwitch({ on, onClick, label }) {
         borderColor: on ? c.coral : c.mute,
       }}
     >
-      <span style={{ ...s.switchKnob, transform: on ? "translateX(20px)" : "translateX(0)" }}>
-        <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
-          <rect
-            x="5" y="10.5" width="14" height="10" rx="2.6"
-            fill="none" stroke={on ? c.coral : c.mute} strokeWidth="2"
-          />
-          {on ? (
-            <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke={c.coral} strokeWidth="2" strokeLinecap="round" />
-          ) : (
-            <path d="M8.5 10.5V8a3.5 3.5 0 0 1 6.6-1.6" fill="none" stroke={c.mute} strokeWidth="2" strokeLinecap="round" />
-          )}
-        </svg>
-      </span>
+      <span style={{ ...s.switchKnob, transform: on ? "translateX(20px)" : "translateX(0)" }} />
     </button>
   );
 }
