@@ -24,13 +24,15 @@ function setItem(key, value) {
   });
 }
 
+// Возвращает null, если прочитать не удалось: пустое хранилище и сбой
+// связи — разные вещи, и путать их нельзя (на этом терялись аккаунты).
 function getItems(keys) {
   return new Promise((resolve) => {
     if (!keys.length) return resolve({});
     try {
-      api().getItems(keys, (err, res) => resolve(err ? {} : res || {}));
+      api().getItems(keys, (err, res) => resolve(err ? null : res || {}));
     } catch {
-      resolve({});
+      resolve(null);
     }
   });
 }
@@ -66,20 +68,39 @@ export async function cloudSet(prefix, text) {
   return true;
 }
 
+/**
+ * Читает значение. Три разных исхода:
+ *   строка    — значение есть;
+ *   null      — хранилище пустое;
+ *   undefined — прочитать не удалось.
+ */
 export async function cloudGet(prefix) {
   if (!hasCloud()) return null;
 
   const head = await getItems([`${prefix}_n`]);
+  if (head === null) return undefined;
+
   const n = Number(head[`${prefix}_n`] || 0);
   if (!n) return null;
 
   const keys = Array.from({ length: n }, (_, i) => `${prefix}_${i}`);
   const items = await getItems(keys);
+  if (items === null) return undefined;
 
   let out = "";
   for (const k of keys) {
-    if (items[k] == null) return null; // кусок потерялся — данным верить нельзя
+    if (items[k] == null) return undefined; // кусок потерялся — данным верить нельзя
     out += items[k];
   }
   return out;
+}
+
+/** Читает с повторами: одиночный сбой связи не должен решать судьбу входа. */
+export async function cloudGetSure(prefix, tries = 3) {
+  for (let i = 0; i < tries; i++) {
+    const value = await cloudGet(prefix);
+    if (value !== undefined) return value;
+    await new Promise((r) => setTimeout(r, 250 * (i + 1)));
+  }
+  return undefined;
 }

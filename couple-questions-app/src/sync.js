@@ -4,7 +4,7 @@
 // работает локально. Как только ключи появились — состояние подтягивается
 // с сервера и каждое изменение уходит туда же.
 import { isRemote, supabase, makeInviteCode, serverUrl, anonKey } from "./backend.js";
-import { hasCloud, cloudGet, cloudSet } from "./cloud.js";
+import { hasCloud, cloudGet, cloudGetSure, cloudSet } from "./cloud.js";
 import { QUESTIONS } from "./data.js";
 import { DECK_QUESTIONS } from "./decks.js";
 
@@ -12,6 +12,30 @@ const ALL = [...QUESTIONS, ...DECK_QUESTIONS];
 const blockOf = (qid) => ALL.find((q) => q.id === qid)?.cat || "unknown";
 
 const SESSION_KEY = "rgsess";
+const ID_KEY = "rgid";
+
+/**
+ * Отметка о том, что аккаунт у человека уже был. Нужна, чтобы при сбое
+ * восстановления не завести новый: старые ответы и связи остались бы на
+ * сервере без хозяина, а человек увидел бы пустое приложение.
+ */
+function localId() {
+  try {
+    return localStorage.getItem(ID_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberId(id) {
+  if (!id) return;
+  try {
+    localStorage.setItem(ID_KEY, id);
+  } catch {
+    // приватный режим — остаётся облако
+  }
+  cloudSet(ID_KEY, id);
+}
 
 let me = null;
 let lastError = "";
@@ -60,6 +84,7 @@ export async function ensureSession() {
   const { data: existing } = await supabase.auth.getSession();
   if (existing.session) {
     me = existing.session.user.id;
+    rememberId(me);
     await rememberSession();
     return me;
   }
@@ -67,7 +92,17 @@ export async function ensureSession() {
   const restored = await restoreSession();
   if (restored) {
     me = restored;
+    rememberId(me);
     return me;
+  }
+
+  // Вход не восстановился. Прежде чем заводить новый аккаунт, убеждаемся,
+  // что прежнего не было: иначе человек потеряет доступ к своим данным.
+  const cloudId = hasCloud() ? await cloudGetSure(ID_KEY) : null;
+  if (cloudId === undefined || localId() || cloudId) {
+    lastError =
+      "Не удалось восстановить прошлый вход. Закройте приложение и откройте заново.";
+    return null;
   }
 
   const initData = window.Telegram?.WebApp?.initData;
@@ -105,7 +140,10 @@ export async function ensureSession() {
     }
     me = data.user?.id || null;
     if (!me) lastError = "сервер не вернул пользователя";
-    else await rememberSession();
+    else {
+      rememberId(me);
+      await rememberSession();
+    }
     return me;
   } catch (e) {
     lastError = e?.message || "сервер недоступен";
