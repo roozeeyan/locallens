@@ -43,6 +43,7 @@ const T = {
     premiumOff: "Все 11 блоков, неограниченное число связей, разбор от ИИ и новые колоды.",
     premiumCta: "Посмотреть, что входит",
     sync: "Синхронизация",
+    version: "Версия",
     docs: "Документы",
     privacyDoc: "Политика конфиденциальности",
     termsDoc: "Пользовательское соглашение",
@@ -84,6 +85,7 @@ const T = {
     premiumOff: "All 11 blocks, unlimited connections, the AI summary and new decks.",
     premiumCta: "See what is included",
     sync: "Sync",
+    version: "Version",
     docs: "Documents",
     privacyDoc: "Privacy policy",
     termsDoc: "Terms of use",
@@ -275,6 +277,19 @@ export default function Profile({ onPaywall, onLegal }) {
         </div>
       </Card>
 
+      <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <Label>{t.sync}</Label>
+        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+          <span style={{ ...dot, background: syncInfo.color }} />
+          <span style={{ font: `700 15px ${font.sans}`, color: c.ink }}>{syncInfo.title}</span>
+        </div>
+        <span style={{ font: `400 13px/1.45 ${font.sans}`, color: c.mute }}>{syncInfo.hint}</span>
+        {syncMsg && <div style={errBox}>{syncMsg}</div>}
+        <span style={{ font: `500 11px ${font.mono}`, color: c.mute }}>
+          {t.version} {BUILD} UTC
+        </span>
+      </Card>
+
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Label>{t.docs}</Label>
         <Button full variant="secondary" onClick={() => onLegal("privacy")}>
@@ -377,6 +392,9 @@ const swatch = {
   gap: 5,
   cursor: "pointer",
 };
+// Метка сборки: по ней сразу видно, доехала ли до телефона свежая версия.
+const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "—";
+
 const errBox = {
   background: c.bg,
   border: `1.5px solid ${c.ink}`,
