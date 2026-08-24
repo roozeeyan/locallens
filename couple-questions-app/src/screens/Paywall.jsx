@@ -194,7 +194,7 @@ const close = {
   width: 34,
   height: 34,
   background: c.paper,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: "50%",
   boxShadow: `0 2px 0 ${c.ink}`,
   font: "13px/1 sans-serif",
@@ -228,9 +228,9 @@ const list = {
   flexDirection: "column",
   gap: 10,
   background: c.paper,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 32,
-  boxShadow: `0 3px 0 ${c.ink}`,
+  boxShadow: `0 2px 0 ${c.ink}`,
   padding: 16,
 };
 const tick = {
@@ -240,7 +240,7 @@ const tick = {
   flexShrink: 0,
   borderRadius: 8,
   background: c.sage,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
 };
 const priceCard = {
   display: "flex",
@@ -248,9 +248,9 @@ const priceCard = {
   justifyContent: "space-between",
   gap: 12,
   background: c.paper,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 32,
-  boxShadow: `0 3px 0 ${c.ink}`,
+  boxShadow: `0 2px 0 ${c.ink}`,
   padding: "14px 16px",
 };
 const devBox = {

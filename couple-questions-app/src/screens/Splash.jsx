@@ -3,9 +3,8 @@ import { screenHeight, screenTop } from "../viewport.js";
 
 // Заставка при открытии приложения.
 //
-// Свет собран из наложенных радиальных градиентов и размыт: тёмное ядро
-// цвета тёмного вина уходит через бордо в кремовый и гаснет пастельным
-// голубым по краю — те же цвета, что и во всём приложении.
+// Фон — снимок автора со своим зерном. Чужой текст с кадра снят, вместо
+// него набирается наш.
 //
 // Курсивная строка набрана латиницей намеренно: каллиграфических шрифтов
 // такого рисунка с кириллицей не существует, а смысл несут строки под ней.
@@ -110,8 +109,7 @@ export default function Splash({ leaving = false, onDone, onTyped }) {
       role="button"
       aria-label="Пропустить заставку"
     >
-      <div style={aura} aria-hidden="true" />
-      <div style={grain} aria-hidden="true" />
+      <div style={photo} aria-hidden="true" />
 
       <div style={content}>
         <div style={{ ...mark, ...fade(shownHead, 0) }}>{COPY.mark}</div>
@@ -178,7 +176,7 @@ const wrap = {
   right: 0,
   height: screenHeight,
   overflow: "hidden",
-  background: "linear-gradient(180deg, #DFE4E5 0%, #D3DADC 50%, #DADEDE 100%)",
+  background: "#D3DADC",
   display: "flex",
   alignItems: "flex-end",
   justifyContent: "center",
@@ -186,31 +184,13 @@ const wrap = {
   transition: "opacity 380ms ease",
 };
 
-// Ядро свечения смещено вверх, как в референсе: текст ложится на самую
-// тёмную часть, а свет расходится к краям кадра.
-const aura = {
-  position: "absolute",
-  inset: "5% 11% 4%",
-  borderRadius: "26% / 12%",
-  background: [
-    "radial-gradient(66% 50% at 50% 44%, #100A09 0%, #170F0D 44%, rgba(23,15,13,0) 78%)",
-    "radial-gradient(82% 66% at 50% 52%, #2E1815 0%, rgba(46,24,21,0.9) 48%, rgba(46,24,21,0) 84%)",
-    "radial-gradient(96% 84% at 50% 60%, #61291F 0%, rgba(97,41,31,0.7) 52%, rgba(97,41,31,0) 88%)",
-    "radial-gradient(112% 100% at 50% 70%, #9A5233 0%, rgba(154,82,51,0.42) 54%, rgba(154,82,51,0) 92%)",
-  ].join(", "),
-  filter: "blur(52px)",
-};
-
-// Тонкая крупа поверх свечения: без неё градиент выглядит слишком гладким.
-const grain = {
+// Кадр целиком, без подгонки цветом: зерно и свет — из самого снимка.
+const photo = {
   position: "absolute",
   inset: 0,
-  opacity: 0.16,
-  mixBlendMode: "overlay",
-  backgroundImage:
-    "radial-gradient(rgba(255,255,255,0.55) 0.6px, transparent 0.7px), radial-gradient(rgba(0,0,0,0.45) 0.6px, transparent 0.7px)",
-  backgroundSize: "3px 3px, 4px 4px",
-  backgroundPosition: "0 0, 1px 2px",
+  backgroundImage: "url('/splash.jpg')",
+  backgroundSize: "cover",
+  backgroundPosition: "center",
 };
 
 // В референсе весь набор занимает нижнюю треть кадра и держится плотно:

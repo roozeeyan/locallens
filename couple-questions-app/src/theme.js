@@ -12,7 +12,6 @@ export const palettes = {
     ink: "#452928",
     mute: "#8A7C76",
     backdrop: "url('/backdrop.jpg')",
-    grain: 0.22,
     // Полупрозрачная вуаль для полноэкранных слоёв: картинка просвечивает,
     // но текст поверх неё остаётся читаемым.
     veil: "rgba(240, 236, 228, 0.74)",
@@ -86,6 +85,8 @@ export const font = {
 
 export const r = { sm: 20, md: 28, lg: 36, xl: 48, pill: 999 };
 
-export const hard = (n = 3) => `0 ${n}px 0 ${c.ink}`;
+// Плотная тень под тонкой рамкой выглядит тяжело — она тоже уменьшена.
+export const hard = (n = 2) => `0 ${n}px 0 ${c.ink}`;
 
-export const border = `2px solid ${c.ink}`;
+// Тонкая обводка: толстая рамка съедала форму на скруглённых блоках.
+export const border = `1.5px solid ${c.ink}`;

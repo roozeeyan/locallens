@@ -139,5 +139,5 @@ const bullet = {
   height: 12,
   flexShrink: 0,
   borderRadius: 8,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
 };

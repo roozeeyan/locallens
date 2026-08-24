@@ -463,10 +463,10 @@ function Themes({ t, lang, value, onPick, onNext }) {
               width: 104,
               height: 128,
               background: p.bg,
-              border: `2px solid ${c.ink}`,
+              border: `1.5px solid ${c.ink}`,
               borderRadius: 32,
-              boxShadow: `0 3px 0 ${c.ink}`,
-              border: value === id ? `3px solid ${c.coral}` : `2px solid ${c.ink}`,
+              boxShadow: `0 2px 0 ${c.ink}`,
+              border: value === id ? `2px solid ${c.coral}` : `1.5px solid ${c.ink}`,
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -483,7 +483,7 @@ function Themes({ t, lang, value, onPick, onNext }) {
                 height: 40,
                 borderRadius: 20,
                 background: p.accent,
-                border: `2px solid ${p.ink}`,
+                border: `1.5px solid ${p.ink}`,
               }}
             />
             <span style={{ font: `600 12px ${font.sans}`, color: p.ink }}>{lang === "en" ? p.nameEn : p.name}</span>
@@ -517,7 +517,7 @@ function Demo({ t, onNext }) {
               key={tag}
               style={{
                 background: i === 0 ? c.sage : c.bg,
-                border: `2px solid ${c.ink}`,
+                border: `1.5px solid ${c.ink}`,
                 borderRadius: 999,
                 boxShadow: `0 2px 0 ${c.ink}`,
                 padding: "6px 11px",
@@ -576,9 +576,9 @@ function Name({ t, value, onChange, onDone }) {
           marginTop: 22,
           width: "100%",
           background: c.paper,
-          border: `2px solid ${c.ink}`,
+          border: `1.5px solid ${c.ink}`,
           borderRadius: 28,
-          boxShadow: `0 3px 0 ${c.ink}`,
+          boxShadow: `0 2px 0 ${c.ink}`,
           padding: "14px 15px",
           font: `400 16px ${font.sans}`,
           color: c.ink,
@@ -643,7 +643,7 @@ const back = {
   height: 34,
   flexShrink: 0,
   background: c.paper,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: "50%",
   boxShadow: `0 2px 0 ${c.ink}`,
   font: "17px/1 sans-serif",
@@ -655,9 +655,9 @@ const row = (active) => ({
   alignItems: "center",
   gap: 12,
   background: active ? c.sage : c.paper,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 28,
-  boxShadow: `0 3px 0 ${c.ink}`,
+  boxShadow: `0 2px 0 ${c.ink}`,
   padding: "14px 15px",
   color: c.ink,
   cursor: "pointer",
@@ -668,7 +668,7 @@ const radio = (active) => ({
   height: 20,
   flexShrink: 0,
   borderRadius: "50%",
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   background: active ? c.ink : "transparent",
 });
 const box = (active) => ({
@@ -676,14 +676,14 @@ const box = (active) => ({
   height: 20,
   flexShrink: 0,
   borderRadius: 12,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   background: active ? c.ink : "transparent",
 });
 const ageBadge = {
   alignSelf: "flex-start",
   background: c.coral,
   color: c.onCoral,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 999,
   boxShadow: `0 2px 0 ${c.ink}`,
   padding: "5px 14px",
@@ -700,9 +700,9 @@ const linkBtn = {
 };
 const demoCard = {
   background: c.paper,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 32,
-  boxShadow: `0 3px 0 ${c.ink}`,
+  boxShadow: `0 2px 0 ${c.ink}`,
   padding: 15,
   display: "flex",
   flexDirection: "column",

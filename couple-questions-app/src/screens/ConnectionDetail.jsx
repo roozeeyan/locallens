@@ -24,7 +24,7 @@ function Tag({ children, warm }) {
         color: c.ink,
         background: warm ? c.coral : c.sage,
         color: warm ? c.onCoral : c.ink,
-        border: `2px solid ${c.ink}`,
+        border: `1.5px solid ${c.ink}`,
         borderRadius: 999,
         padding: "3px 9px",
       }}
@@ -395,7 +395,7 @@ function Stat({ n, label, bg, onBg = c.ink }) {
       style={{
         flex: 1,
         background: bg,
-        border: `2px solid ${c.ink}`,
+        border: `1.5px solid ${c.ink}`,
         borderRadius: 24,
         padding: "9px 6px",
         textAlign: "center",
@@ -414,7 +414,7 @@ function Seg({ children, active, onClick }) {
       style={{
         flex: 1,
         background: active ? c.sage : c.paper,
-        border: `2px solid ${c.ink}`,
+        border: `1.5px solid ${c.ink}`,
         borderRadius: 999,
         boxShadow: `0 2px 0 ${c.ink}`,
         padding: "9px 8px",
@@ -430,7 +430,7 @@ function Seg({ children, active, onClick }) {
 
 const verdictBox = {
   background: c.bg,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 24,
   padding: 13,
   display: "flex",
@@ -457,7 +457,7 @@ const back = {
   height: 36,
   flexShrink: 0,
   background: c.paper,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: "50%",
   boxShadow: `0 2px 0 ${c.ink}`,
   font: "18px/1 sans-serif",
@@ -476,7 +476,7 @@ const body = {
   margin: "0 auto",
 };
 const reactBtn = {
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 999,
   boxShadow: `0 2px 0 ${c.ink}`,
   padding: "7px 13px",

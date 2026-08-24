@@ -207,7 +207,7 @@ function Tag({ children, warm }) {
         color: c.ink,
         background: warm ? c.coral : c.bg,
         color: warm ? c.onCoral : c.ink,
-        border: `2px solid ${c.ink}`,
+        border: `1.5px solid ${c.ink}`,
         borderRadius: 999,
         padding: "3px 9px",
       }}
@@ -220,7 +220,7 @@ function Tag({ children, warm }) {
 const statBox = {
   flex: 1,
   background: c.bg,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 24,
   padding: "9px 12px",
 };
@@ -239,7 +239,7 @@ const avatar = {
   flexShrink: 0,
   borderRadius: "50%",
   background: c.sage,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",

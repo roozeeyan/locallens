@@ -223,7 +223,7 @@ export default function Profile({ onPaywall, onLegal }) {
                 ...swatch,
                 background: p.bg,
                 border:
-                  profile.theme === id ? `3px solid ${c.coral}` : `2px solid ${c.ink}`,
+                  profile.theme === id ? `2px solid ${c.coral}` : `1.5px solid ${c.ink}`,
               }}
               aria-label={lang === "en" ? p.nameEn : p.name}
               aria-pressed={profile.theme === id}
@@ -373,7 +373,7 @@ function Toggle({ children, active, onClick }) {
       style={{
         flex: 1,
         background: active ? c.sage : c.bg,
-        border: `2px solid ${c.ink}`,
+        border: `1.5px solid ${c.ink}`,
         borderRadius: 999,
         boxShadow: `0 2px 0 ${c.ink}`,
         padding: "10px 8px",
@@ -391,7 +391,7 @@ function Toggle({ children, active, onClick }) {
 const input = {
   width: "100%",
   background: c.bg,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 24,
   padding: "11px 13px",
   font: `400 15px ${font.sans}`,
@@ -400,7 +400,7 @@ const input = {
 const swatch = {
   width: 96,
   height: 62,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 24,
   boxShadow: `0 2px 0 ${c.ink}`,
   display: "flex",
@@ -412,7 +412,7 @@ const swatch = {
 };
 const errBox = {
   background: c.bg,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 20,
   padding: "8px 10px",
   font: `500 11.5px/1.4 ${font.mono}`,
@@ -423,7 +423,7 @@ const dot = {
   width: 12,
   height: 12,
   borderRadius: 999,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   flexShrink: 0,
 };
 const swDot = {
@@ -437,7 +437,7 @@ const rowBtn = {
   display: "flex",
   alignItems: "center",
   gap: 10,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 20,
   padding: "9px 12px",
   font: `600 13px ${font.sans}`,

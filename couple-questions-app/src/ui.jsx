@@ -31,8 +31,8 @@ export function Button({ children, onClick, variant = "primary", full, disabled,
     ? {
         background: c.bg,
         color: c.mute,
-        border: `2px solid ${c.mute}`,
-        boxShadow: `0 3px 0 ${c.mute}`,
+        border: `1.5px solid ${c.mute}`,
+        boxShadow: `0 2px 0 ${c.mute}`,
         cursor: "default",
       }
     : null;
@@ -168,21 +168,118 @@ export function Iso({ size = 92, shape = "square" }) {
   );
 }
 
+/**
+ * Нижнее меню. Выделение — отдельная плашка, которая переезжает на
+ * выбранный пункт: подсветка самой кнопки не даёт этого движения, а
+ * именно оно читается как «переключение».
+ *
+ * Позицию плашки берём измерением, а не расчётом по числу пунктов:
+ * подписи разной длины, и на равные доли меню не делится.
+ */
 export function TabBar({ tabs, active, onChange }) {
+  const items = React.useRef([]);
+  const [pill, setPill] = React.useState(null);
+
+  const measure = React.useCallback(() => {
+    const el = items.current[tabs.findIndex((t) => t.id === active)];
+    if (!el) return;
+    setPill({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [tabs, active]);
+
+  React.useLayoutEffect(measure, [measure]);
+
+  React.useEffect(() => {
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [measure]);
+
   return (
     <nav style={s.tabbar}>
-      {tabs.map((t) => {
+      {pill && <span style={{ ...s.tabPill, left: pill.left, width: pill.width }} aria-hidden="true" />}
+      {tabs.map((t, i) => {
         const on = t.id === active;
+        const Icon = ICONS[t.id] || ICONS.form;
         return (
-          <button key={t.id} onClick={() => onChange(t.id)} style={s.tab} aria-current={on}>
-            <span style={{ ...s.tabIcon, background: on ? c.sage : "transparent", borderRadius: t.round ? "50%" : 12 }} />
-            <span style={{ ...s.tabText, opacity: on ? 1 : 0.45 }}>{t.label}</span>
+          <button
+            key={t.id}
+            ref={(el) => (items.current[i] = el)}
+            onClick={() => onChange(t.id)}
+            style={s.tab}
+            aria-current={on}
+          >
+            <Icon active={on} />
+            <span style={{ ...s.tabText, opacity: on ? 1 : 0.55 }}>{t.label}</span>
           </button>
         );
       })}
     </nav>
   );
 }
+
+/* --------------------------------------------------------------- иконки */
+
+const stroke = {
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.6,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+};
+
+function Glyph({ children }) {
+  return (
+    <svg width="23" height="23" viewBox="0 0 24 24" aria-hidden="true" style={{ display: "block" }}>
+      {children}
+    </svg>
+  );
+}
+
+/** Анкета — стопка вопросов. */
+function IconForm({ active }) {
+  return (
+    <Glyph>
+      <rect x="4" y="3" width="16" height="18" rx="3.5" {...stroke} />
+      <path d="M8 8.5h8M8 12h8M8 15.5h5" {...stroke} strokeWidth={active ? 2 : 1.6} />
+    </Glyph>
+  );
+}
+
+/** Связи — двое. */
+function IconLinks({ active }) {
+  return (
+    <Glyph>
+      <circle cx="9" cy="8" r="3.2" {...stroke} strokeWidth={active ? 2 : 1.6} />
+      <circle cx="16.5" cy="9.5" r="2.4" {...stroke} />
+      <path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" {...stroke} strokeWidth={active ? 2 : 1.6} />
+      <path d="M16 14.2c2.4.2 4.5 2 4.5 4.8" {...stroke} />
+    </Glyph>
+  );
+}
+
+/** Лента — список того, что изменилось. */
+function IconFeed({ active }) {
+  const w = active ? 2 : 1.6;
+  return (
+    <Glyph>
+      <circle cx="5.5" cy="7" r="1.5" {...stroke} strokeWidth={w} />
+      <circle cx="5.5" cy="12" r="1.5" {...stroke} strokeWidth={w} />
+      <circle cx="5.5" cy="17" r="1.5" {...stroke} strokeWidth={w} />
+      <path d="M10.5 7h9M10.5 12h9M10.5 17h5.5" {...stroke} strokeWidth={w} />
+    </Glyph>
+  );
+}
+
+/** Профиль — человек. */
+function IconMe({ active }) {
+  return (
+    <Glyph>
+      <circle cx="12" cy="8.5" r="3.6" {...stroke} strokeWidth={active ? 2 : 1.6} />
+      <path d="M4.5 20c0-3.8 3.4-6 7.5-6s7.5 2.2 7.5 6" {...stroke} strokeWidth={active ? 2 : 1.6} />
+    </Glyph>
+  );
+}
+
+const ICONS = { form: IconForm, links: IconLinks, feed: IconFeed, me: IconMe };
 
 // Ореол под текстом, который лежит прямо на подложке: без него надпись
 // пропадает на тёмных участках картинки.
@@ -292,21 +389,38 @@ export const s = {
     borderRadius: r.pill,
     boxShadow: hard(3),
     display: "flex",
-    justifyContent: "space-around",
-    padding: "8px 4px",
+    justifyContent: "space-between",
+    padding: "7px 6px",
     flexShrink: 0,
   },
   tab: {
+    position: "relative",
+    zIndex: 1,
+    flex: 1,
     background: "none",
     border: "none",
-    padding: "2px 6px",
+    padding: "4px 2px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: 4,
+    gap: 3,
     cursor: "pointer",
     color: c.ink,
   },
-  tabIcon: { width: 16, height: 16, border, display: "block" },
+  // Плашка выделения: полупрозрачное стекло с бликом сверху и тенью снизу.
+  tabPill: {
+    position: "absolute",
+    top: 4,
+    bottom: 4,
+    borderRadius: r.pill,
+    background: "rgba(255, 255, 255, 0.34)",
+    backdropFilter: "blur(14px) saturate(1.5)",
+    WebkitBackdropFilter: "blur(14px) saturate(1.5)",
+    border: "1px solid rgba(255, 255, 255, 0.55)",
+    boxShadow:
+      "inset 0 1px 1px rgba(255,255,255,0.75), inset 0 -1px 2px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)",
+    transition: "left 420ms cubic-bezier(0.2, 0.9, 0.2, 1), width 420ms cubic-bezier(0.2, 0.9, 0.2, 1)",
+    pointerEvents: "none",
+  },
   tabText: { font: `650 10px ${font.sans}` },
 };

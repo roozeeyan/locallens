@@ -62,7 +62,7 @@ function Tab({ children, active, onClick }) {
       style={{
         flex: 1,
         background: active ? c.sage : c.paper,
-        border: `2px solid ${c.ink}`,
+        border: `1.5px solid ${c.ink}`,
         borderRadius: 999,
         boxShadow: `0 2px 0 ${c.ink}`,
         padding: "9px 8px",
@@ -96,7 +96,7 @@ const back = {
   height: 36,
   flexShrink: 0,
   background: c.paper,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: "50%",
   boxShadow: `0 2px 0 ${c.ink}`,
   font: "18px/1 sans-serif",

@@ -207,7 +207,7 @@ function Pick({ children, active, onClick }) {
       style={{
         flex: 1,
         background: active ? c.sage : c.bg,
-        border: `2px solid ${c.ink}`,
+        border: `1.5px solid ${c.ink}`,
         borderRadius: 999,
         boxShadow: `0 2px 0 ${c.ink}`,
         padding: "10px 8px",
@@ -241,7 +241,7 @@ const back = {
   height: 36,
   flexShrink: 0,
   background: c.paper,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: "50%",
   boxShadow: `0 2px 0 ${c.ink}`,
   font: "18px/1 sans-serif",
@@ -261,7 +261,7 @@ const body = {
 };
 const codeBox = {
   background: c.bg,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 24,
   padding: "11px 13px",
   font: `500 12.5px/1.4 ${font.mono}`,
@@ -271,7 +271,7 @@ const codeBox = {
 const input = {
   width: "100%",
   background: c.bg,
-  border: `2px solid ${c.ink}`,
+  border: `1.5px solid ${c.ink}`,
   borderRadius: 24,
   padding: "11px 13px",
   font: `400 15px ${font.sans}`,
