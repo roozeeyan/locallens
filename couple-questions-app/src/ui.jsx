@@ -104,8 +104,46 @@ export function Progress({ value, height = 10 }) {
   );
 }
 
-export function Label({ children }) {
-  return <span style={s.label}>{children}</span>;
+/**
+ * Подпись раздела. `light` — для подписей, лежащих прямо на подложке:
+ * тёмная надпись на снимке пропадает, а обводить её ореолом некрасиво.
+ */
+export function Label({ children, light }) {
+  return <span style={light ? { ...s.label, ...s.labelLight } : s.label}>{children}</span>;
+}
+
+/**
+ * Переключатель как в настройках iOS, в наших цветах. На бегунке — замок:
+ * без него плашка не объясняет, что именно она делает.
+ */
+export function LockSwitch({ on, onClick, label }) {
+  return (
+    <button
+      onClick={onClick}
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      style={{
+        ...s.switchTrack,
+        background: on ? c.coral : "var(--rg-bg)",
+        borderColor: on ? c.coral : c.mute,
+      }}
+    >
+      <span style={{ ...s.switchKnob, transform: on ? "translateX(20px)" : "translateX(0)" }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+          <rect
+            x="5" y="10.5" width="14" height="10" rx="2.6"
+            fill="none" stroke={on ? c.coral : c.mute} strokeWidth="2"
+          />
+          {on ? (
+            <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke={c.coral} strokeWidth="2" strokeLinecap="round" />
+          ) : (
+            <path d="M8.5 10.5V8a3.5 3.5 0 0 1 6.6-1.6" fill="none" stroke={c.mute} strokeWidth="2" strokeLinecap="round" />
+          )}
+        </svg>
+      </span>
+    </button>
+  );
 }
 
 export function Lock() {
@@ -281,10 +319,6 @@ function IconMe({ active }) {
 
 const ICONS = { form: IconForm, links: IconLinks, feed: IconFeed, me: IconMe };
 
-// Ореол под текстом, который лежит прямо на подложке: без него надпись
-// пропадает на тёмных участках картинки.
-const halo = "0 1px 3px var(--rg-bg), 0 0 10px var(--rg-bg)";
-
 export const s = {
   screen: {
     display: "flex",
@@ -294,19 +328,17 @@ export const s = {
   },
   header: { display: "flex", alignItems: "flex-start", gap: 12, paddingTop: 6 },
   h1: {
-    font: `700 30px/1.08 ${font.serif}`,
-    letterSpacing: "-0.01em",
+    font: `700 33px/1.06 ${font.serif}`,
+    letterSpacing: "-0.015em",
     margin: 0,
     color: c.ink,
-    textShadow: halo,
   },
+  // Подзаголовок лежит на подложке, поэтому светлый: тёмный тонет на снимке.
   sub: {
-    margin: "6px 0 0",
-    fontSize: 13.5,
-    color: c.ink,
-    opacity: 0.72,
-    lineHeight: 1.4,
-    textShadow: halo,
+    margin: "7px 0 0",
+    font: `400 15px/1.4 ${font.sans}`,
+    color: "#F6F1E8",
+    opacity: 0.92,
   },
 
   btn: {
@@ -314,7 +346,7 @@ export const s = {
     borderRadius: r.pill,
     boxShadow: hard(3),
     padding: "13px 22px",
-    font: `700 15px ${font.sans}`,
+    font: `700 16px ${font.sans}`,
     color: c.ink,
     cursor: "pointer",
   },
@@ -331,7 +363,7 @@ export const s = {
     borderRadius: r.pill,
     boxShadow: hard(2),
     padding: "8px 14px",
-    font: `600 13.5px ${font.sans}`,
+    font: `600 14.5px ${font.sans}`,
     color: c.ink,
     cursor: "pointer",
   },
@@ -344,12 +376,36 @@ export const s = {
   },
   progFill: { display: "block", height: "100%", background: c.sage, transition: "width .25s ease" },
   label: {
-    font: `600 10.5px ${font.mono}`,
-    letterSpacing: "0.12em",
+    font: `600 13.5px ${font.sans}`,
+    letterSpacing: "0.02em",
     textTransform: "uppercase",
-    color: c.mute,
-    textShadow: halo,
+    color: c.ink,
+    opacity: 0.62,
   },
+  switchTrack: {
+    width: 50,
+    height: 30,
+    flexShrink: 0,
+    borderRadius: 999,
+    border: "1.5px solid",
+    padding: 2,
+    display: "flex",
+    alignItems: "center",
+    cursor: "pointer",
+    transition: "background 220ms ease, border-color 220ms ease",
+  },
+  switchKnob: {
+    width: 24,
+    height: 24,
+    borderRadius: "50%",
+    background: c.paper,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "transform 220ms cubic-bezier(0.3, 0.9, 0.3, 1)",
+  },
+  labelLight: { color: "#F6F1E8", opacity: 0.92 },
   lock: {
     display: "inline-block",
     width: 14,
@@ -370,7 +426,7 @@ export const s = {
     borderRadius: r.md,
     boxShadow: hard(3),
     padding: 13,
-    font: `400 15px/1.45 ${font.sans}`,
+    font: `400 16px/1.5 ${font.sans}`,
     color: c.ink,
     resize: "vertical",
     boxSizing: "border-box",
@@ -422,5 +478,5 @@ export const s = {
     transition: "left 420ms cubic-bezier(0.2, 0.9, 0.2, 1), width 420ms cubic-bezier(0.2, 0.9, 0.2, 1)",
     pointerEvents: "none",
   },
-  tabText: { font: `650 10px ${font.sans}` },
+  tabText: { font: `600 11.5px ${font.sans}` },
 };

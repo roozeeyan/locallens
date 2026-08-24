@@ -142,8 +142,8 @@ const top = {
   zIndex: 1,
 };
 const blockName = {
-  font: `600 10.5px/1.35 ${font.mono}`,
-  letterSpacing: "0.12em",
+  font: `600 12.5px/1.35 ${font.sans}`,
+  letterSpacing: "0.02em",
   textTransform: "uppercase",
   color: c.mute,
   minWidth: 0,
@@ -194,7 +194,7 @@ const body = {
   overflowY: "auto",
 };
 const question = {
-  font: `600 25px/1.2 ${font.serif}`,
+  font: `600 27px/1.22 ${font.serif}`,
   letterSpacing: "-0.01em",
   color: c.ink,
   margin: "10px 0 0",

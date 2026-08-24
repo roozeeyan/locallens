@@ -95,7 +95,7 @@ export default function Feed({ onOpenConn, onGoForm }) {
       {connections.length === 0 && (
         <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Label>{t.empty}</Label>
-          <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
+          <p style={{ margin: 0, font: `400 15.5px/1.5 ${font.sans}`, color: c.ink }}>
             {t.emptyBody}
           </p>
           <Progress value={mine.pct} height={8} />
@@ -114,8 +114,8 @@ export default function Feed({ onOpenConn, onGoForm }) {
         >
           <span style={{ ...bullet, background: e.accent ? c.coral : c.sage }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ font: `700 14px/1.35 ${font.sans}`, color: c.ink }}>{e.title}</div>
-            <div style={{ font: `400 12.5px/1.4 ${font.sans}`, color: c.mute, marginTop: 2 }}>
+            <div style={{ font: `700 15.5px/1.35 ${font.sans}`, color: c.ink }}>{e.title}</div>
+            <div style={{ font: `400 13.5px/1.45 ${font.sans}`, color: c.mute, marginTop: 2 }}>
               {e.note}
             </div>
           </div>

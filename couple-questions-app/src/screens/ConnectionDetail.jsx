@@ -183,7 +183,7 @@ export default function ConnectionDetail({ connId, onClose }) {
             {open.length === 0 && (
               <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                 <Label>{t.nothingYet}</Label>
-                <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
+                <p style={{ margin: 0, font: `400 15.5px/1.5 ${font.sans}`, color: c.ink }}>
                   {t.nothingBody}
                   {p.waitingMe > 0 && t.theirTurn(conn.name, p.waitingMe)}
                 </p>
@@ -228,7 +228,7 @@ export default function ConnectionDetail({ connId, onClose }) {
               return (
                 <Card key={cat.id} pad={13} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                    <span style={{ font: `700 14px ${font.sans}`, color: c.ink }}>
+                    <span style={{ font: `700 15.5px ${font.sans}`, color: c.ink }}>
                       {setTitle(cat.id, lang)}
                     </span>
                     {hidden && (
@@ -245,7 +245,7 @@ export default function ConnectionDetail({ connId, onClose }) {
 
         <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Label>{t.verdict}</Label>
-          <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
+          <p style={{ margin: 0, font: `400 15.5px/1.5 ${font.sans}`, color: c.ink }}>
             {t.verdictBody}
           </p>
 
@@ -290,7 +290,7 @@ export default function ConnectionDetail({ connId, onClose }) {
 
         <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Label>{t.pairExport}</Label>
-          <p style={{ margin: 0, font: `400 13px/1.5 ${font.sans}`, color: c.ink }}>{t.pairBody}</p>
+          <p style={{ margin: 0, font: `400 14.5px/1.55 ${font.sans}`, color: c.ink }}>{t.pairBody}</p>
 
           <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
             <Tag warm={!consent.mine}>{t.youAgreed(consent.mine)}</Tag>

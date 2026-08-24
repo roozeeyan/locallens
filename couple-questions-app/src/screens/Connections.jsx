@@ -77,7 +77,7 @@ export default function Connections({ onOpen, onInvite, onPaywall }) {
       {connections.length === 0 ? (
         <Card pad={18} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Label>{t.empty}</Label>
-          <p style={{ margin: 0, font: `400 14.5px/1.5 ${font.sans}`, color: c.ink }}>
+          <p style={{ margin: 0, font: `400 15.5px/1.5 ${font.sans}`, color: c.ink }}>
             {t.emptyBody}
           </p>
           <Button full onClick={onInvite}>
@@ -111,8 +111,8 @@ export default function Connections({ onOpen, onInvite, onPaywall }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
                     <span style={avatar}>{conn.name.slice(0, 1).toUpperCase()}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ font: `700 15px ${font.sans}`, color: c.ink }}>{conn.name}</div>
-                      <div style={{ font: `400 12px ${font.sans}`, color: c.mute }}>
+                      <div style={{ font: `700 16.5px ${font.sans}`, color: c.ink }}>{conn.name}</div>
+                      <div style={{ font: `400 13px ${font.sans}`, color: c.mute }}>
                         {kinds[conn.kind] || kinds.other}
                         {m.pct !== null && t.match(Math.round(m.pct))}
                       </div>
@@ -178,7 +178,7 @@ function Row({ label, value, total, pct }) {
     <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
       <span
         style={{
-          font: `600 11.5px ${font.sans}`,
+          font: `600 12.5px ${font.sans}`,
           color: c.mute,
           width: 62,
           flexShrink: 0,

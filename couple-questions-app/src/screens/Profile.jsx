@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { c, font, palettes } from "../theme.js";
 import { deleteAccount } from "../sync.js";
 import { exportAnswers } from "../export.js";
-import { Screen, Card, Button, Label } from "../ui.jsx";
+import { Screen, Card, Button, Label, LockSwitch } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress, setTitle } from "../store.js";
 
 const REMINDERS = {
@@ -168,7 +168,7 @@ export default function Profile({ onPaywall, onLegal }) {
           placeholder={t.namePlaceholder}
           style={input}
         />
-        <span style={{ font: `400 12px ${font.sans}`, color: c.mute }}>
+        <span style={{ font: `400 13px ${font.sans}`, color: c.mute }}>
           {t.filled(mine.done, mine.total)}
         </span>
       </Card>
@@ -262,50 +262,17 @@ export default function Profile({ onPaywall, onLegal }) {
           {CATEGORIES.map((cat) => {
             const hidden = profile.hiddenBlocks.includes(cat.id);
             return (
-              <button
-                key={cat.id}
-                onClick={() => actions.toggleHiddenBlock(cat.id)}
-                style={{ ...rowBtn, background: hidden ? c.coral : c.bg, color: hidden ? c.onCoral : c.ink }}
-                aria-pressed={hidden}
-              >
-                <span style={{ flex: 1, textAlign: "left" }}>
-                  {setTitle(cat.id, lang)}
-                </span>
-                <span style={{ font: `600 11px ${font.mono}`, opacity: 0.75 }}>
-                  {hidden ? t.hidden : t.visible}
-                </span>
-              </button>
+              <div key={cat.id} style={{ ...blockRow, opacity: hidden ? 0.45 : 1 }}>
+                <span style={{ flex: 1, minWidth: 0 }}>{setTitle(cat.id, lang)}</span>
+                <LockSwitch
+                  on={hidden}
+                  onClick={() => actions.toggleHiddenBlock(cat.id)}
+                  label={setTitle(cat.id, lang)}
+                />
+              </div>
             );
           })}
         </div>
-      </Card>
-
-      <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <Label>Premium</Label>
-        {profile.premium ? (
-          <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
-            {t.premiumOn}
-          </p>
-        ) : (
-          <>
-            <p style={{ margin: 0, font: `400 14px/1.5 ${font.sans}`, color: c.ink }}>
-              {t.premiumOff}
-            </p>
-            <Button full onClick={onPaywall}>
-              {t.premiumCta}
-            </Button>
-          </>
-        )}
-      </Card>
-
-      <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        <Label>{t.sync}</Label>
-        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <span style={{ ...dot, background: syncInfo.color }} />
-          <span style={{ font: `700 14px ${font.sans}`, color: c.ink }}>{syncInfo.title}</span>
-        </div>
-        <span style={{ font: `400 12px/1.45 ${font.sans}`, color: c.mute }}>{syncInfo.hint}</span>
-        {syncMsg && <div style={errBox}>{syncMsg}</div>}
       </Card>
 
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -320,7 +287,7 @@ export default function Profile({ onPaywall, onLegal }) {
 
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Label>{t.data}</Label>
-        <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>{t.dataNote}</span>
+        <span style={{ font: `400 13.5px/1.5 ${font.sans}`, color: c.mute }}>{t.dataNote}</span>
         <Button
           full
           variant="secondary"
@@ -394,7 +361,7 @@ const input = {
   border: `1.5px solid ${c.ink}`,
   borderRadius: 24,
   padding: "11px 13px",
-  font: `400 15px ${font.sans}`,
+  font: `400 16px ${font.sans}`,
   color: c.ink,
 };
 const swatch = {
@@ -433,6 +400,19 @@ const swDot = {
   borderWidth: 2,
   borderStyle: "solid",
 };
+const blockRow = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  background: c.bg,
+  border: `1.5px solid ${c.ink}`,
+  borderRadius: 999,
+  padding: "7px 8px 7px 16px",
+  font: `600 14.5px ${font.sans}`,
+  color: c.ink,
+  transition: "opacity 220ms ease",
+};
+
 const rowBtn = {
   display: "flex",
   alignItems: "center",

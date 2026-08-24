@@ -59,14 +59,14 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
           <Label>{t.filled}</Label>
-          <span style={{ font: `700 15px ${font.serif}` }}>
+          <span style={{ font: `700 17px ${font.serif}` }}>
             {total.done} {t.of} {total.total}
           </span>
         </div>
         <Progress value={total.pct} />
       </Card>
 
-      <Label>{t.course}</Label>
+      <Label light>{t.course}</Label>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {order.map((cat) => {
           const p = blockProgress(answers, cat.id);
@@ -95,10 +95,10 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
           style={{ display: "flex", alignItems: "center", gap: 12, background: c.sage }}
         >
           <div style={{ flex: 1 }}>
-            <div style={{ font: `700 14.5px ${font.sans}`, color: c.ink }}>
+            <div style={{ font: `700 16px ${font.sans}`, color: c.ink }}>
               {t.openRest(locked)}
             </div>
-            <div style={{ font: `400 12.5px ${font.sans}`, color: c.ink, opacity: 0.75 }}>
+            <div style={{ font: `400 13.5px ${font.sans}`, color: c.ink, opacity: 0.75 }}>
               {lockedNames.join(", ")}
             </div>
           </div>
@@ -109,9 +109,9 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
       {hasFriends && (
         <>
           <div style={{ marginTop: 8 }}>
-            <Label>{t.friends}</Label>
+            <Label light>{t.friends}</Label>
           </div>
-          <p style={{ margin: "-6px 0 2px", font: `400 12.5px/1.4 ${font.sans}`, color: c.mute }}>
+          <p style={{ margin: "-6px 0 2px", font: `400 13.5px/1.45 ${font.sans}`, color: "#F6F1E8", opacity: 0.8 }}>
             {t.friendsNote}
           </p>
           <Row
@@ -126,9 +126,9 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
       )}
 
       <div style={{ marginTop: 8 }}>
-        <Label>{t.decks}</Label>
+        <Label light>{t.decks}</Label>
       </div>
-      <p style={{ margin: "-6px 0 2px", font: `400 12.5px/1.4 ${font.sans}`, color: c.mute }}>
+      <p style={{ margin: "-6px 0 2px", font: `400 13.5px/1.45 ${font.sans}`, color: "#F6F1E8", opacity: 0.8 }}>
         {t.decksNote}
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -167,16 +167,16 @@ function Row({ badge, title, note, open, done, progress, onClick }) {
           {badge}
         </span>
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 7 }}>
-          <span style={{ font: `700 14.5px ${font.sans}`, color: c.ink }}>{title}</span>
+          <span style={{ font: `700 16px ${font.sans}`, color: c.ink }}>{title}</span>
           {open ? (
             <Progress value={progress.pct} height={7} />
           ) : (
-            <span style={{ font: `600 11.5px ${font.mono}`, color: c.mute }}>
+            <span style={{ font: `500 13px ${font.sans}`, color: c.mute }}>
               {note ? `Premium · ${note}` : "Premium"}
             </span>
           )}
         </div>
-        <span style={{ font: `600 12px ${font.mono}`, color: c.mute, whiteSpace: "nowrap" }}>
+        <span style={{ font: `600 13.5px ${font.mono}`, color: c.mute, whiteSpace: "nowrap" }}>
           {open ? `${progress.done}/${progress.total}` : `${progress.total}`}
         </span>
       </div>
