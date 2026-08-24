@@ -125,11 +125,10 @@ export function Switch({ on, onClick, label }) {
       aria-label={label}
       style={{
         ...s.switchTrack,
-        background: on ? c.coral : "var(--rg-bg)",
-        borderColor: on ? c.coral : c.mute,
+        background: on ? c.coral : "color-mix(in srgb, var(--rg-mute) 45%, var(--rg-bg))",
       }}
     >
-      <span style={{ ...s.switchKnob, transform: on ? "translateX(20px)" : "translateX(0)" }} />
+      <span style={{ ...s.switchKnob, transform: on ? "translateX(21px)" : "translateX(0)" }} />
     </button>
   );
 }
@@ -370,28 +369,28 @@ export const s = {
     color: c.ink,
     opacity: 0.62,
   },
+  // Пропорции переключателя взяты у iOS: дорожка 52 на 31, бегунок 27,
+  // ход 21. Обводки нет — в системном переключателе её тоже нет, а с ней
+  // он выглядит толстым.
   switchTrack: {
-    width: 50,
-    height: 30,
+    width: 52,
+    height: 31,
     flexShrink: 0,
     borderRadius: 999,
-    border: "1.5px solid",
+    border: "none",
     padding: 2,
     display: "flex",
     alignItems: "center",
     cursor: "pointer",
-    transition: "background 220ms ease, border-color 220ms ease",
+    transition: "background 240ms ease",
   },
   switchKnob: {
-    width: 24,
-    height: 24,
+    width: 27,
+    height: 27,
     borderRadius: "50%",
-    background: c.paper,
-    boxShadow: "0 1px 3px rgba(0,0,0,0.25)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "transform 220ms cubic-bezier(0.3, 0.9, 0.3, 1)",
+    background: "#FFFFFF",
+    boxShadow: "0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16)",
+    transition: "transform 240ms cubic-bezier(0.3, 0.9, 0.3, 1)",
   },
   labelLight: { color: "#F6F1E8", opacity: 0.92 },
   lock: {
