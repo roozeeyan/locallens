@@ -186,7 +186,7 @@ function Row({ badge, title, note, open, done, progress, onClick }) {
 
 // Закрытый блок раньше просто гасился прозрачностью — на подложке сквозь
 // него просвечивала картинка. Гасим цветом, карточка остаётся непрозрачной.
-const lockedCard = { background: "color-mix(in srgb, var(--rg-paper) 82%, var(--rg-mute))" };
+const lockedCard = { background: c.dim };
 
 const icon = {
   width: 34,

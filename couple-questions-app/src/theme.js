@@ -15,6 +15,8 @@ export const palettes = {
     // Полупрозрачная вуаль для полноэкранных слоёв: картинка просвечивает,
     // но текст поверх неё остаётся читаемым.
     veil: "rgba(240, 236, 228, 0.74)",
+    off: "#D9D1C7",   // дорожка выключенного переключателя
+    dim: "#E7E1D9",   // фон закрытой карточки
   },
   night: {
     name: "Ночная",
@@ -27,6 +29,8 @@ export const palettes = {
     ink: "#F0EDE7",
     mute: "#8E9490",
     veil: "rgba(26, 28, 31, 0.86)",
+    off: "#3B4147",
+    dim: "#2C3034",
   },
   rose: {
     name: "Розовая",
@@ -39,6 +43,8 @@ export const palettes = {
     ink: "#2B1E1C",
     mute: "#9A8582",
     veil: "rgba(244, 231, 228, 0.8)",
+    off: "#E0CFCB",
+    dim: "#F0E2DF",
   },
 };
 
@@ -55,6 +61,8 @@ export function applyPalette(id) {
   root.style.setProperty("--rg-ink", p.ink);
   root.style.setProperty("--rg-mute", p.mute);
   root.style.setProperty("--rg-veil", p.veil || p.bg);
+  root.style.setProperty("--rg-off", p.off || p.mute);
+  root.style.setProperty("--rg-dim", p.dim || p.paper);
   root.style.setProperty("--rg-backdrop", p.backdrop || "none");
   root.style.setProperty("--rg-grain", p.grain ? String(p.grain) : "0");
   // Цвет держим на корне страницы: непрозрачный фон body закрыл бы собой
@@ -75,6 +83,8 @@ export const c = {
   ink: "var(--rg-ink)",
   mute: "var(--rg-mute)",
   veil: "var(--rg-veil)",
+  off: "var(--rg-off)",
+  dim: "var(--rg-dim)",
 };
 
 export const font = {

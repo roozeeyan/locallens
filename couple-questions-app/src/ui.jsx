@@ -125,7 +125,7 @@ export function Switch({ on, onClick, label }) {
       aria-label={label}
       style={{
         ...s.switchTrack,
-        background: on ? c.coral : "color-mix(in srgb, var(--rg-mute) 45%, var(--rg-bg))",
+        background: on ? c.coral : c.off,
       }}
     >
       <span style={{ ...s.switchKnob, transform: on ? "translateX(21px)" : "translateX(0)" }} />
