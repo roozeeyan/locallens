@@ -100,6 +100,17 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Первый разбор бесплатен — он и продаёт остальные. Дальше нужен
+    // открытый доступ: свой или того, с кем есть активная связь.
+    const { count: madeBefore } = await db
+      .from("verdicts")
+      .select("id", { count: "exact", head: true })
+      .eq("made_by", me);
+
+    if ((madeBefore || 0) > 0 && !(await hasAccess(db, me))) {
+      return json({ error: "locked" }, 402);
+    }
+
     // Скрытые блоки исключаем: разбор не должен обходить приватность.
     const [{ data: hiddenMine }, { data: hiddenTheirs }] = await Promise.all([
       db.from("profiles").select("hidden_blocks, name").eq("id", me).maybeSingle(),
@@ -168,6 +179,7 @@ Deno.serve(async (req) => {
 
     await db.from("verdicts").insert({
       connection_id: connectionId,
+      made_by: me,
       lang,
       body,
       pairs_used: pairs.length,
@@ -178,3 +190,27 @@ Deno.serve(async (req) => {
     return json({ error: String(e?.message || e) }, 500);
   }
 });
+
+/** Доступ открыт, если купил я сам или кто-то, с кем я связана. */
+async function hasAccess(db: ReturnType<typeof createClient>, me: string) {
+  const { data: links } = await db
+    .from("connections")
+    .select("a, b")
+    .eq("status", "active")
+    .or(`a.eq.${me},b.eq.${me}`);
+
+  const ids = new Set<string>([me]);
+  for (const link of links || []) {
+    ids.add(link.a);
+    if (link.b) ids.add(link.b);
+  }
+
+  const { data: paid } = await db
+    .from("profiles")
+    .select("id")
+    .in("id", [...ids])
+    .eq("premium", true)
+    .limit(1);
+
+  return Boolean(paid?.length);
+}

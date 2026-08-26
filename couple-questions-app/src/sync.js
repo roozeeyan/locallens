@@ -418,6 +418,7 @@ export async function fetchVerdict(connectionId, lang, refresh = false) {
     });
 
     const payload = await res.json().catch(() => ({}));
+    if (res.status === 402) return { ok: false, locked: true };
     if (!res.ok) {
       return { ok: false, message: payload.error || "Разбор пока недоступен.", info: payload };
     }

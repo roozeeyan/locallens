@@ -168,7 +168,13 @@ export default function App() {
       <TabBar tabs={TABS[lang] || TABS.ru} active={tab} onChange={setTab} />
 
       {openBlock && <QuestionFlow catId={openBlock} onClose={() => setOpenBlock(null)} />}
-      {openConn && <ConnectionDetail connId={openConn} onClose={() => setOpenConn(null)} />}
+      {openConn && (
+        <ConnectionDetail
+          connId={openConn}
+          onClose={() => setOpenConn(null)}
+          onPaywall={() => setPaywall("blocks")}
+        />
+      )}
       {invite && (
         <InviteSheet
           onClose={() => setInvite(false)}

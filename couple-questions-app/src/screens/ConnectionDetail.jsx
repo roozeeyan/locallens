@@ -57,7 +57,7 @@ const T = {
     hidden: "скрыт",
     verdict: "Заключение",
     verdictBody:
-      "Разбор по всем открытым ответам: где вы сходитесь, что стоит обсудить и на что обратить внимание. Появится в блоке про ИИ — он читает оба ответа и ваши отметки.",
+      "Разбор по всем открытым ответам: где вы сходитесь, что стоит обсудить и на что обратить внимание. Первый — бесплатно.",
     soon: "Пока недоступно",
     build: "Собрать разбор",
     again: "Собрать заново",
@@ -96,7 +96,7 @@ const T = {
     hidden: "hidden",
     verdict: "Summary",
     verdictBody:
-      "A read of every revealed answer: where you agree, what is worth discussing, and what to watch out for. It arrives with the AI block, which reads both answers and your marks.",
+      "A read of every revealed answer: where you agree, what is worth discussing, and what to watch out for. The first one is free.",
     soon: "Not available yet",
     build: "Build the summary",
     again: "Build again",
@@ -120,7 +120,7 @@ const T = {
   },
 };
 
-export default function ConnectionDetail({ connId, onClose }) {
+export default function ConnectionDetail({ connId, onClose, onPaywall }) {
   useEffect(lockScroll, []);
 
   const { answers, connections, profile } = useStore();
@@ -273,7 +273,10 @@ export default function ConnectionDetail({ connId, onClose }) {
               setVerdictNote("");
               const res = await fetchVerdict(conn.id, lang, Boolean(verdict));
               setBusy(false);
-              if (res.ok) setVerdict(res.body);
+              // Первый разбор бесплатен; за следующим сервер отправляет
+              // к покупке — открываем её сразу, без промежуточных надписей.
+              if (res.locked) onPaywall?.();
+              else if (res.ok) setVerdict(res.body);
               else setVerdictNote(res.message);
             }}
           >

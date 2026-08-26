@@ -27,3 +27,7 @@ as $$
 $$;
 
 grant execute on function partner_answer_counts() to authenticated;
+
+-- 3. Первый разбор от ИИ бесплатен — для этого нужно знать, кто его заказал.
+alter table verdicts add column if not exists made_by uuid references profiles(id) on delete set null;
+create index if not exists verdicts_made_by_idx on verdicts(made_by);

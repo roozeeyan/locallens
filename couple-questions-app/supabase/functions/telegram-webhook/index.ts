@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     await tg("sendMessage", {
       chat_id: update.message.chat.id,
-      text: "Доступ открыт. Возвращайтесь в приложение — все блоки уже на месте.",
+      text: "Доступ открыт — вам и вашей паре. Возвращайтесь в приложение, все блоки на месте.",
     });
     return new Response("ok");
   }
