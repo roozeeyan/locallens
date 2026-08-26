@@ -264,15 +264,17 @@ export async function pullAll(localName) {
     .map((c) => (c.a === me ? c.b : c.a))
     .filter(Boolean);
   const names = {};
-  const paid = {};
+  const covers = {};
   if (otherIds.length) {
     const { data: people } = await supabase
       .from("profiles")
-      .select("id, name, premium")
+      .select("id, name, premium, premium_for")
       .in("id", otherIds);
     for (const p of people || []) {
       names[p.id] = p.name;
-      paid[p.id] = Boolean(p.premium);
+      // Покупка открывает доступ ровно одному человеку. Чужая покупка
+      // считается моей только если открыта именно мне.
+      covers[p.id] = Boolean(p.premium) && p.premium_for === me;
     }
   }
 
@@ -301,11 +303,12 @@ export async function pullAll(localName) {
 
       return {
         id: c.id,
+        userId: other,
         name: names[other] || "Партнёр",
         kind: c.kind,
         answers: theirs[other] || {},
         reactions,
-        premium: Boolean(paid[other]),
+        premium: Boolean(covers[other]),
         blockCounts: counts[other] || {},
         exportConsent: { mine: mineOk, theirs: theirOk },
       };
@@ -335,6 +338,7 @@ export async function pullAll(localName) {
       hiddenBlocks: profile?.hidden_blocks || [],
       topics: profile?.topics || [],
       premium: Boolean(profile?.premium),
+      premiumFor: profile?.premium_for || null,
       reminder: profile?.reminder || "week",
       consentAt: profile?.consent_at ? Date.parse(profile.consent_at) : null,
     },
@@ -375,6 +379,15 @@ export async function pushProfile(patch) {
   }
   // premium сюда не попадает намеренно: его ставит только вебхук платежей
   if (Object.keys(row).length) await supabase.from("profiles").update(row).eq("id", me);
+}
+
+/** Открывает свой оплаченный доступ одному человеку из своих связей. */
+export async function shareAccess(targetId) {
+  if (!isRemote || !me) return { ok: false, message: "Нет связи с сервером." };
+  const { data, error } = await supabase.rpc("share_access", { target: targetId });
+  if (error) return { ok: false, message: error.message };
+  if (!data) return { ok: false, message: "Доступ уже открыт другому человеку." };
+  return { ok: true };
 }
 
 export async function pushReaction(connectionId, questionId, value) {

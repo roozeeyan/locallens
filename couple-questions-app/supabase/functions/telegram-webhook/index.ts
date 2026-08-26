@@ -50,7 +50,27 @@ Deno.serve(async (req) => {
       const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
         auth: { autoRefreshToken: false, persistSession: false },
       });
-      await admin.from("profiles").update({ premium: true }).eq("id", payload.user_id);
+      // Покупка открывает доступ ещё одному человеку. Если связь ровно
+      // одна — выбирать не из чего, открываем сразу. Если их несколько,
+      // поле остаётся пустым и приложение спросит, кому.
+      const { data: links } = await admin
+        .from("connections")
+        .select("a, b")
+        .eq("status", "active")
+        .or(`a.eq.${payload.user_id},b.eq.${payload.user_id}`);
+
+      const partners = [
+        ...new Set(
+          (links || [])
+            .map((l) => (l.a === payload.user_id ? l.b : l.a))
+            .filter((id): id is string => Boolean(id))
+        ),
+      ];
+
+      await admin
+        .from("profiles")
+        .update({ premium: true, premium_for: partners.length === 1 ? partners[0] : null })
+        .eq("id", payload.user_id);
       await admin.from("payments").insert({
         user_id: payload.user_id,
         product: payload.product,

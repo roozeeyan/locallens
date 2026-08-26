@@ -15,6 +15,7 @@ const empty = {
     theme: DEFAULT_PALETTE,
     hiddenBlocks: [], // id блоков, скрытых от всех связей
     premium: false,
+    premiumFor: null, // кому из связей открыт оплаченный доступ
     onboarded: false,
     situation: null, // together | choosing | engaged
     together: null, // срок отношений

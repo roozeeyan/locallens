@@ -36,3 +36,41 @@ create index if not exists verdicts_made_by_idx on verdicts(made_by);
 --    Раньше они жили только на телефоне — на другом устройстве бесплатным
 --    оказывалось не то, что человек просил.
 alter table profiles add column if not exists topics text[] not null default '{}';
+
+-- 5. Покупка открывает доступ ровно одному человеку — тому, с кем пара.
+--    Без этого один купивший мог бы раздать доступ всем подряд, просто
+--    добавляя людей в связи.
+alter table profiles add column if not exists premium_for uuid references profiles(id) on delete set null;
+
+create or replace function share_access(target uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  ok boolean;
+begin
+  -- Только тот, кто оплатил, и только пока никому ещё не открыл.
+  if not exists (
+    select 1 from profiles
+    where id = auth.uid() and premium and premium_for is null
+  ) then
+    return false;
+  end if;
+
+  -- И только тому, с кем есть активная связь.
+  select exists (
+    select 1 from connections c
+    where c.status = 'active'
+      and ((c.a = auth.uid() and c.b = target) or (c.b = auth.uid() and c.a = target))
+  ) into ok;
+
+  if not ok then return false; end if;
+
+  update profiles set premium_for = target where id = auth.uid();
+  return true;
+end;
+$$;
+
+grant execute on function share_access(uuid) to authenticated;

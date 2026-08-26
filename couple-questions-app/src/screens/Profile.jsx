@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { c, font, palettes } from "../theme.js";
-import { deleteAccount, resetLogin, pullAll, lastSyncError } from "../sync.js";
+import { deleteAccount, resetLogin, pullAll, shareAccess, lastSyncError } from "../sync.js";
 import { exportAnswers } from "../export.js";
 import { hasAccess, paidBy } from "../access.js";
 import { Screen, Card, Button, Label, Switch } from "../ui.jsx";
@@ -45,6 +45,11 @@ const T = {
     premiumCta: "Посмотреть, что входит",
     premiumTitle: "Доступ",
     premiumPair: (name) => `Доступ открыл ${name} — он действует на вас обоих.`,
+    premiumShared: (name) => `Доступ открыт вам и ${name}.`,
+    premiumChoose: "Покупка открывает доступ ещё одному человеку. Выберите, кому:",
+    premiumOpenFor: (name) => `Открыть ${name}`,
+    premiumShareConfirm: (name) =>
+      `Открыть доступ для ${name}? Выбрать можно один раз — потом изменить нельзя.`,
     sync: "Синхронизация",
     version: "Версия",
     relogin: "Войти заново",
@@ -96,6 +101,11 @@ const T = {
     premiumCta: "See what is included",
     premiumTitle: "Access",
     premiumPair: (name) => `${name} unlocked access — it covers both of you.`,
+    premiumShared: (name) => `Access is open for you and ${name}.`,
+    premiumChoose: "Your purchase opens access for one more person. Choose who:",
+    premiumOpenFor: (name) => `Open for ${name}`,
+    premiumShareConfirm: (name) =>
+      `Open access for ${name}? You can choose only once — it cannot be changed later.`,
     sync: "Sync",
     version: "Version",
     relogin: "Sign in again",
@@ -175,12 +185,26 @@ export default function Profile({ onPaywall, onLegal }) {
   const { profile, answers, connections, sync, syncMsg } = useStore();
   const open = hasAccess(profile, connections);
   const byPartner = paidBy(profile, connections);
+  const sharedWith = connections.find((x) => x.userId === profile.premiumFor)?.name || "";
   const mine = totalProgress(answers);
   const lang = profile.lang === "en" ? "en" : "ru";
   const t = T[lang];
   const syncInfo = SYNC[lang][sync] || SYNC[lang].local;
   const [busy, setBusy] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
+  // Выбрать можно один раз: иначе доступ гулял бы по цепочке знакомых.
+  async function onShare(conn) {
+    if (!window.confirm(t.premiumShareConfirm(conn.name))) return;
+    setSharing(true);
+    const res = await shareAccess(conn.userId);
+    if (res.ok) {
+      const remote = await pullAll(profile.name);
+      if (remote) actions.applyRemote(remote);
+    }
+    setSharing(false);
+  }
   const [newId, setNewId] = useState("");
 
   // Вход заново — только по явному подтверждению: прежние ответы остаются
@@ -323,8 +347,36 @@ export default function Profile({ onPaywall, onLegal }) {
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Label>{t.premiumTitle}</Label>
         <p style={{ margin: 0, font: `400 14px/1.45 ${font.sans}`, color: c.ink }}>
-          {byPartner ? t.premiumPair(byPartner) : open ? t.premiumOn : t.premiumOff}
+          {byPartner
+            ? t.premiumPair(byPartner)
+            : sharedWith
+              ? t.premiumShared(sharedWith)
+              : open
+                ? t.premiumOn
+                : t.premiumOff}
         </p>
+
+        {/* Оплата открывает доступ ещё одному человеку — тому, с кем пара.
+            Пока никто не выбран, предлагаем выбрать. */}
+        {profile.premium && !profile.premiumFor && connections.length > 0 && (
+          <>
+            <span style={{ font: `400 13px/1.45 ${font.sans}`, color: c.mute }}>
+              {t.premiumChoose}
+            </span>
+            {connections.map((conn) => (
+              <Button
+                key={conn.id}
+                full
+                variant="secondary"
+                disabled={sharing}
+                onClick={() => onShare(conn)}
+              >
+                {t.premiumOpenFor(conn.name)}
+              </Button>
+            ))}
+          </>
+        )}
+
         {!open && (
           <Button full onClick={() => onPaywall("blocks")}>
             {t.premiumCta}
@@ -458,7 +510,7 @@ const swatch = {
 };
 // Метка версии: по ней сразу видно, доехала ли до телефона свежая сборка.
 // Обновляется вручную при выкатке — так надёжнее, чем подстановка при сборке.
-const BUILD = "26.08 · 17:55";
+const BUILD = "26.08 · 18:30";
 
 const errBox = {
   background: c.bg,
