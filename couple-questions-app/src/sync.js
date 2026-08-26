@@ -27,14 +27,14 @@ function localId() {
   }
 }
 
-function rememberId(id) {
+async function rememberId(id) {
   if (!id) return;
   try {
     localStorage.setItem(ID_KEY, id);
   } catch {
     // приватный режим — остаётся облако
   }
-  cloudSet(ID_KEY, id);
+  await cloudSet(ID_KEY, id);
 }
 
 let me = null;
@@ -110,7 +110,7 @@ export async function ensureSession() {
   const { data: existing } = await supabase.auth.getSession();
   if (existing.session) {
     me = existing.session.user.id;
-    rememberId(me);
+    await rememberId(me);
     await rememberSession();
     return me;
   }
@@ -118,7 +118,7 @@ export async function ensureSession() {
   const restored = await restoreSession();
   if (restored.id) {
     me = restored.id;
-    rememberId(me);
+    await rememberId(me);
     return me;
   }
 
@@ -176,7 +176,7 @@ export async function ensureSession() {
     me = data.user?.id || null;
     if (!me) lastError = "сервер не вернул пользователя";
     else {
-      rememberId(me);
+      await rememberId(me);
       await rememberSession();
     }
     return me;

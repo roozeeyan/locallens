@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { c, font, palettes } from "../theme.js";
-import { deleteAccount, resetLogin } from "../sync.js";
+import { deleteAccount, resetLogin, pullAll, lastSyncError } from "../sync.js";
 import { exportAnswers } from "../export.js";
 import { Screen, Card, Button, Label, Switch } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress, setTitle } from "../store.js";
@@ -182,8 +182,18 @@ export default function Profile({ onPaywall, onLegal }) {
     if (!window.confirm(t.reloginConfirm)) return;
     setResetting(true);
     const res = await resetLogin();
+    if (!res.ok) {
+      setResetting(false);
+      setNewId(res.message);
+      return;
+    }
+    // Вход получен — забираем данные и снимаем красный статус,
+    // иначе карточка так и висит с прошлой ошибкой.
+    const remote = await pullAll(profile.name);
+    if (remote) actions.applyRemote(remote);
+    actions.setSync(remote?.ok ? "online" : "error", remote?.ok ? "" : lastSyncError());
     setResetting(false);
-    setNewId(res.ok ? `${t.newId}: ${res.id}` : res.message);
+    setNewId(`${t.newId}: ${res.id}`);
   }
 
   return (
@@ -429,7 +439,7 @@ const swatch = {
 };
 // Метка версии: по ней сразу видно, доехала ли до телефона свежая сборка.
 // Обновляется вручную при выкатке — так надёжнее, чем подстановка при сборке.
-const BUILD = "26.08 · 13:45";
+const BUILD = "26.08 · 15:10";
 
 const errBox = {
   background: c.bg,
