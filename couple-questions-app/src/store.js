@@ -146,13 +146,17 @@ export const actions = {
 
   /** Заменяет локальное состояние тем, что пришло с сервера. */
   applyRemote({ profile, answers, connections, invites }) {
-    commit({
-      ...state,
-      profile: { ...state.profile, ...profile },
-      answers,
-      connections,
-      invites: invites || [],
-    });
+    const merged = { ...state.profile, ...profile };
+
+    // Темы выбирались на телефоне и до сих пор там и жили. Если на сервере
+    // их ещё нет, а локально есть — поднимаем, а не затираем: от них зависит,
+    // какие три блока у человека бесплатны.
+    if (!profile?.topics?.length && state.profile.topics?.length) {
+      merged.topics = state.profile.topics;
+      pushProfile({ topics: merged.topics });
+    }
+
+    commit({ ...state, profile: merged, answers, connections, invites: invites || [] });
   },
 
   toggleHiddenBlock(catId) {

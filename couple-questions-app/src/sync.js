@@ -333,6 +333,7 @@ export async function pullAll(localName) {
       theme: profile?.theme || "cream",
       lang: profile?.lang || "ru",
       hiddenBlocks: profile?.hidden_blocks || [],
+      topics: profile?.topics || [],
       premium: Boolean(profile?.premium),
       reminder: profile?.reminder || "week",
       consentAt: profile?.consent_at ? Date.parse(profile.consent_at) : null,
@@ -368,6 +369,7 @@ export async function pushProfile(patch) {
   if ("lang" in patch) row.lang = patch.lang;
   if ("reminder" in patch) row.reminder = patch.reminder;
   if ("hiddenBlocks" in patch) row.hidden_blocks = patch.hiddenBlocks;
+  if ("topics" in patch) row.topics = patch.topics;
   if ("consentAt" in patch && patch.consentAt) {
     row.consent_at = new Date(patch.consentAt).toISOString();
   }
