@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { c, font, palettes } from "../theme.js";
-import { deleteAccount } from "../sync.js";
+import { deleteAccount, resetLogin } from "../sync.js";
 import { exportAnswers } from "../export.js";
 import { Screen, Card, Button, Label, Switch } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress, setTitle } from "../store.js";
@@ -44,6 +44,13 @@ const T = {
     premiumCta: "Посмотреть, что входит",
     sync: "Синхронизация",
     version: "Версия",
+    relogin: "Войти заново",
+    relogging: "Входим…",
+    reloginNote:
+      "Заводит новый вход. Прежние ответы остаются на сервере — чтобы вернуть их, пришлите номер из строки ниже в поддержку.",
+    reloginConfirm:
+      "Войти заново? Прежние ответы и связи останутся на сервере, но их придётся возвращать через поддержку.",
+    newId: "Новый номер входа",
     docs: "Документы",
     privacyDoc: "Политика конфиденциальности",
     termsDoc: "Пользовательское соглашение",
@@ -86,6 +93,13 @@ const T = {
     premiumCta: "See what is included",
     sync: "Sync",
     version: "Version",
+    relogin: "Sign in again",
+    relogging: "Signing in…",
+    reloginNote:
+      "Creates a new sign-in. Previous answers stay on the server — send the number below to support to get them back.",
+    reloginConfirm:
+      "Sign in again? Previous answers and connections stay on the server, but support has to restore them.",
+    newId: "New sign-in number",
     docs: "Documents",
     privacyDoc: "Privacy policy",
     termsDoc: "Terms of use",
@@ -159,6 +173,18 @@ export default function Profile({ onPaywall, onLegal }) {
   const t = T[lang];
   const syncInfo = SYNC[lang][sync] || SYNC[lang].local;
   const [busy, setBusy] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [newId, setNewId] = useState("");
+
+  // Вход заново — только по явному подтверждению: прежние ответы остаются
+  // на сервере, но привязать их к новому входу может лишь поддержка.
+  async function onReset() {
+    if (!window.confirm(t.reloginConfirm)) return;
+    setResetting(true);
+    const res = await resetLogin();
+    setResetting(false);
+    setNewId(res.ok ? `${t.newId}: ${res.id}` : res.message);
+  }
 
   return (
     <Screen title={t.title} subtitle={t.subtitle}>
@@ -285,6 +311,15 @@ export default function Profile({ onPaywall, onLegal }) {
         </div>
         <span style={{ font: `400 13px/1.45 ${font.sans}`, color: c.mute }}>{syncInfo.hint}</span>
         {syncMsg && <div style={errBox}>{syncMsg}</div>}
+        {sync === "error" && (
+          <>
+            <Button full variant="secondary" onClick={onReset} disabled={resetting}>
+              {resetting ? t.relogging : t.relogin}
+            </Button>
+            <span style={{ font: `400 12px/1.45 ${font.sans}`, color: c.mute }}>{t.reloginNote}</span>
+          </>
+        )}
+        {newId && <div style={errBox}>{newId}</div>}
         <span style={{ font: `500 11px ${font.mono}`, color: c.mute }}>
           {t.version} {BUILD} UTC
         </span>
@@ -394,7 +429,7 @@ const swatch = {
 };
 // Метка версии: по ней сразу видно, доехала ли до телефона свежая сборка.
 // Обновляется вручную при выкатке — так надёжнее, чем подстановка при сборке.
-const BUILD = "26.08 · 12:00";
+const BUILD = "26.08 · 13:45";
 
 const errBox = {
   background: c.bg,

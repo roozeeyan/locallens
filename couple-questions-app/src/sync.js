@@ -46,32 +46,58 @@ export function lastSyncError() {
 }
 
 /** Кладёт вход в облако Telegram, чтобы при следующем запуске узнать человека. */
-async function rememberSession() {
-  if (!hasCloud()) return;
-  const { data } = await supabase.auth.getSession();
-  const s = data.session;
-  if (!s) return;
+async function saveSession(s) {
+  if (!hasCloud() || !s?.refresh_token) return;
   await cloudSet(
     SESSION_KEY,
     JSON.stringify({ access_token: s.access_token, refresh_token: s.refresh_token })
   );
 }
 
-/** Пробует продолжить прошлый вход, сохранённый в облаке Telegram. */
+async function rememberSession() {
+  if (!hasCloud()) return;
+  const { data } = await supabase.auth.getSession();
+  await saveSession(data.session);
+}
+
+/**
+ * Ключ входа одноразовый: как только клиент обновляет его сам (а он делает
+ * это молча, пока приложение открыто), прежний ключ сервер больше не примет.
+ * Поэтому копию в облаке переписываем при каждом обновлении — иначе при
+ * следующем запуске вход не восстановится уже никогда.
+ */
+if (isRemote) {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (session && (event === "TOKEN_REFRESHED" || event === "SIGNED_IN" || event === "USER_UPDATED")) {
+      saveSession(session);
+    }
+  });
+}
+
+/**
+ * Пробует продолжить прошлый вход, сохранённый в облаке Telegram.
+ * Возвращает { id } при успехе либо { reason } — почему не вышло.
+ */
 async function restoreSession() {
-  if (!hasCloud()) return null;
-  const raw = await cloudGet(SESSION_KEY);
-  if (!raw) return null;
+  if (!hasCloud()) return { reason: "no-cloud" };
+
+  const raw = await cloudGetSure(SESSION_KEY);
+  if (raw === undefined) return { reason: "cloud-unreachable" };
+  if (!raw) return { reason: "nothing-stored" };
+
+  let keys;
   try {
-    const { access_token, refresh_token } = JSON.parse(raw);
-    if (!access_token || !refresh_token) return null;
-    const { data, error } = await supabase.auth.setSession({ access_token, refresh_token });
-    if (error || !data.session) return null;
-    await rememberSession(); // токен обновился — сохраняем новый
-    return data.session.user.id;
+    keys = JSON.parse(raw);
   } catch {
-    return null;
+    return { reason: "broken" };
   }
+  if (!keys?.access_token || !keys?.refresh_token) return { reason: "broken" };
+
+  const { data, error } = await supabase.auth.setSession(keys);
+  if (error || !data.session) return { reason: "rejected" };
+
+  await saveSession(data.session); // ключ обновился — сохраняем новый
+  return { id: data.session.user.id };
 }
 
 /**
@@ -90,8 +116,8 @@ export async function ensureSession() {
   }
 
   const restored = await restoreSession();
-  if (restored) {
-    me = restored;
+  if (restored.id) {
+    me = restored.id;
     rememberId(me);
     return me;
   }
@@ -99,9 +125,18 @@ export async function ensureSession() {
   // Вход не восстановился. Прежде чем заводить новый аккаунт, убеждаемся,
   // что прежнего не было: иначе человек потеряет доступ к своим данным.
   const cloudId = hasCloud() ? await cloudGetSure(ID_KEY) : null;
-  if (cloudId === undefined || localId() || cloudId) {
+  const hadAccount = Boolean(localId() || cloudId);
+
+  if (cloudId === undefined || restored.reason === "cloud-unreachable") {
+    lastError = "Telegram не отдал сохранённый вход. Закройте приложение и откройте заново.";
+    return null;
+  }
+
+  if (hadAccount) {
+    // Аккаунт был, но ключ входа устарел. Новый заводить нельзя — прежние
+    // ответы и связи остались бы на сервере без хозяина.
     lastError =
-      "Не удалось восстановить прошлый вход. Закройте приложение и откройте заново.";
+      "Ключ входа устарел. Откройте приложение заново — если не поможет, напишите в поддержку, доступ вернём.";
     return null;
   }
 
@@ -422,9 +457,43 @@ export async function deleteAccount() {
   const { error } = await supabase.rpc("delete_my_account");
   if (error) return { ok: false, message: error.message };
   await supabase.auth.signOut();
-  if (hasCloud()) await cloudSet(SESSION_KEY, "");
+  await forgetLogin();
   me = null;
   return { ok: true };
+}
+
+/** Стирает следы прошлого входа: и ключ, и отметку о том, что аккаунт был. */
+async function forgetLogin() {
+  try {
+    localStorage.removeItem(ID_KEY);
+  } catch {
+    // приватный режим
+  }
+  if (hasCloud()) {
+    await cloudSet(SESSION_KEY, "");
+    await cloudSet(ID_KEY, "");
+  }
+}
+
+/**
+ * Аварийный вход заново. Нужен, когда ключ входа устарел и приложение
+ * само себя разблокировать не может. Заводит новый аккаунт — прежние ответы
+ * остаются на сервере, их переносит поддержка. Вызывать только по явной
+ * просьбе человека и после подтверждения.
+ */
+export async function resetLogin() {
+  if (!isRemote) return { ok: false, message: "сервер не подключён" };
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    // сессии могло и не быть
+  }
+  await forgetLogin();
+  me = null;
+  lastError = "";
+  const id = await ensureSession();
+  if (!id) return { ok: false, message: lastError || "сервер не ответил" };
+  return { ok: true, id };
 }
 
 export function currentUser() {
