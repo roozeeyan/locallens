@@ -207,10 +207,10 @@ async function hasAccess(db: ReturnType<typeof createClient>, me: string) {
 
   const { data: paid } = await db
     .from("profiles")
-    .select("id")
+    .select("id, premium_for")
     .in("id", [...ids])
-    .eq("premium", true)
-    .limit(1);
+    .eq("premium", true);
 
-  return Boolean(paid?.length);
+  // Чужая покупка засчитывается, только если открыта именно мне.
+  return (paid || []).some((p) => p.id === me || p.premium_for === me);
 }
