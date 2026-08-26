@@ -285,7 +285,12 @@ export function matchStats(conn) {
 export function connBlockProgress(myAnswers, conn, catId) {
   const qs = questionsOf(catId);
   const mine = qs.filter((q) => myAnswers[q.id]).length;
-  const theirs = qs.filter((q) => conn.answers[q.id]).length;
+  // В закрытом блоке текстов партнёра у нас нет — сервер прислал только
+  // число. Берём большее из двух, иначе полоса врёт про пустоту.
+  const theirs = Math.max(
+    qs.filter((q) => conn.answers[q.id]).length,
+    conn.blockCounts?.[catId] || 0
+  );
   return {
     total: qs.length,
     mine,
@@ -293,6 +298,14 @@ export function connBlockProgress(myAnswers, conn, catId) {
     minePct: qs.length ? (mine / qs.length) * 100 : 0,
     theirsPct: qs.length ? (theirs / qs.length) * 100 : 0,
   };
+}
+
+/** Сколько всего ответил партнёр — включая закрытые блоки. */
+export function partnerProgress(conn) {
+  const counted = Object.values(conn.blockCounts || {}).reduce((sum, n) => sum + n, 0);
+  const seen = totalProgress(conn.answers);
+  const done = Math.min(Math.max(counted, seen.done), seen.total);
+  return { done, total: seen.total, pct: seen.total ? (done / seen.total) * 100 : 0 };
 }
 
 export { CATEGORIES, QUESTIONS, DECKS };

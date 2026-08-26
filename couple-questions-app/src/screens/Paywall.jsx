@@ -9,22 +9,26 @@ import { buyPremium, isRemote } from "../backend.js";
 const T = {
   ru: {
     perks: [
+      "Открывается обоим — платит один",
       "Все 11 блоков вместо трёх",
-      "Сколько угодно связей — партнёры и кандидаты",
+      "Сколько угодно связей — партнёры, кандидаты, друзья",
       "Разбор от ИИ по каждой связи",
       "Все темы оформления",
-      "Новые колоды по мере выхода",
     ],
     close: "Закрыть",
     titleConnections: "Добавляйте сколько угодно людей",
     titleBlocks: (n) => `Ещё ${n} ${plural(n, "вопрос", "вопроса", "вопросов")} впереди`,
+    titleWaiting: (name, n) =>
+      `${name} ответил на ${n} ${plural(n, "вопрос", "вопроса", "вопросов")}`,
+    ledeWaiting: (name) =>
+      `Эти ответы уже лежат и ждут вас. Откройте — и они станут видны обоим: ${name} платить не придётся.`,
     ledeConnections:
       "Бесплатно доступна одна связь. Premium снимает ограничение — можно вести и партнёра, и кандидатов одновременно.",
     ledeBlocks:
       "Бесплатно открыты три блока. Остальные — про деньги, детей, конфликты и границы: то, из-за чего пары чаще всего расходятся, если не проговорили заранее.",
-    forever: "Навсегда",
-    oneTime: "Разовая покупка, без подписки",
-    buy: "Открыть доступ",
+    forever: "Навсегда, для двоих",
+    oneTime: "Разовая покупка. Открывается и партнёру",
+    buy: "Открыть для нас двоих",
     opening: "Открываем оплату…",
     cancelled: "Покупка отменена",
     localPay: "Оплата включится, когда подключим сервер и бота.",
@@ -36,22 +40,25 @@ const T = {
   },
   en: {
     perks: [
+      "Opens for both of you — only one pays",
       "All 11 blocks instead of three",
-      "As many connections as you like — partners and candidates",
+      "As many connections as you like — partners, candidates, friends",
       "An AI summary for every connection",
       "All appearance themes",
-      "New decks as they are released",
     ],
     close: "Close",
     titleConnections: "Add as many people as you like",
     titleBlocks: (n) => `${n} more ${n === 1 ? "question" : "questions"} ahead`,
+    titleWaiting: (name, n) => `${name} answered ${n} ${n === 1 ? "question" : "questions"}`,
+    ledeWaiting: (name) =>
+      `Those answers are already waiting for you. Unlock, and both of you see them: ${name} pays nothing.`,
     ledeConnections:
       "One connection is free. Premium removes the limit — you can keep a partner and candidates at the same time.",
     ledeBlocks:
       "Three blocks are free. The rest are about money, children, conflict and boundaries: the things couples most often break up over when they never talked them through.",
-    forever: "Forever",
-    oneTime: "One-time purchase, no subscription",
-    buy: "Unlock access",
+    forever: "Forever, for both",
+    oneTime: "One-time purchase. Your partner gets it too",
+    buy: "Unlock for both of us",
     opening: "Opening payment…",
     cancelled: "Purchase cancelled",
     localPay: "Payment turns on once the server and the bot are connected.",
@@ -63,14 +70,28 @@ const T = {
   },
 };
 
+/** Связь, у которой больше всего неоткрытых ответов. */
+function mostAnswers(connections = []) {
+  let best = null;
+  for (const conn of connections) {
+    const n = Object.values(conn.blockCounts || {}).reduce((sum, x) => sum + x, 0);
+    if (n > 0 && (!best || n > best.n)) best = { name: conn.name, n };
+  }
+  return best;
+}
+
 export default function Paywall({ onClose, reason }) {
   useEffect(lockScroll, []);
 
-  const profile = useStore((s) => s.profile);
+  const { profile, connections } = useStore();
   const t = T[profile.lang === "en" ? "en" : "ru"];
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
-  const locked = lockedQuestionCount(profile);
+  const locked = lockedQuestionCount(profile, connections);
+
+  // Самый сильный довод — не список возможностей, а конкретный человек,
+  // чьи ответы уже написаны и лежат за закрытой дверью.
+  const waiting = mostAnswers(connections);
 
   const buy = async () => {
     setBusy(true);
@@ -102,15 +123,19 @@ export default function Paywall({ onClose, reason }) {
         </div>
 
         <h1 style={h1}>
-          {reason === "connections"
-            ? t.titleConnections
-            : t.titleBlocks(locked)}
+          {waiting
+            ? t.titleWaiting(waiting.name, waiting.n)
+            : reason === "connections"
+              ? t.titleConnections
+              : t.titleBlocks(locked)}
         </h1>
 
         <p style={lede}>
-          {reason === "connections"
-            ? t.ledeConnections
-            : t.ledeBlocks}
+          {waiting
+            ? t.ledeWaiting(waiting.name)
+            : reason === "connections"
+              ? t.ledeConnections
+              : t.ledeBlocks}
         </p>
 
         <div style={list}>

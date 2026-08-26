@@ -10,6 +10,7 @@ import {
   setTitle,
 } from "../store.js";
 import { blockOrder, isBlockOpen, lockedQuestionCount } from "../limits.js";
+import { hasAccess } from "../access.js";
 import { FRIEND_DECK } from "../friends.js";
 
 const T = {
@@ -22,6 +23,7 @@ const T = {
     decks: "Колоды",
     decksNote: "Наборы под конкретный момент. Черновик — тексты ещё правятся.",
     openRest: (n) => `Открыть остальные ${n}`,
+    answered: (name, n) => `${name} ответил · ${n}`,
     friends: "Для друзей",
     friendsNote: "Короткий набор для дружеских связей — без вопросов про пару.",
   },
@@ -34,6 +36,7 @@ const T = {
     decks: "Decks",
     decksNote: "Sets for a specific moment. Draft — wording still being edited.",
     openRest: (n) => `Unlock the remaining ${n}`,
+    answered: (name, n) => `${name} answered · ${n}`,
     friends: "For friends",
     friendsNote: "A short set for friendships — none of the couple questions.",
   },
@@ -47,10 +50,10 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
   const t = T[lang];
   const total = totalProgress(answers);
   const order = blockOrder(profile.topics);
-  const locked = lockedQuestionCount(profile);
+  const locked = lockedQuestionCount(profile, connections);
 
   const lockedNames = order
-    .filter((cat) => !isBlockOpen(cat.id, profile))
+    .filter((cat) => !isBlockOpen(cat.id, profile, connections))
     .slice(0, 4)
     .map((cat) => setTitle(cat.id, lang).split(/\s+и\s+|\s+&\s+|,/)[0]);
 
@@ -71,8 +74,9 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
         {order.map((cat) => {
           const p = blockProgress(answers, cat.id);
           const done = p.done === p.total;
-          const open = isBlockOpen(cat.id, profile);
+          const open = isBlockOpen(cat.id, profile, connections);
           const num = CATEGORIES.findIndex((x) => x.id === cat.id) + 1;
+          const ahead = open ? null : partnerAhead(connections, cat.id);
 
           return (
             <Row
@@ -82,6 +86,7 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
               open={open}
               done={done}
               progress={p}
+              waiting={ahead ? t.answered(ahead.name, ahead.n) : ""}
               onClick={() => (open ? onOpenBlock(cat.id) : onPaywall("blocks"))}
             />
           );
@@ -134,7 +139,7 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {DECKS.map((deck) => {
           const p = blockProgress(answers, deck.id);
-          const open = Boolean(profile.premium);
+          const open = hasAccess(profile, connections);
           return (
             <Row
               key={deck.id}
@@ -153,7 +158,20 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
   );
 }
 
-function Row({ badge, title, note, open, done, progress, onClick }) {
+/**
+ * Кто из связей уже ответил в закрытом блоке и сколько раз. Сами ответы
+ * сервер не отдаёт — только число, поэтому берём самого продвинувшегося.
+ */
+function partnerAhead(connections, catId) {
+  let best = null;
+  for (const conn of connections) {
+    const n = conn.blockCounts?.[catId] || 0;
+    if (n > 0 && (!best || n > best.n)) best = { name: conn.name, n };
+  }
+  return best;
+}
+
+function Row({ badge, title, note, open, done, progress, waiting, onClick }) {
   return (
     <Card onClick={onClick} pad={13} style={open ? undefined : lockedCard}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -170,9 +188,13 @@ function Row({ badge, title, note, open, done, progress, onClick }) {
           <span style={{ font: `700 16px ${font.sans}`, color: c.ink }}>{title}</span>
           {open ? (
             <Progress value={progress.pct} height={7} />
+          ) : waiting ? (
+            // Ответ партнёра уже лежит на сервере. Показываем не замок,
+            // а то, что за ним: это и есть повод открыть.
+            <span style={{ font: `600 13px ${font.sans}`, color: c.warm }}>{waiting}</span>
           ) : (
             <span style={{ font: `500 13px ${font.sans}`, color: c.mute }}>
-              {note ? `Premium · ${note}` : "Premium"}
+              {note || ""}
             </span>
           )}
         </div>

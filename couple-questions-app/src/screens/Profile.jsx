@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { c, font, palettes } from "../theme.js";
 import { deleteAccount, resetLogin, pullAll, lastSyncError } from "../sync.js";
 import { exportAnswers } from "../export.js";
+import { hasAccess, paidBy } from "../access.js";
 import { Screen, Card, Button, Label, Switch } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress, setTitle } from "../store.js";
 
@@ -40,8 +41,10 @@ const T = {
     hidden: "скрыт",
     visible: "виден",
     premiumOn: "Доступ открыт. Все блоки, связи без ограничений и разбор от ИИ.",
-    premiumOff: "Все 11 блоков, неограниченное число связей, разбор от ИИ и новые колоды.",
+    premiumOff: "Все 11 блоков, сколько угодно связей и разбор от ИИ. Платит один — открывается обоим.",
     premiumCta: "Посмотреть, что входит",
+    premiumTitle: "Доступ",
+    premiumPair: (name) => `Доступ открыл ${name} — он действует на вас обоих.`,
     sync: "Синхронизация",
     version: "Версия",
     relogin: "Войти заново",
@@ -89,8 +92,10 @@ const T = {
     hidden: "hidden",
     visible: "visible",
     premiumOn: "Access is open. All blocks, unlimited connections and the AI summary.",
-    premiumOff: "All 11 blocks, unlimited connections, the AI summary and new decks.",
+    premiumOff: "All 11 blocks, as many connections as you like and the AI summary. One pays, both get it.",
     premiumCta: "See what is included",
+    premiumTitle: "Access",
+    premiumPair: (name) => `${name} unlocked access — it covers both of you.`,
     sync: "Sync",
     version: "Version",
     relogin: "Sign in again",
@@ -167,7 +172,9 @@ const SYNC = {
 };
 
 export default function Profile({ onPaywall, onLegal }) {
-  const { profile, answers, sync, syncMsg } = useStore();
+  const { profile, answers, connections, sync, syncMsg } = useStore();
+  const open = hasAccess(profile, connections);
+  const byPartner = paidBy(profile, connections);
   const mine = totalProgress(answers);
   const lang = profile.lang === "en" ? "en" : "ru";
   const t = T[lang];
@@ -313,6 +320,18 @@ export default function Profile({ onPaywall, onLegal }) {
         </div>
       </Card>
 
+      <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <Label>{t.premiumTitle}</Label>
+        <p style={{ margin: 0, font: `400 14px/1.45 ${font.sans}`, color: c.ink }}>
+          {byPartner ? t.premiumPair(byPartner) : open ? t.premiumOn : t.premiumOff}
+        </p>
+        {!open && (
+          <Button full onClick={() => onPaywall("blocks")}>
+            {t.premiumCta}
+          </Button>
+        )}
+      </Card>
+
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <Label>{t.sync}</Label>
         <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
@@ -439,7 +458,7 @@ const swatch = {
 };
 // Метка версии: по ней сразу видно, доехала ли до телефона свежая сборка.
 // Обновляется вручную при выкатке — так надёжнее, чем подстановка при сборке.
-const BUILD = "26.08 · 15:10";
+const BUILD = "26.08 · 16:40";
 
 const errBox = {
   background: c.bg,

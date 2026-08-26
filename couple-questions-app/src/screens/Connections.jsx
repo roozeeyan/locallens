@@ -1,7 +1,7 @@
 import React from "react";
 import { c, font } from "../theme.js";
 import { Screen, Card, Button, Progress, Label } from "../ui.jsx";
-import { useStore, actions, totalProgress, pending, matchStats } from "../store.js";
+import { useStore, actions, totalProgress, partnerProgress, pending, matchStats } from "../store.js";
 import { demoConnection } from "../demo.js";
 import { canAddConnection } from "../limits.js";
 import { isRemote } from "../backend.js";
@@ -24,7 +24,7 @@ const T = {
     demoNote:
       "Сервер не подключён, поэтому приглашение по ссылке пока не сработает. Демо-связь показывает, как всё будет выглядеть.",
     more: "Пригласить ещё",
-    morePremium: "Пригласить ещё · Premium",
+    morePremium: "Пригласить ещё · открыть доступ",
     match: (n) => ` · совпадений ${n}%`,
     you: "Вы",
     waitingMe: (n) => `ждут вашего ответа: ${n}`,
@@ -48,7 +48,7 @@ const T = {
     demoNote:
       "The server is not connected, so an invitation link will not work yet. The demo connection shows how it will look.",
     more: "Invite someone else",
-    morePremium: "Invite someone else · Premium",
+    morePremium: "Invite someone else · unlock",
     match: (n) => ` · ${n}% match`,
     you: "You",
     waitingMe: (n) => `waiting for your answer: ${n}`,
@@ -104,7 +104,7 @@ export default function Connections({ onOpen, onInvite, onPaywall }) {
           {connections.map((conn) => {
             const p = pending(answers, conn);
             const m = matchStats(conn);
-            const theirs = totalProgress(conn.answers);
+            const theirs = partnerProgress(conn);
             return (
               <Card key={conn.id} onClick={() => onOpen(conn.id)} pad={14}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>

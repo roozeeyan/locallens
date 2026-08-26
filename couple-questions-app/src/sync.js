@@ -264,12 +264,24 @@ export async function pullAll(localName) {
     .map((c) => (c.a === me ? c.b : c.a))
     .filter(Boolean);
   const names = {};
+  const paid = {};
   if (otherIds.length) {
     const { data: people } = await supabase
       .from("profiles")
-      .select("id, name")
+      .select("id, name, premium")
       .in("id", otherIds);
-    for (const p of people || []) names[p.id] = p.name;
+    for (const p of people || []) {
+      names[p.id] = p.name;
+      paid[p.id] = Boolean(p.premium);
+    }
+  }
+
+  // Сколько партнёр ответил в каждом блоке. Тексты закрытых блоков сервер
+  // не отдаёт — только число, чтобы было видно, что там есть что открывать.
+  const counts = {};
+  const { data: countRows } = await supabase.rpc("partner_answer_counts");
+  for (const r of countRows || []) {
+    (counts[r.other_id] ||= {})[r.block] = r.n;
   }
 
   const connections = (conns || [])
@@ -293,6 +305,8 @@ export async function pullAll(localName) {
         kind: c.kind,
         answers: theirs[other] || {},
         reactions,
+        premium: Boolean(paid[other]),
+        blockCounts: counts[other] || {},
         exportConsent: { mine: mineOk, theirs: theirOk },
       };
     });
