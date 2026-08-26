@@ -21,7 +21,6 @@ function Tag({ children, warm }) {
     <span
       style={{
         font: `600 11px ${font.sans}`,
-        color: c.ink,
         background: warm ? c.coral : c.sage,
         color: warm ? c.onCoral : c.ink,
         border: `1.5px solid ${c.ink}`,

@@ -463,7 +463,6 @@ function Themes({ t, lang, value, onPick, onNext }) {
               width: 104,
               height: 128,
               background: p.bg,
-              border: `1.5px solid ${c.ink}`,
               borderRadius: 32,
               boxShadow: `0 2px 0 ${c.ink}`,
               border: value === id ? `2px solid ${c.coral}` : `1.5px solid ${c.ink}`,
