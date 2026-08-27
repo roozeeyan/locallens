@@ -5,8 +5,9 @@ import { Card, Button, Label } from "../ui.jsx";
 import { isRemote, makeInviteCode } from "../backend.js";
 import { createInviteRemote, joinByCode } from "../sync.js";
 import { useStore } from "../store.js";
+import { inviteLink, inviteMessage } from "../invite.js";
+import { PAIR_ONLY } from "../access.js";
 
-const BOT = "relationship_game_by_roo_bot";
 
 const T = {
   ru: {
@@ -95,11 +96,11 @@ export default function InviteSheet({ onClose, onAccepted }) {
   const [entered, setEntered] = useState("");
   const [note, setNote] = useState("");
 
-  const link = code ? `https://t.me/${BOT}?startapp=${code}` : "";
+  const link = code ? inviteLink(code) : "";
   const [draft, setDraft] = useState("");
 
   useEffect(() => {
-    if (link) setDraft(t.draft(link));
+    if (link) setDraft(inviteMessage(link, lang === "en" ? "en" : "ru"));
   }, [link]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const generate = async () => {
@@ -163,6 +164,7 @@ export default function InviteSheet({ onClose, onAccepted }) {
       </div>
 
       <div style={body}>
+        {!PAIR_ONLY && (
         <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
           <Label>{t.who}</Label>
           <div style={{ display: "flex", gap: 8 }}>
@@ -180,6 +182,7 @@ export default function InviteSheet({ onClose, onAccepted }) {
             {t.hints[kind]}
           </span>
         </Card>
+        )}
 
         {!code ? (
           <Button full onClick={generate} disabled={busy}>

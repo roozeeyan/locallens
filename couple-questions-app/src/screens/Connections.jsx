@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { c, font } from "../theme.js";
 import { Screen, Card, Button, Progress, Label } from "../ui.jsx";
 import { useStore, actions, totalProgress, partnerProgress, pending, matchStats } from "../store.js";
 import { demoConnection } from "../demo.js";
 import { canAddConnection } from "../limits.js";
 import { isRemote } from "../backend.js";
+import { inviteLink, inviteMessage, copyText } from "../invite.js";
 
 export const KIND_LABEL = {
   ru: { partner: "партнёр", candidate: "кандидат", friend: "друг", other: "связь" },
@@ -34,6 +35,11 @@ const T = {
     joined: "присоединились",
     noName: "Без имени",
     pending: "Ждёт ответа",
+    nudge: "Напомнить",
+    nudged: "Текст скопирован — отправьте его ещё раз",
+    nudgeFailed: "Не удалось скопировать. Попробуйте в браузере.",
+    nudgeNote:
+      "Приглашение висит больше двух дней. Второй заход срабатывает чаще первого — текст готов, осталось отправить.",
     locale: "ru-RU",
   },
   en: {
@@ -58,6 +64,11 @@ const T = {
     joined: "joined",
     noName: "No name",
     pending: "Waiting",
+    nudge: "Remind",
+    nudged: "Message copied — send it again",
+    nudgeFailed: "Could not copy. Try in a browser.",
+    nudgeNote:
+      "This invitation has been waiting more than two days. A second nudge works more often than the first — the message is ready.",
     locale: "en-GB",
   },
 };
@@ -71,6 +82,18 @@ export default function Connections({ onOpen, onInvite, onPaywall }) {
   const mine = totalProgress(answers);
   const sent = invites.length;
   const joined = invites.filter((i) => i.accepted).length;
+  const [note, setNote] = useState("");
+
+  // «Отмахнулся, вернусь через неделю» — самый частый исход первого
+  // приглашения. Приложение должно помогать зайти второй раз, а не
+  // показывать висящую строку в статистике.
+  const STALE = 2 * 24 * 60 * 60 * 1000;
+  const stale = (inv) => !inv.accepted && inv.at && Date.now() - inv.at > STALE;
+
+  const nudge = async (inv) => {
+    const ok = await copyText(inviteMessage(inviteLink(inv.code), lang));
+    setNote(ok ? t.nudged : t.nudgeFailed);
+  };
 
   return (
     <Screen title={t.title} subtitle={t.subtitle}>
@@ -152,12 +175,25 @@ export default function Connections({ onOpen, onInvite, onPaywall }) {
                   {inv.accepted ? inv.name || t.noName : t.pending}
                   <span style={{ color: c.mute }}> · {kinds[inv.kind] || kinds.other}</span>
                 </span>
+                {stale(inv) && (
+                  <button onClick={() => nudge(inv)} style={nudgeBtn}>
+                    {t.nudge}
+                  </button>
+                )}
                 <span style={{ font: `600 11px ${font.mono}`, color: c.mute }}>
                   {inv.at ? new Date(inv.at).toLocaleDateString(t.locale) : ""}
                 </span>
               </div>
             ))}
           </div>
+          {invites.some(stale) && (
+            <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>
+              {t.nudgeNote}
+            </span>
+          )}
+          {note && (
+            <span style={{ font: `600 12.5px ${font.sans}`, color: c.warm }}>{note}</span>
+          )}
         </Card>
       )}
     </Screen>
@@ -222,6 +258,16 @@ const statBox = {
   border: `1.5px solid ${c.ink}`,
   borderRadius: 24,
   padding: "9px 12px",
+};
+const nudgeBtn = {
+  flexShrink: 0,
+  background: c.sage,
+  border: `1.5px solid ${c.ink}`,
+  borderRadius: 999,
+  padding: "4px 11px",
+  font: `700 11.5px ${font.sans}`,
+  color: c.ink,
+  cursor: "pointer",
 };
 const inviteRow = {
   display: "flex",

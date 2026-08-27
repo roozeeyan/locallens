@@ -13,6 +13,14 @@
  */
 export const OPEN_ALL = String(import.meta.env.VITE_OPEN_ALL || "") === "1";
 
+/**
+ * Первая версия обслуживает один набор обстоятельств: два человека,
+ * которые проходят анкету вдвоём. Кандидаты, друзья и колоды никуда
+ * не делись — они просто не показываются, пока мы смотрим за парами.
+ * Выключается переменной VITE_PAIR_ONLY=0 при сборке.
+ */
+export const PAIR_ONLY = String(import.meta.env.VITE_PAIR_ONLY || "") !== "0";
+
 /** Открыт ли доступ мне — своей покупкой или покупкой партнёра. */
 export function hasAccess(profile, connections = []) {
   if (OPEN_ALL) return true;

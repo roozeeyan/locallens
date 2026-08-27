@@ -3,6 +3,7 @@ import { c, font, palettes, applyPalette } from "../theme.js";
 import { screenHeight, screenTop, lockScroll } from "../viewport.js";
 import { Button, Progress, Iso } from "../ui.jsx";
 import { actions, CATEGORIES, setTitle } from "../store.js";
+import { PAIR_ONLY } from "../access.js";
 import Legal from "./Legal.jsx";
 
 const T = {
@@ -208,7 +209,7 @@ export default function Onboarding({ onFinish }) {
     <Choice
       key="situation"
       title={t.situationTitle}
-      options={t.situations}
+      options={PAIR_ONLY ? t.situations.filter((x) => x.id !== "choosing") : t.situations}
       value={data.situation}
       onPick={(id) => {
         set({ situation: id });

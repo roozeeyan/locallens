@@ -11,7 +11,7 @@ import {
   setTitle,
 } from "../store.js";
 import { blockOrder, isBlockOpen, lockedQuestionCount } from "../limits.js";
-import { hasAccess } from "../access.js";
+import { hasAccess, PAIR_ONLY } from "../access.js";
 import { FRIEND_DECK } from "../friends.js";
 
 const T = {
@@ -185,7 +185,7 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
         </Card>
       )}
 
-      {hasFriends && (
+      {hasFriends && !PAIR_ONLY && (
         <>
           <div style={{ marginTop: 8 }}>
             <Label light>{t.friends}</Label>
@@ -204,6 +204,8 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
         </>
       )}
 
+      {!PAIR_ONLY && (
+      <>
       <div style={{ marginTop: 8 }}>
         <Label light>{t.decks}</Label>
       </div>
@@ -228,6 +230,8 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
           );
         })}
       </div>
+      </>
+      )}
     </Screen>
   );
 }
