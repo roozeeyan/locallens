@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { c, font } from "../theme.js";
 import { Screen, Card, Label, Progress } from "../ui.jsx";
-import { useStore, revealed, pending, totalProgress } from "../store.js";
+import { useStore, actions, revealed, pending, totalProgress, qText } from "../store.js";
 
 const T = {
   ru: {
@@ -22,6 +22,8 @@ const T = {
     waitingNote: "Ваши ответы откроются, как только он ответит на те же.",
     fill: (done, total) => `Заполнено ${done} из ${total}`,
     fillNote: "Чем больше ответов, тем точнее сравнение.",
+    fresh: "Новое с прошлого раза",
+    freshNote: (name) => `${name} ответил, и эти вопросы открылись.`,
   },
   en: {
     title: "Feed",
@@ -39,13 +41,33 @@ const T = {
     waitingNote: "Your answers open as soon as they answer the same ones.",
     fill: (done, total) => `${done} of ${total} answered`,
     fillNote: "The more you answer, the sharper the comparison.",
+    fresh: "New since last time",
+    freshNote: (name) => `${name} answered, and these opened up.`,
   },
 };
 
 export default function Feed({ onOpenConn, onGoForm }) {
-  const { answers, connections, profile } = useStore();
+  const { answers, connections, profile, seen } = useStore();
   const t = T[profile.lang === "en" ? "en" : "ru"];
+  const lang = profile.lang === "en" ? "en" : "ru";
   const hiddenBlocks = profile.hiddenBlocks;
+
+  // Отметку времени фиксируем на входе и сразу двигаем вперёд: иначе
+  // «новое» исчезнет прямо под руками, пока человек читает.
+  const since = useRef(seen || 0).current;
+  useEffect(() => {
+    actions.markFeedSeen();
+  }, []);
+
+  // Что именно открылось с прошлого захода — а не сколько всего ждёт.
+  const fresh = [];
+  for (const conn of connections) {
+    for (const q of revealed(answers, conn, hiddenBlocks)) {
+      const at = conn.answers[q.id]?.at || 0;
+      if (since && at > since) fresh.push({ conn, q, at });
+    }
+  }
+  fresh.sort((a, b) => b.at - a.at);
 
   const mine = totalProgress(answers);
   const events = [];
@@ -103,6 +125,27 @@ export default function Feed({ onOpenConn, onGoForm }) {
             {t.yours(mine.done, mine.total)}
           </span>
         </Card>
+      )}
+
+      {fresh.length > 0 && (
+        <>
+          <Label light>{t.fresh}</Label>
+          {fresh.slice(0, 6).map(({ conn, q }) => (
+            <Card
+              key={`${conn.id}-${q.id}`}
+              pad={14}
+              onClick={() => onOpenConn(conn.id)}
+              style={{ display: "flex", flexDirection: "column", gap: 8 }}
+            >
+              <span style={{ font: `600 16px/1.3 ${font.serif}`, color: c.ink }}>
+                {qText(q, lang)}
+              </span>
+              <span style={{ font: `400 13.5px/1.45 ${font.sans}`, color: c.mute }}>
+                {t.freshNote(conn.name)}
+              </span>
+            </Card>
+          ))}
+        </>
       )}
 
       {events.map((e) => (

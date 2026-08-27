@@ -23,6 +23,7 @@ const empty = {
     reminder: "week", // twice | week | off
     lang: "ru", // ru | en
     consentAt: null, // когда принято соглашение
+    later: [], // вопросы, отложенные «подумать и вернуться»
   },
   answers: {}, // { [questionId]: { text, at } }
   connections: [], // до подключения Supabase живёт локально
@@ -98,8 +99,22 @@ export const actions = {
     const answers = { ...state.answers };
     if (t) answers[questionId] = { text: t, at: Date.now() };
     else delete answers[questionId];
-    commit({ ...state, answers });
+    // Ответил — значит вопрос больше не «отложен».
+    const later = (state.profile.later || []).filter((x) => x !== questionId);
+    commit({ ...state, answers, profile: { ...state.profile, later } });
     pushAnswer(questionId, t);
+  },
+
+  /**
+   * «Отложить, чтобы подумать» — не то же, что «пропустить и забыть».
+   * Отметка живёт вместе с ответами, иначе отложенный вопрос растворяется
+   * среди неотвеченных, стоит закрыть приложение.
+   */
+  markLater(questionId, on = true) {
+    const cur = state.profile.later || [];
+    if (on === cur.includes(questionId)) return;
+    const later = on ? [...cur, questionId] : cur.filter((x) => x !== questionId);
+    commit({ ...state, profile: { ...state.profile, later } });
   },
 
   setProfile(patch) {

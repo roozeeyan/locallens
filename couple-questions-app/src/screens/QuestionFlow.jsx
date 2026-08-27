@@ -15,7 +15,7 @@ const T = {
     close: "Закрыть",
     prev: "Предыдущий вопрос",
     nextQ: "Следующий вопрос",
-    skip: "Пропустить вопрос",
+    skip: "Отложить и вернуться позже",
     saved: "Ответ сохранён",
     share: "Поделиться вопросом",
     next: "Сохранить и дальше",
@@ -23,7 +23,7 @@ const T = {
     listTitle: "Вопросы блока",
     allQuestions: "Все вопросы",
     answered: "отвечен",
-    skipped: "пропущен",
+    skipped: "отложен",
     empty: "без ответа",
     placeholder: "Ваш ответ — его увидит партнёр, когда ответит сам",
   },
@@ -31,7 +31,7 @@ const T = {
     close: "Close",
     prev: "Previous question",
     nextQ: "Next question",
-    skip: "Skip this question",
+    skip: "Put aside for later",
     saved: "Answer saved",
     share: "Share this question",
     next: "Save and continue",
@@ -39,7 +39,7 @@ const T = {
     listTitle: "Questions in this block",
     allQuestions: "All questions",
     answered: "answered",
-    skipped: "skipped",
+    skipped: "for later",
     empty: "no answer",
     placeholder: "Your answer — your partner sees it once they answer too",
   },
@@ -58,9 +58,9 @@ export default function QuestionFlow({ catId, onClose }) {
   const [i, setI] = useState(firstUnanswered === -1 ? 0 : firstUnanswered);
   const [draft, setDraft] = useState("");
   const [showList, setShowList] = useState(false);
-  // Пропущенные надо уметь найти: иначе вопрос исчезает и вернуться к нему
-  // человек уже не может.
-  const [skipped, setSkipped] = useState(() => new Set());
+  // Отметка живёт в профиле, а не в этом экране: закрыл приложение —
+  // отложенный вопрос должен остаться отложенным.
+  const later = useStore((s) => s.profile.later) || [];
 
   const q = list[i];
 
@@ -85,24 +85,19 @@ export default function QuestionFlow({ catId, onClose }) {
 
   const save = () => {
     actions.saveAnswer(q.id, draft);
-    setSkipped((s) => {
-      const next = new Set(s);
-      next.delete(q.id);
-      return next;
-    });
     if (last) onClose();
     else setI(i + 1);
   };
 
   const skip = () => {
     keep();
-    setSkipped((s) => new Set(s).add(q.id));
+    actions.markLater(q.id);
     if (last) onClose();
     else setI(i + 1);
   };
 
   const stateOf = (item) =>
-    answers[item.id] ? "answered" : skipped.has(item.id) ? "skipped" : "empty";
+    answers[item.id] ? "answered" : later.includes(item.id) ? "skipped" : "empty";
 
   return (
     <div style={wrap}>
