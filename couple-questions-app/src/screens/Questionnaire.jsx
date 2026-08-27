@@ -4,6 +4,7 @@ import { Screen, Card, Progress, Label } from "../ui.jsx";
 import {
   useStore,
   CATEGORIES,
+  QUESTIONS,
   DECKS,
   blockProgress,
   totalProgress,
@@ -19,6 +20,9 @@ const T = {
     subtitle: "Отвечаете только вы. Ответы партнёра откроются, когда он ответит на тот же вопрос.",
     filled: "Заполнено",
     of: "из",
+    openedWith: (name, n) => `Открыто с ${name}: ${n}`,
+    toVerdict: (n) => `Ещё ${n} общих ответов — и можно собрать разбор`,
+    verdictReady: "Разбор уже можно собрать",
     course: "Ваши темы",
     rest: "Остальные блоки",
     invite: "Пригласите партнёра",
@@ -37,6 +41,9 @@ const T = {
     subtitle: "Only you answer. Your partner's answer opens once they answer the same question.",
     filled: "Completed",
     of: "of",
+    openedWith: (name, n) => `Open with ${name}: ${n}`,
+    toVerdict: (n) => `${n} more shared answers and the summary can be built`,
+    verdictReady: "The summary can be built now",
     course: "Your topics",
     rest: "Other blocks",
     invite: "Invite your partner",
@@ -69,6 +76,15 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
   const mineBlocks = order.filter((cat) => picked.includes(cat.id));
   const restBlocks = order.filter((cat) => !picked.includes(cat.id));
 
+  // Дима спрашивал: сколько мне нужно ответить, чтобы приложение что-то
+  // дало? Нигде не было сказано. Теперь видно и то, что уже открыто,
+  // и сколько осталось до разбора.
+  const partner = connections[0];
+  const openedNow = partner
+    ? QUESTIONS.filter((q) => answers[q.id] && partner.answers[q.id]).length
+    : 0;
+  const toVerdict = Math.max(0, 5 - openedNow);
+
   const lockedNames = order
     .filter((cat) => !isBlockOpen(cat.id, profile, connections))
     .slice(0, 4)
@@ -84,6 +100,16 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
           </span>
         </div>
         <Progress value={total.pct} />
+        {partner && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ font: `600 13px ${font.sans}`, color: c.ink }}>
+              {t.openedWith(partner.name, openedNow)}
+            </span>
+            <span style={{ font: `400 12.5px ${font.sans}`, color: c.mute }}>
+              {toVerdict > 0 ? t.toVerdict(toVerdict) : t.verdictReady}
+            </span>
+          </div>
+        )}
       </Card>
 
       {connections.length === 0 && (
