@@ -26,6 +26,13 @@ const T = {
     linkLabel: "Ссылка-приглашение",
     copy: "Скопировать ссылку",
     copied: "Ссылка скопирована",
+    message: "Что написать",
+    messageNote:
+      "Самое трудное — объяснить, что это не проверка. Готовый текст можно поправить под себя.",
+    copyMessage: "Скопировать текст со ссылкой",
+    copiedMessage: "Текст скопирован — вставьте его в чат",
+    draft: (who) =>
+      `Слушай, хочу кое-что пройти вместе. Это не тест и не претензия — просто список вопросов про деньги, детей, границы и всё то, о чём мы вечно не доходим поговорить.\n\nОтвечает каждый сам, со своего телефона. Твой ответ я увижу, только когда отвечу на тот же вопрос сама, — и наоборот. Можно понемногу, по паре вопросов вечером.\n\nВот ссылка: ${who}`,
     copyManually: "Скопируйте ссылку вручную",
     linkNote:
       "Отправьте её в личном сообщении. Человек откроет приложение, заполнит свою анкету — и вы увидите, где совпадаете.",
@@ -55,6 +62,13 @@ const T = {
     linkLabel: "Invitation link",
     copy: "Copy link",
     copied: "Link copied",
+    message: "What to write",
+    messageNote:
+      "The hard part is explaining that this is not a test. Here is a draft you can edit.",
+    copyMessage: "Copy the message with the link",
+    copiedMessage: "Message copied — paste it into the chat",
+    draft: (who) =>
+      `Hey, I want us to go through something together. It is not a test and not a complaint — just a list of questions about money, children, boundaries and all the things we never get around to.\n\nEach of us answers alone, on our own phone. I only see your answer once I answer the same question myself — and the other way round. A couple of questions an evening is fine.\n\nHere is the link: ${who}`,
     copyManually: "Copy the link manually",
     linkNote:
       "Send it in a private message. They open the app, fill in their own answers — and you see where you agree.",
@@ -82,6 +96,11 @@ export default function InviteSheet({ onClose, onAccepted }) {
   const [note, setNote] = useState("");
 
   const link = code ? `https://t.me/${BOT}?startapp=${code}` : "";
+  const [draft, setDraft] = useState("");
+
+  useEffect(() => {
+    if (link) setDraft(t.draft(link));
+  }, [link]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const generate = async () => {
     setBusy(true);
@@ -100,6 +119,17 @@ export default function InviteSheet({ onClose, onAccepted }) {
     try {
       await navigator.clipboard.writeText(link);
       setNote(t.copied);
+    } catch {
+      setNote(t.copyManually);
+    }
+  };
+
+  // Ссылка без слов не работает: половина приглашений умирает на том, что
+  // позвавший не знает, как объяснить, что это не проверка.
+  const copyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(draft);
+      setNote(t.copiedMessage);
     } catch {
       setNote(t.copyManually);
     }
@@ -159,12 +189,30 @@ export default function InviteSheet({ onClose, onAccepted }) {
           <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
             <Label>{t.linkLabel}</Label>
             <div style={codeBox}>{link}</div>
-            <Button full onClick={copy}>
+            <Button full variant="secondary" onClick={copy}>
               {t.copy}
             </Button>
             <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>
               {t.linkNote}
             </span>
+          </Card>
+        )}
+
+        {code && (
+          <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+            <Label>{t.message}</Label>
+            <span style={{ font: `400 12.5px/1.45 ${font.sans}`, color: c.mute }}>
+              {t.messageNote}
+            </span>
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={9}
+              style={draftBox}
+            />
+            <Button full onClick={copyMessage}>
+              {t.copyMessage}
+            </Button>
           </Card>
         )}
 
@@ -258,6 +306,16 @@ const body = {
   maxWidth: 560,
   width: "100%",
   margin: "0 auto",
+};
+const draftBox = {
+  width: "100%",
+  resize: "vertical",
+  background: c.bg,
+  border: `1.5px solid ${c.ink}`,
+  borderRadius: 24,
+  padding: "13px 14px",
+  font: `400 14px/1.5 ${font.sans}`,
+  color: c.ink,
 };
 const codeBox = {
   background: c.bg,

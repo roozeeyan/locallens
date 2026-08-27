@@ -219,6 +219,15 @@ export async function createInviteRemote(kind, localName) {
   return error ? { ok: false, message: error.message } : { ok: true, code: data.invite_code };
 }
 
+/** Имя пригласившего по коду — чтобы позванный сразу видел, от кого ссылка. */
+export async function inviteInfo(code) {
+  if (!isRemote || !code) return null;
+  const { data, error } = await supabase.rpc("invite_info", { code });
+  if (error) return null;
+  const row = Array.isArray(data) ? data[0] : data;
+  return row ? { inviter: (row.inviter || "").trim(), kind: row.kind } : null;
+}
+
 /** Принимает приглашение по коду. */
 export async function joinByCode(code, localName) {
   if (!isRemote) return { ok: false, message: "Сервер не подключён." };

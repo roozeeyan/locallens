@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { c, font, applyPalette } from "./theme.js";
 import { TabBar } from "./ui.jsx";
-import { useStore, actions } from "./store.js";
+import { useStore, actions, CATEGORIES } from "./store.js";
 import { isRemote } from "./backend.js";
 import { ensureSession, pullAll, joinByCode, lastSyncError } from "./sync.js";
 import { cloudGet, hasCloud } from "./cloud.js";
@@ -13,6 +13,7 @@ import Feed from "./screens/Feed.jsx";
 import Profile from "./screens/Profile.jsx";
 import InviteSheet from "./screens/InviteSheet.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
+import Invited from "./screens/Invited.jsx";
 import Paywall from "./screens/Paywall.jsx";
 import Legal from "./screens/Legal.jsx";
 import Splash from "./screens/Splash.jsx";
@@ -52,6 +53,9 @@ export default function App() {
   const [splashTyped, setSplashTyped] = useState(false);
   const lang = useStore((s) => s.profile.lang);
   const [restoring, setRestoring] = useState(() => hasCloud());
+  // Код из ссылки читаем один раз при запуске: по нему видно, что человек
+  // пришёл по приглашению, а не сам.
+  const [inviteCode] = useState(inviteCodeFromLink);
   const started = useRef(false);
 
   useEffect(() => {
@@ -118,8 +122,7 @@ export default function App() {
       }
 
       // Ссылка вида t.me/бот?startapp=КОД — принимаем приглашение сразу.
-      const code = inviteCodeFromLink();
-      if (code) await joinByCode(code, name);
+      if (inviteCode) await joinByCode(inviteCode, name);
       if (cancelled) return;
 
       const remote = await pullAll(name);
@@ -138,6 +141,18 @@ export default function App() {
         leaving={splashFading}
         onTyped={() => setSplashTyped(true)}
         onDone={() => setSplashFading(true)}
+      />
+    );
+  }
+
+  // Позванный пришёл по чужой ссылке — ему не нужно ни выбирать темы,
+  // ни настраивать оформление. Для него отдельный короткий вход.
+  if (!onboarded && inviteCode) {
+    return (
+      <Invited
+        code={inviteCode}
+        lang={lang || "ru"}
+        onDone={() => setOpenBlock(CATEGORIES[0].id)}
       />
     );
   }
