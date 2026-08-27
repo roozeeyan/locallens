@@ -320,12 +320,13 @@ export const s = {
     margin: 0,
     color: c.ink,
   },
-  // Подзаголовок лежит на подложке, поэтому светлый: тёмный тонет на снимке.
+  // Подзаголовок лежит прямо на подложке. Светлым он на ней терялся —
+  // фон сам светлый; поэтому тёмный, приглушённый прозрачностью.
   sub: {
     margin: "7px 0 0",
     font: `400 15px/1.4 ${font.sans}`,
-    color: "#F6F1E8",
-    opacity: 0.92,
+    color: c.ink,
+    opacity: 0.72,
   },
 
   btn: {
@@ -392,7 +393,7 @@ export const s = {
     boxShadow: "0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.16)",
     transition: "transform 240ms cubic-bezier(0.3, 0.9, 0.3, 1)",
   },
-  labelLight: { color: "#F6F1E8", opacity: 0.92 },
+  labelLight: { color: c.ink, opacity: 0.68 },
   lock: {
     display: "inline-block",
     width: 14,

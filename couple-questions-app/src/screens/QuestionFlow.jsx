@@ -1,15 +1,46 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { c, font } from "../theme.js";
 import { screenHeight, screenTop, lockScroll } from "../viewport.js";
-import { Button, Field, Progress } from "../ui.jsx";
+import { Button, Field } from "../ui.jsx";
 import { useStore, actions, questionsOf, setTitle, qText } from "../store.js";
 import { shareQuestion } from "../share.js";
 
+// Перемещение между вопросами и ответ на вопрос — разные функции, и
+// выглядеть они должны по-разному. Наверху — только навигация: закрыть,
+// счётчик со списком, шкала, стрелки. Внизу — одно действие: ответить.
+// Всё остальное убрано в тихие ссылки, чтобы заметной кнопка была одна.
+
 const T = {
-  ru: { back: "Назад", skip: "Пропустить", saved: "Ответ сохранён", share: "Поделиться вопросом",
-        next: "Сохранить и дальше", last: "Сохранить и закрыть" },
-  en: { back: "Back", skip: "Skip", saved: "Answer saved", share: "Share this question",
-        next: "Save and continue", last: "Save and close" },
+  ru: {
+    close: "Закрыть",
+    prev: "Предыдущий вопрос",
+    nextQ: "Следующий вопрос",
+    skip: "Пропустить вопрос",
+    saved: "Ответ сохранён",
+    share: "Поделиться вопросом",
+    next: "Сохранить и дальше",
+    last: "Сохранить и закрыть",
+    listTitle: "Вопросы блока",
+    answered: "отвечен",
+    skipped: "пропущен",
+    empty: "без ответа",
+    placeholder: "Ваш ответ — его увидит партнёр, когда ответит сам",
+  },
+  en: {
+    close: "Close",
+    prev: "Previous question",
+    nextQ: "Next question",
+    skip: "Skip this question",
+    saved: "Answer saved",
+    share: "Share this question",
+    next: "Save and continue",
+    last: "Save and close",
+    listTitle: "Questions in this block",
+    answered: "answered",
+    skipped: "skipped",
+    empty: "no answer",
+    placeholder: "Your answer — your partner sees it once they answer too",
+  },
 };
 
 export default function QuestionFlow({ catId, onClose }) {
@@ -23,8 +54,13 @@ export default function QuestionFlow({ catId, onClose }) {
 
   const firstUnanswered = list.findIndex((q) => !answers[q.id]);
   const [i, setI] = useState(firstUnanswered === -1 ? 0 : firstUnanswered);
-  const q = list[i];
   const [draft, setDraft] = useState("");
+  const [showList, setShowList] = useState(false);
+  // Пропущенные надо уметь найти: иначе вопрос исчезает и вернуться к нему
+  // человек уже не может.
+  const [skipped, setSkipped] = useState(() => new Set());
+
+  const q = list[i];
 
   useEffect(() => {
     setDraft(answers[q.id]?.text || "");
@@ -33,87 +69,196 @@ export default function QuestionFlow({ catId, onClose }) {
   const saved = answers[q.id]?.text || "";
   const dirty = draft.trim() !== saved;
   const doneCount = list.filter((x) => answers[x.id]).length;
+  const last = i + 1 === list.length;
 
-  const go = (d) => {
-    if (dirty) actions.saveAnswer(q.id, draft);
-    const n = i + d;
-    if (n < 0) return;
-    if (n >= list.length) return onClose();
-    setI(n);
+  const keep = () => {
+    if (dirty && draft.trim()) actions.saveAnswer(q.id, draft);
+  };
+
+  const jump = (n) => {
+    keep();
+    setI(Math.min(Math.max(n, 0), list.length - 1));
+    setShowList(false);
   };
 
   const save = () => {
     actions.saveAnswer(q.id, draft);
-    if (i + 1 < list.length) setI(i + 1);
-    else onClose();
+    setSkipped((s) => {
+      const next = new Set(s);
+      next.delete(q.id);
+      return next;
+    });
+    if (last) onClose();
+    else setI(i + 1);
   };
+
+  const skip = () => {
+    keep();
+    setSkipped((s) => new Set(s).add(q.id));
+    if (last) onClose();
+    else setI(i + 1);
+  };
+
+  const stateOf = (item) =>
+    answers[item.id] ? "answered" : skipped.has(item.id) ? "skipped" : "empty";
 
   return (
     <div style={wrap}>
+      {/* ------------------------------------------------ навигация */}
       <div style={top}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button onClick={() => { if (dirty) actions.saveAnswer(q.id, draft); onClose(); }} style={back} aria-label={t.back}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button
+            onClick={() => {
+              keep();
+              onClose();
+            }}
+            style={round}
+            aria-label={t.close}
+          >
             ←
           </button>
+
           <span style={{ ...blockName, flex: 1 }}>{setTitle(catId, lang)}</span>
-          <span style={{ font: `600 12px ${font.mono}`, color: c.mute, flexShrink: 0 }}>
-            {i + 1}/{list.length}
-          </span>
+
+          <button onClick={() => jump(i - 1)} style={arrow} disabled={i === 0} aria-label={t.prev}>
+            ‹
+          </button>
           <button
-            onClick={() => shareQuestion(qText(q, lang), theme, lang)}
-            style={share}
-            aria-label={t.share}
-            title={t.share}
+            onClick={() => setShowList(true)}
+            style={counter}
+            aria-label={t.listTitle}
           >
-            <ShareIcon />
+            {i + 1} / {list.length}
+          </button>
+          <button
+            onClick={() => jump(i + 1)}
+            style={arrow}
+            disabled={last}
+            aria-label={t.nextQ}
+          >
+            ›
           </button>
         </div>
-        <Progress value={(doneCount / list.length) * 100} height={8} />
+
+        {/* Шкала не только показывает, но и переносит: если человек видит
+            путь, он инстинктивно хочет ткнуть в его середину. */}
+        <ProgressJump
+          total={list.length}
+          at={i}
+          done={doneCount}
+          onPick={jump}
+          label={t.listTitle}
+        />
       </div>
 
+      {/* ---------------------------------------------------- ответ */}
       <div style={body}>
         <p style={question}>{qText(q, lang)}</p>
 
-        <Field
-          value={draft}
-          onChange={setDraft}
-          placeholder={lang === "en" ? "Your answer — your partner sees it once they answer too" : "Ваш ответ — его увидит партнёр, когда ответит сам"}
-          grow
-        />
+        <Field value={draft} onChange={setDraft} placeholder={t.placeholder} grow />
 
         {saved && !dirty && <span style={savedPill}>{t.saved}</span>}
+
+        <button
+          onClick={() => shareQuestion(qText(q, lang), theme, lang)}
+          style={quietLink}
+        >
+          {t.share}
+        </button>
       </div>
 
+      {/* Заметная кнопка одна. Пропуск — тоже действие, но не главное,
+          поэтому выполнен ссылкой: найти можно, в глаза не бросается. */}
       <div style={footer}>
-        <div style={{ display: "flex", gap: 9 }}>
-          {i > 0 && (
-            <Button variant="secondary" onClick={() => go(-1)} style={{ flex: 1 }}>
-              {t.back}
-            </Button>
-          )}
-          <Button variant="secondary" onClick={() => go(1)} style={{ flex: 1 }}>
-            {t.skip}
-          </Button>
-        </div>
         <Button full onClick={save} disabled={!draft.trim()}>
-          {i + 1 === list.length ? t.last : t.next}
+          {last ? t.last : t.next}
         </Button>
+        <button onClick={skip} style={{ ...quietLink, alignSelf: "center" }}>
+          {t.skip}
+        </button>
       </div>
+
+      {showList && (
+        <QuestionList
+          list={list}
+          lang={lang}
+          at={i}
+          t={t}
+          stateOf={stateOf}
+          onPick={jump}
+          onClose={() => setShowList(false)}
+        />
+      )}
     </div>
   );
 }
 
-function ShareIcon() {
+/** Шкала пути: показывает, где человек сейчас, и переносит по нажатию. */
+function ProgressJump({ total, at, done, onPick, label }) {
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path
-        d="M8 10.5V2M8 2 5 5M8 2l3 3M3 9v4.5h10V9"
-        stroke={c.ink}
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    <div
+      role="group"
+      aria-label={label}
+      style={{
+        display: "flex",
+        gap: 3,
+        height: 10,
+        background: c.bg,
+        border: `1.5px solid ${c.ink}`,
+        borderRadius: 999,
+        padding: 2,
+        overflow: "hidden",
+      }}
+    >
+      {Array.from({ length: total }, (_, n) => (
+        <button
+          key={n}
+          onClick={() => onPick(n)}
+          aria-label={`${n + 1}`}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            padding: 0,
+            border: "none",
+            cursor: "pointer",
+            borderRadius: 999,
+            background: n === at ? c.warm : n < done ? c.accent : "transparent",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Список вопросов блока — единственный способ вернуться к пропущенному. */
+function QuestionList({ list, lang, at, t, stateOf, onPick, onClose }) {
+  return (
+    <div style={sheetWrap} onClick={onClose}>
+      <div style={sheet} onClick={(e) => e.stopPropagation()}>
+        <div style={sheetTop}>
+          <span style={blockName}>{t.listTitle}</span>
+          <button onClick={onClose} style={round} aria-label={t.close}>
+            ✕
+          </button>
+        </div>
+        <div style={sheetBody}>
+          {list.map((item, n) => {
+            const state = stateOf(item);
+            return (
+              <button key={item.id} onClick={() => onPick(n)} style={row(n === at)}>
+                <span style={dot(state)} />
+                <span style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                  {qText(item, lang)}
+                </span>
+                <span style={{ font: `500 11px ${font.mono}`, color: c.mute, flexShrink: 0 }}>
+                  {t[state]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -148,6 +293,39 @@ const blockName = {
   color: c.mute,
   minWidth: 0,
 };
+const round = {
+  width: 36,
+  height: 36,
+  flexShrink: 0,
+  background: c.paper,
+  border: `1.5px solid ${c.ink}`,
+  borderRadius: "50%",
+  boxShadow: `0 2px 0 ${c.ink}`,
+  font: "18px/1 sans-serif",
+  color: c.ink,
+  cursor: "pointer",
+};
+const arrow = {
+  width: 30,
+  height: 30,
+  flexShrink: 0,
+  background: "transparent",
+  border: "none",
+  font: `600 22px/1 ${font.sans}`,
+  color: c.mute,
+  cursor: "pointer",
+  padding: 0,
+};
+const counter = {
+  flexShrink: 0,
+  background: c.paper,
+  border: `1.5px solid ${c.ink}`,
+  borderRadius: 999,
+  padding: "5px 11px",
+  font: `600 12.5px ${font.mono}`,
+  color: c.ink,
+  cursor: "pointer",
+};
 const savedPill = {
   alignSelf: "flex-start",
   background: c.sage,
@@ -158,30 +336,15 @@ const savedPill = {
   color: c.ink,
   flexShrink: 0,
 };
-const share = {
-  width: 34,
-  height: 34,
-  flexShrink: 0,
-  background: c.paper,
-  border: `1.5px solid ${c.ink}`,
-  borderRadius: "50%",
-  boxShadow: `0 2px 0 ${c.ink}`,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: c.ink,
-  cursor: "pointer",
-};
-const back = {
-  width: 36,
-  height: 36,
-  flexShrink: 0,
-  background: c.paper,
-  border: `1.5px solid ${c.ink}`,
-  borderRadius: "50%",
-  boxShadow: `0 2px 0 ${c.ink}`,
-  font: "18px/1 sans-serif",
-  color: c.ink,
+const quietLink = {
+  alignSelf: "flex-start",
+  background: "transparent",
+  border: "none",
+  padding: 0,
+  font: `500 13.5px ${font.sans}`,
+  color: c.mute,
+  textDecoration: "underline",
+  textUnderlineOffset: 3,
   cursor: "pointer",
 };
 const body = {
@@ -203,8 +366,61 @@ const footer = {
   padding: "12px 16px calc(16px + env(safe-area-inset-bottom))",
   display: "flex",
   flexDirection: "column",
-  gap: 9,
+  gap: 10,
   background: c.veil,
   backdropFilter: "blur(8px)",
   WebkitBackdropFilter: "blur(8px)",
 };
+const sheetWrap = {
+  position: "absolute",
+  inset: 0,
+  background: "rgba(0,0,0,0.28)",
+  display: "flex",
+  alignItems: "flex-end",
+  zIndex: 2,
+};
+const sheet = {
+  width: "100%",
+  maxHeight: "78%",
+  display: "flex",
+  flexDirection: "column",
+  background: c.paper,
+  border: `1.5px solid ${c.ink}`,
+  borderRadius: "32px 32px 0 0",
+};
+const sheetTop = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  padding: "16px 16px 8px",
+};
+const sheetBody = {
+  flex: 1,
+  minHeight: 0,
+  overflowY: "auto",
+  padding: "0 12px calc(16px + env(safe-area-inset-bottom))",
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+};
+const row = (here) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  width: "100%",
+  background: here ? c.bg : "transparent",
+  border: "none",
+  borderRadius: 18,
+  padding: "10px 10px",
+  font: `500 14px/1.35 ${font.sans}`,
+  color: c.ink,
+  cursor: "pointer",
+});
+const dot = (state) => ({
+  width: 9,
+  height: 9,
+  flexShrink: 0,
+  borderRadius: "50%",
+  border: `1.5px solid ${c.ink}`,
+  background: state === "answered" ? c.sage : state === "skipped" ? c.coral : "transparent",
+});

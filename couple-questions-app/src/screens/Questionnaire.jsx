@@ -19,7 +19,12 @@ const T = {
     subtitle: "Отвечаете только вы. Ответы партнёра откроются, когда он ответит на тот же вопрос.",
     filled: "Заполнено",
     of: "из",
-    course: "Основной курс",
+    course: "Ваши темы",
+    rest: "Остальные блоки",
+    invite: "Пригласите партнёра",
+    inviteBody:
+      "Ответы открываются только когда вы оба ответили на один вопрос. Пока вы одни, сравнивать не с чем.",
+    inviteCta: "Пригласить партнёра",
     decks: "Колоды",
     decksNote: "Наборы под конкретный момент. Черновик — тексты ещё правятся.",
     openRest: (n) => `Открыть остальные ${n}`,
@@ -32,7 +37,12 @@ const T = {
     subtitle: "Only you answer. Your partner's answer opens once they answer the same question.",
     filled: "Completed",
     of: "of",
-    course: "Main course",
+    course: "Your topics",
+    rest: "Other blocks",
+    invite: "Invite your partner",
+    inviteBody:
+      "Answers open only once you have both answered the same question. Alone there is nothing to compare.",
+    inviteCta: "Invite partner",
     decks: "Decks",
     decksNote: "Sets for a specific moment. Draft — wording still being edited.",
     openRest: (n) => `Unlock the remaining ${n}`,
@@ -42,7 +52,7 @@ const T = {
   },
 };
 
-export default function Questionnaire({ onOpenBlock, onPaywall }) {
+export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
   const { answers, profile, connections } = useStore();
   const hasFriends = connections.some((x) => x.kind === "friend");
   const friendProgress = blockProgress(answers, FRIEND_DECK.id);
@@ -51,6 +61,13 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
   const total = totalProgress(answers);
   const order = blockOrder(profile.topics);
   const locked = lockedQuestionCount(profile, connections);
+
+  // Выбранное при знакомстве идёт первым и выглядит как основное.
+  // Остальное — тише: иначе человек не понимает, почему ему показывают
+  // блоки, которых он не просил.
+  const picked = profile.topics?.length ? profile.topics : order.slice(0, 3).map((x) => x.id);
+  const mineBlocks = order.filter((cat) => picked.includes(cat.id));
+  const restBlocks = order.filter((cat) => !picked.includes(cat.id));
 
   const lockedNames = order
     .filter((cat) => !isBlockOpen(cat.id, profile, connections))
@@ -69,29 +86,60 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
         <Progress value={total.pct} />
       </Card>
 
+      {connections.length === 0 && (
+        <Card
+          pad={16}
+          onClick={onInvite}
+          style={{ display: "flex", flexDirection: "column", gap: 10, background: c.sage }}
+        >
+          <span style={{ font: `700 18px ${font.serif}`, color: c.ink }}>{t.invite}</span>
+          <span style={{ font: `400 14px/1.45 ${font.sans}`, color: c.ink, opacity: 0.8 }}>
+            {t.inviteBody}
+          </span>
+          <span style={{ font: `700 15px ${font.sans}`, color: c.ink }}>{t.inviteCta} →</span>
+        </Card>
+      )}
+
       <Label light>{t.course}</Label>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {order.map((cat) => {
-          const p = blockProgress(answers, cat.id);
-          const done = p.done === p.total;
-          const open = isBlockOpen(cat.id, profile, connections);
-          const num = CATEGORIES.findIndex((x) => x.id === cat.id) + 1;
-          const ahead = open ? null : partnerAhead(connections, cat.id);
-
-          return (
-            <Row
-              key={cat.id}
-              badge={num}
-              title={setTitle(cat.id, lang)}
-              open={open}
-              done={done}
-              progress={p}
-              waiting={ahead ? t.answered(ahead.name, ahead.n) : ""}
-              onClick={() => (open ? onOpenBlock(cat.id) : onPaywall("blocks"))}
-            />
-          );
-        })}
+        {mineBlocks.map((cat) => (
+          <BlockRow
+            key={cat.id}
+            cat={cat}
+            t={t}
+            lang={lang}
+            answers={answers}
+            profile={profile}
+            connections={connections}
+            onOpenBlock={onOpenBlock}
+            onPaywall={onPaywall}
+          />
+        ))}
       </div>
+
+      {restBlocks.length > 0 && (
+        <>
+          <div style={{ marginTop: 8 }}>
+            <Label light>{t.rest}</Label>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {restBlocks.map((cat) => (
+              <BlockRow
+                key={cat.id}
+                cat={cat}
+                t={t}
+                lang={lang}
+                answers={answers}
+                profile={profile}
+                connections={connections}
+                onOpenBlock={onOpenBlock}
+                onPaywall={onPaywall}
+                quiet
+              />
+            ))}
+          </div>
+        </>
+      )}
 
       {locked > 0 && lockedNames.length > 0 && (
         <Card
@@ -116,7 +164,7 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
           <div style={{ marginTop: 8 }}>
             <Label light>{t.friends}</Label>
           </div>
-          <p style={{ margin: "-6px 0 2px", font: `400 13.5px/1.45 ${font.sans}`, color: "#F6F1E8", opacity: 0.8 }}>
+          <p style={{ margin: "-6px 0 2px", font: `400 13.5px/1.45 ${font.sans}`, color: c.ink, opacity: 0.7 }}>
             {t.friendsNote}
           </p>
           <Row
@@ -133,7 +181,7 @@ export default function Questionnaire({ onOpenBlock, onPaywall }) {
       <div style={{ marginTop: 8 }}>
         <Label light>{t.decks}</Label>
       </div>
-      <p style={{ margin: "-6px 0 2px", font: `400 13.5px/1.45 ${font.sans}`, color: "#F6F1E8", opacity: 0.8 }}>
+      <p style={{ margin: "-6px 0 2px", font: `400 13.5px/1.45 ${font.sans}`, color: c.ink, opacity: 0.7 }}>
         {t.decksNote}
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -171,21 +219,42 @@ function partnerAhead(connections, catId) {
   return best;
 }
 
-function Row({ badge, title, note, open, done, progress, waiting, onClick }) {
+function BlockRow({ cat, t, lang, answers, profile, connections, onOpenBlock, onPaywall, quiet }) {
+  const p = blockProgress(answers, cat.id);
+  const open = isBlockOpen(cat.id, profile, connections);
+  const ahead = open ? null : partnerAhead(connections, cat.id);
   return (
-    <Card onClick={onClick} pad={13} style={open ? undefined : lockedCard}>
+    <Row
+      badge={CATEGORIES.findIndex((x) => x.id === cat.id) + 1}
+      title={setTitle(cat.id, lang)}
+      open={open}
+      done={p.done === p.total}
+      progress={p}
+      quiet={quiet}
+      waiting={ahead ? t.answered(ahead.name, ahead.n) : ""}
+      onClick={() => (open ? onOpenBlock(cat.id) : onPaywall("blocks"))}
+    />
+  );
+}
+
+function Row({ badge, title, note, open, done, progress, waiting, quiet, onClick }) {
+  return (
+    <Card onClick={onClick} pad={quiet ? 10 : 13} style={open ? undefined : lockedCard}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span
           style={{
             ...icon,
-            background: !open ? c.coral : done ? c.sage : c.paper,
-            color: !open ? c.onCoral : c.ink,
+            ...(quiet ? { width: 26, height: 26, font: `600 12px ${font.serif}` } : null),
+            background: !open ? c.dim : done ? c.sage : c.paper,
+            color: c.ink,
           }}
         >
           {badge}
         </span>
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 7 }}>
-          <span style={{ font: `700 16px ${font.sans}`, color: c.ink }}>{title}</span>
+          <span style={{ font: `${quiet ? 600 : 700} ${quiet ? 14.5 : 16}px ${font.sans}`, color: c.ink }}>
+            {title}
+          </span>
           {open ? (
             <Progress value={progress.pct} height={7} />
           ) : waiting ? (

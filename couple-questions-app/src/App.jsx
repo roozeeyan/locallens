@@ -148,7 +148,11 @@ export default function App() {
     <div style={shell}>
       <main style={main}>
         {tab === "form" && (
-          <Questionnaire onOpenBlock={setOpenBlock} onPaywall={setPaywall} />
+          <Questionnaire
+            onOpenBlock={setOpenBlock}
+            onPaywall={setPaywall}
+            onInvite={() => setInvite(true)}
+          />
         )}
         {tab === "links" && (
           <Connections
