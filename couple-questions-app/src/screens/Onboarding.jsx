@@ -9,9 +9,9 @@ const T = {
   ru: {
     langTitle: "Выберите язык",
     langNote: "Язык всего приложения — вопросов, кнопок и подсказок. Можно поменять в профиле.",
-    coverTitle: "Узнать друг друга до того, как станет поздно",
+    coverTitle: "Поговорить о том, что обычно откладывают",
     coverBody:
-      "119 вопросов, которые обычно задают уже в кабинете психолога. Каждый отвечает сам — а потом вы видите, где сходитесь и о чём стоит поговорить.",
+      "119 вопросов про деньги, близость, детей и границы. Каждый отвечает сам, со своего телефона, — а потом вы видите, где сходитесь и о чём стоит поговорить.",
     start: "Начать",
     consentTitle: "Прежде чем начать",
     consentBody:
@@ -65,15 +65,20 @@ const T = {
     nameNote: "Имя увидят только те, кого вы сами добавите.",
     namePlaceholder: "Имя",
     done: "Перейти к анкете",
+    inviteTitle: "Позовите второго",
+    inviteBody:
+      "Ответы открываются только по взаимности — значит, одному здесь делать нечего. Отправьте ссылку тому, с кем собираетесь отвечать.",
+    inviteCta: "Пригласить партнёра",
+    inviteLater: "Сначала посмотрю сам",
     back: "Назад",
   },
   en: {
     langTitle: "Choose your language",
     langNote:
       "This sets the language of the whole app — questions, buttons and hints. You can change it in your profile.",
-    coverTitle: "Know each other before it is too late",
+    coverTitle: "Talk about what usually gets postponed",
     coverBody:
-      "119 questions usually asked for the first time in a therapist's office. Each of you answers alone — then you see where you agree and what is worth talking about.",
+      "119 questions about money, intimacy, children and boundaries. Each of you answers alone, on your own phone — then you see where you agree and what is worth talking about.",
     start: "Start",
     consentTitle: "Before we begin",
     consentBody:
@@ -126,11 +131,16 @@ const T = {
     nameNote: "Only people you add yourself will see it.",
     namePlaceholder: "Name",
     done: "Go to the questions",
+    inviteTitle: "Bring the second person in",
+    inviteBody:
+      "Answers open only both ways, so there is nothing here for one person alone. Send the link to whoever you plan to answer with.",
+    inviteCta: "Invite partner",
+    inviteLater: "I will look around first",
     back: "Back",
   },
 };
 
-export default function Onboarding() {
+export default function Onboarding({ onFinish }) {
   const [step, setStep] = useState(0);
   const [legal, setLegal] = useState(null);
   const [lang, setLang] = useState("ru");
@@ -152,8 +162,11 @@ export default function Onboarding() {
   const set = (patch) => setData((d) => ({ ...d, ...patch }));
   const skipTogether = data.situation === "choosing";
 
+  // Порядок держится на простом правиле: рассказали — предложили сделать —
+  // снова рассказали. Раньше два объяснения шли подряд, а потом три
+  // действия без единого слова, и человек терял нить.
   const steps = [
-    // 0
+    // 0 · действие: без языка ничего не прочитать
     <Language
       key="lang"
       t={t}
@@ -165,21 +178,33 @@ export default function Onboarding() {
       onNext={() => setStep(1)}
     />,
 
-    // 1
+    // 1 · рассказали: что это вообще
     <Cover key="cover" t={t} onNext={() => setStep(2)} />,
 
-    // 2
+    // 2 · показали: ради чего всё затевается
+    <Demo key="demo" t={t} onNext={() => setStep(3)} />,
+
+    // 3 · действие: согласие
     <Consent
       key="consent"
       t={t}
       onOpen={setLegal}
       onAgree={() => {
         set({ consentAt: Date.now() });
-        setStep(3);
+        setStep(4);
       }}
     />,
 
-    // 3
+    // 4 · рассказали: как устроено прохождение
+    <Promise
+      key="p1"
+      title={t.p1Title}
+      body={t.p1Body}
+      cta={t.got}
+      onNext={() => setStep(5)}
+    />,
+
+    // 5 · действие
     <Choice
       key="situation"
       title={t.situationTitle}
@@ -187,11 +212,11 @@ export default function Onboarding() {
       value={data.situation}
       onPick={(id) => {
         set({ situation: id });
-        setStep(id === "choosing" ? 5 : 4);
+        setStep(id === "choosing" ? 7 : 6);
       }}
     />,
 
-    // 4
+    // 6 · действие, продолжение предыдущего вопроса
     <Choice
       key="together"
       title={t.togetherTitle}
@@ -199,11 +224,21 @@ export default function Onboarding() {
       value={data.together}
       onPick={(id) => {
         set({ together: id });
-        setStep(5);
+        setStep(7);
       }}
     />,
 
-    // 5
+    // 7 · рассказали: главное правило
+    <Promise
+      key="p2"
+      shape="circle"
+      title={t.p2Title}
+      body={t.p2Body}
+      cta={t.got}
+      onNext={() => setStep(8)}
+    />,
+
+    // 8 · действие
     <Multi
       key="topics"
       title={t.topicsTitle}
@@ -215,29 +250,10 @@ export default function Onboarding() {
       }))}
       value={data.topics}
       onChange={(topics) => set({ topics })}
-      onNext={() => setStep(6)}
+      onNext={() => setStep(9)}
     />,
 
-    // 6
-    <Promise
-      key="p1"
-      title={t.p1Title}
-      body={t.p1Body}
-      cta={t.got}
-      onNext={() => setStep(7)}
-    />,
-
-    // 7
-    <Promise
-      key="p2"
-      shape="circle"
-      title={t.p2Title}
-      body={t.p2Body}
-      cta={t.got}
-      onNext={() => setStep(8)}
-    />,
-
-    // 8
+    // 9 · действие
     <Choice
       key="reminder"
       title={t.reminderTitle}
@@ -246,11 +262,11 @@ export default function Onboarding() {
       value={data.reminder}
       onPick={(id) => {
         set({ reminder: id });
-        setStep(9);
+        setStep(10);
       }}
     />,
 
-    // 9
+    // 10 · действие
     <Themes
       key="theme"
       t={t}
@@ -260,31 +276,43 @@ export default function Onboarding() {
         set({ theme: id });
         applyPalette(id);
       }}
-      onNext={() => setStep(10)}
+      onNext={() => setStep(11)}
     />,
 
-    // 10
-    <Demo key="demo" t={t} onNext={() => setStep(11)} />,
-
-    // 11
+    // 11 · действие
     <Name
       key="name"
       t={t}
       value={data.name}
       onChange={(name) => set({ name })}
-      onDone={() => actions.completeOnboarding(data)}
+      onDone={() => setStep(12)}
+    />,
+
+    // 12 · последнее и самое важное действие: без второго человека
+    // приложению нечего показывать
+    <InvitePartner
+      key="invite"
+      t={t}
+      onInvite={() => {
+        actions.completeOnboarding(data);
+        onFinish?.(true);
+      }}
+      onLater={() => {
+        actions.completeOnboarding(data);
+        onFinish?.(false);
+      }}
     />,
   ];
 
   const total = steps.length - 1;
-  const shown = skipTogether && step > 4 ? step - 1 : step;
+  const shown = skipTogether && step > 6 ? step - 1 : step;
 
   return (
     <div style={wrap}>
       {step > 0 && (
         <div style={{ padding: "16px 16px 0", display: "flex", alignItems: "center", gap: 10 }}>
           <button
-            onClick={() => setStep((s) => (skipTogether && s === 5 ? 3 : Math.max(0, s - 1)))}
+            onClick={() => setStep((s) => (skipTogether && s === 7 ? 5 : Math.max(0, s - 1)))}
             style={back}
             aria-label={t.back}
           >
@@ -587,6 +615,45 @@ function Name({ t, value, onChange, onDone }) {
         <Button full onClick={onDone} disabled={!value.trim()}>
           {t.done}
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Последний шаг знакомства. Приглашение — самое важное действие во всём
+ * приложении: без второго человека сравнивать не с чем. Поэтому кнопка
+ * одна и заметная, а «посмотрю сам» — тихой ссылкой.
+ */
+function InvitePartner({ t, onInvite, onLater }) {
+  return (
+    <div style={page}>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+        <Iso size={96} />
+      </div>
+      <h1 style={h1}>{t.inviteTitle}</h1>
+      <p style={lede}>{t.inviteBody}</p>
+      <div style={footer}>
+        <Button full onClick={onInvite}>
+          {t.inviteCta}
+        </Button>
+        <button
+          onClick={onLater}
+          style={{
+            alignSelf: "center",
+            marginTop: 12,
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            font: `500 14px ${font.sans}`,
+            color: c.mute,
+            textDecoration: "underline",
+            textUnderlineOffset: 3,
+            cursor: "pointer",
+          }}
+        >
+          {t.inviteLater}
+        </button>
       </div>
     </div>
   );

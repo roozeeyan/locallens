@@ -142,7 +142,9 @@ export default function App() {
     );
   }
 
-  if (!onboarded) return <Onboarding />;
+  // Знакомство заканчивается приглашением партнёра — если человек его
+  // выбрал, сразу открываем окно со ссылкой.
+  if (!onboarded) return <Onboarding onFinish={(wantInvite) => setInvite(wantInvite)} />;
 
   return (
     <div style={shell}>
