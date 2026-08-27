@@ -390,6 +390,21 @@ export async function pushProfile(patch) {
   if (Object.keys(row).length) await supabase.from("profiles").update(row).eq("id", me);
 }
 
+/**
+ * Код тестировщика. Доступ он не покупает — только разрешает пропустить
+ * оплату на этом телефоне; на сервере остаётся лишь отметка, кто им
+ * воспользовался.
+ */
+export async function redeemTesterCode(code) {
+  if (!isRemote) return { ok: false, message: "Сервер не подключён." };
+  if (!me) return { ok: false, message: "Нет входа на сервер. Откройте приложение заново." };
+  const { data, error } = await supabase.rpc("redeem_tester_code", {
+    code: String(code || "").trim().toLowerCase(),
+  });
+  if (error) return { ok: false, message: error.message };
+  return data ? { ok: true } : { ok: false, message: "" };
+}
+
 /** Открывает свой оплаченный доступ одному человеку из своих связей. */
 export async function shareAccess(targetId) {
   if (!isRemote || !me) return { ok: false, message: "Нет связи с сервером." };

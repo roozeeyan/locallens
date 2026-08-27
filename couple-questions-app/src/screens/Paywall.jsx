@@ -6,6 +6,7 @@ import { useStore, actions } from "../store.js";
 import { PRICE_STARS, lockedQuestionCount } from "../limits.js";
 import { buyPremium, isRemote } from "../backend.js";
 import { TEST_MODE } from "../access.js";
+import { redeemTesterCode } from "../sync.js";
 
 const T = {
   ru: {
@@ -41,8 +42,11 @@ const T = {
     testerCta: "Я тестировщик",
     testerTitle: "Тестовый доступ",
     testerNote:
-      "Оплату можно пропустить — доступ откроется только на этом телефоне и никуда не запишется. Прежде чем пропускать, посмотрите на экран выше: именно его увидит человек, который решает, платить или нет.",
+      "Прежде чем пропускать, посмотрите на экран выше: именно его увидит человек, который решает, платить или нет. Введите личный код — доступ откроется только на этом телефоне.",
+    testerPlaceholder: "Личный код тестировщика",
     testerSkip: "Пропустить оплату",
+    testerChecking: "Проверяем…",
+    testerBad: "Код не подошёл. Проверьте раскладку или спросите новый.",
   },
   en: {
     perks: [
@@ -76,8 +80,11 @@ const T = {
     testerCta: "I am a tester",
     testerTitle: "Test access",
     testerNote:
-      "You can skip payment — access opens on this phone only and is never recorded. Before you skip, look at the screen above: this is what a person deciding whether to pay actually sees.",
+      "Before you skip, look at the screen above: this is what a person deciding whether to pay actually sees. Enter your personal code — access opens on this phone only.",
+    testerPlaceholder: "Personal tester code",
     testerSkip: "Skip payment",
+    testerChecking: "Checking…",
+    testerBad: "That code did not work. Check the keyboard layout or ask for a new one.",
   },
 };
 
@@ -101,6 +108,22 @@ export default function Paywall({ onClose, reason }) {
   // Путь тестировщика намеренно в два нажатия: сначала он должен увидеть
   // экран оплаты целиком, и только потом получает возможность его обойти.
   const [tester, setTester] = useState(false);
+  const [testerCode, setTesterCode] = useState("");
+  const [testerNote, setTesterNote] = useState("");
+
+  // Код личный: по нему потом видно, кто из тестировщиков дошёл до оплаты.
+  const redeem = async () => {
+    setBusy(true);
+    setTesterNote("");
+    const res = await redeemTesterCode(testerCode);
+    setBusy(false);
+    if (!res.ok) {
+      setTesterNote(res.message || t.testerBad);
+      return;
+    }
+    actions.setProfile({ testerUnlocked: true });
+    onClose();
+  };
   const locked = lockedQuestionCount(profile, connections);
 
   // Самый сильный довод — не список возможностей, а конкретный человек,
@@ -197,16 +220,28 @@ export default function Paywall({ onClose, reason }) {
                 <p style={{ margin: 0, font: `400 13px/1.45 ${font.sans}`, color: c.ink }}>
                   {t.testerNote}
                 </p>
+                <input
+                  value={testerCode}
+                  onChange={(e) => setTesterCode(e.target.value)}
+                  placeholder={t.testerPlaceholder}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  style={codeInput}
+                />
                 <Button
                   full
                   variant="secondary"
-                  onClick={() => {
-                    actions.setProfile({ testerUnlocked: true });
-                    onClose();
-                  }}
+                  onClick={redeem}
+                  disabled={busy || !testerCode.trim()}
                 >
-                  {t.testerSkip}
+                  {busy ? t.testerChecking : t.testerSkip}
                 </Button>
+                {testerNote && (
+                  <span style={{ font: `600 12.5px/1.4 ${font.sans}`, color: c.warm }}>
+                    {testerNote}
+                  </span>
+                )}
               </>
             )}
           </div>
@@ -320,6 +355,15 @@ const priceCard = {
   borderRadius: 32,
   boxShadow: `0 2px 0 ${c.ink}`,
   padding: "14px 16px",
+};
+const codeInput = {
+  width: "100%",
+  background: c.paper,
+  border: `1.5px solid ${c.ink}`,
+  borderRadius: 24,
+  padding: "12px 14px",
+  font: `500 15px ${font.mono}`,
+  color: c.ink,
 };
 const devBox = {
   display: "flex",
