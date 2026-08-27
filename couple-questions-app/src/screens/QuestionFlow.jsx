@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { c, font } from "../theme.js";
 import { screenHeight, screenTop, lockScroll } from "../viewport.js";
-import { Button, Field } from "../ui.jsx";
+import { Button, Field, Progress } from "../ui.jsx";
 import { useStore, actions, questionsOf, setTitle, qText } from "../store.js";
 import { shareQuestion } from "../share.js";
 
@@ -21,6 +21,7 @@ const T = {
     next: "Сохранить и дальше",
     last: "Сохранить и закрыть",
     listTitle: "Вопросы блока",
+    allQuestions: "Все вопросы",
     answered: "отвечен",
     skipped: "пропущен",
     empty: "без ответа",
@@ -36,6 +37,7 @@ const T = {
     next: "Save and continue",
     last: "Save and close",
     listTitle: "Questions in this block",
+    allQuestions: "All questions",
     answered: "answered",
     skipped: "skipped",
     empty: "no answer",
@@ -118,37 +120,44 @@ export default function QuestionFlow({ catId, onClose }) {
             ←
           </button>
 
-          <span style={{ ...blockName, flex: 1 }}>{setTitle(catId, lang)}</span>
+          <span style={{ ...blockName, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {setTitle(catId, lang)}
+          </span>
 
-          <button onClick={() => jump(i - 1)} style={arrow} disabled={i === 0} aria-label={t.prev}>
+          {/* Кнопка списка подписана словами: без подписи её не находят,
+              а именно она — единственный путь к пропущенному вопросу. */}
+          <button onClick={() => setShowList(true)} style={listBtn}>
+            <ListIcon />
+            {t.allQuestions}
+          </button>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            onClick={() => jump(i - 1)}
+            style={i === 0 ? { ...arrow, ...arrowOff } : arrow}
+            disabled={i === 0}
+            aria-label={t.prev}
+          >
             ‹
           </button>
-          <button
-            onClick={() => setShowList(true)}
-            style={counter}
-            aria-label={t.listTitle}
-          >
-            {i + 1} / {list.length}
-          </button>
+          {/* Шкала только показывает путь. Попасть по ней в нужный вопрос
+              всё равно нельзя — точность в один пиксель на вопрос. */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Progress value={(doneCount / list.length) * 100} height={8} />
+          </div>
           <button
             onClick={() => jump(i + 1)}
-            style={arrow}
+            style={last ? { ...arrow, ...arrowOff } : arrow}
             disabled={last}
             aria-label={t.nextQ}
           >
             ›
           </button>
+          <span style={{ font: `600 12.5px ${font.mono}`, color: c.mute, flexShrink: 0 }}>
+            {i + 1}/{list.length}
+          </span>
         </div>
-
-        {/* Шкала не только показывает, но и переносит: если человек видит
-            путь, он инстинктивно хочет ткнуть в его середину. */}
-        <ProgressJump
-          total={list.length}
-          at={i}
-          done={doneCount}
-          onPick={jump}
-          label={t.listTitle}
-        />
       </div>
 
       {/* ---------------------------------------------------- ответ */}
@@ -193,40 +202,16 @@ export default function QuestionFlow({ catId, onClose }) {
   );
 }
 
-/** Шкала пути: показывает, где человек сейчас, и переносит по нажатию. */
-function ProgressJump({ total, at, done, onPick, label }) {
+function ListIcon() {
   return (
-    <div
-      role="group"
-      aria-label={label}
-      style={{
-        display: "flex",
-        gap: 3,
-        height: 10,
-        background: c.bg,
-        border: `1.5px solid ${c.ink}`,
-        borderRadius: 999,
-        padding: 2,
-        overflow: "hidden",
-      }}
-    >
-      {Array.from({ length: total }, (_, n) => (
-        <button
-          key={n}
-          onClick={() => onPick(n)}
-          aria-label={`${n + 1}`}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            padding: 0,
-            border: "none",
-            cursor: "pointer",
-            borderRadius: 999,
-            background: n === at ? c.warm : n < done ? c.accent : "transparent",
-          }}
-        />
-      ))}
-    </div>
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M2 4h12M2 8h12M2 12h8"
+        stroke={c.ink}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 
@@ -305,27 +290,38 @@ const round = {
   color: c.ink,
   cursor: "pointer",
 };
+// Стрелки — тоже кнопки, и выглядеть должны кнопками: без рамки их
+// принимают за украшение и не нажимают.
 const arrow = {
   width: 30,
   height: 30,
   flexShrink: 0,
-  background: "transparent",
-  border: "none",
-  font: `600 22px/1 ${font.sans}`,
-  color: c.mute,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: c.paper,
+  border: `1.5px solid ${c.ink}`,
+  borderRadius: "50%",
+  font: `600 17px/1 ${font.sans}`,
+  color: c.ink,
   cursor: "pointer",
   padding: 0,
 };
-const counter = {
+const listBtn = {
   flexShrink: 0,
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
   background: c.paper,
   border: `1.5px solid ${c.ink}`,
   borderRadius: 999,
-  padding: "5px 11px",
-  font: `600 12.5px ${font.mono}`,
+  boxShadow: `0 2px 0 ${c.ink}`,
+  padding: "7px 13px",
+  font: `700 12.5px ${font.sans}`,
   color: c.ink,
   cursor: "pointer",
 };
+const arrowOff = { background: c.bg, border: `1.5px solid ${c.mute}`, color: c.mute, cursor: "default" };
 const savedPill = {
   alignSelf: "flex-start",
   background: c.sage,
