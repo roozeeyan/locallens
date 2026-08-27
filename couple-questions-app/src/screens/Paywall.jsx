@@ -22,8 +22,10 @@ const T = {
     titleBlocks: (n) => `Ещё ${n} ${plural(n, "вопрос", "вопроса", "вопросов")} впереди`,
     titleWaiting: (name, n) =>
       `${name} ответил на ${n} ${plural(n, "вопрос", "вопроса", "вопросов")}`,
-    ledeWaiting: (name) =>
-      `Эти ответы уже лежат и ждут вас. Откройте — и они станут видны обоим: ${name} платить не придётся.`,
+    // Имя в эту фразу не подставляем: русский требует дательного падежа,
+    // а склонять имена в коде — заведомо проигрышная затея.
+    ledeWaiting: () =>
+      "Эти ответы уже написаны и ждут вас. Откройте — и они станут видны обоим. Партнёру платить не придётся.",
     ledeConnections:
       "Бесплатно доступна одна связь. Premium снимает ограничение — можно вести и партнёра, и кандидатов одновременно.",
     ledeBlocks:
@@ -169,7 +171,7 @@ export default function Paywall({ onClose, reason }) {
 
         <p style={lede}>
           {waiting
-            ? t.ledeWaiting(waiting.name)
+            ? t.ledeWaiting()
             : reason === "connections"
               ? t.ledeConnections
               : t.ledeBlocks}
