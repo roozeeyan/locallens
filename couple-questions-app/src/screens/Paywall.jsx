@@ -5,6 +5,7 @@ import { Button, Iso, Label } from "../ui.jsx";
 import { useStore, actions } from "../store.js";
 import { PRICE_STARS, lockedQuestionCount } from "../limits.js";
 import { buyPremium, isRemote } from "../backend.js";
+import { TEST_MODE } from "../access.js";
 
 const T = {
   ru: {
@@ -37,6 +38,11 @@ const T = {
     devNote:
       "Оплата подключается вместе с сервером. Чтобы посмотреть, как выглядит приложение с Premium, можно включить его вручную.",
     devCta: "Включить Premium локально",
+    testerCta: "Я тестировщик",
+    testerTitle: "Тестовый доступ",
+    testerNote:
+      "Оплату можно пропустить — доступ откроется только на этом телефоне и никуда не запишется. Прежде чем пропускать, посмотрите на экран выше: именно его увидит человек, который решает, платить или нет.",
+    testerSkip: "Пропустить оплату",
   },
   en: {
     perks: [
@@ -67,6 +73,11 @@ const T = {
     devNote:
       "Payment arrives together with the server. To see how the app looks with Premium, you can switch it on manually.",
     devCta: "Enable Premium locally",
+    testerCta: "I am a tester",
+    testerTitle: "Test access",
+    testerNote:
+      "You can skip payment — access opens on this phone only and is never recorded. Before you skip, look at the screen above: this is what a person deciding whether to pay actually sees.",
+    testerSkip: "Skip payment",
   },
 };
 
@@ -87,6 +98,9 @@ export default function Paywall({ onClose, reason }) {
   const t = T[profile.lang === "en" ? "en" : "ru"];
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  // Путь тестировщика намеренно в два нажатия: сначала он должен увидеть
+  // экран оплаты целиком, и только потом получает возможность его обойти.
+  const [tester, setTester] = useState(false);
   const locked = lockedQuestionCount(profile, connections);
 
   // Самый сильный довод — не список возможностей, а конкретный человек,
@@ -169,7 +183,36 @@ export default function Paywall({ onClose, reason }) {
           </p>
         )}
 
-        {!isRemote && (
+        {/* Экран оплаты для тестировщика выглядит ровно так же, как для
+            покупателя. Обойти его можно, но только осознанно. */}
+        {TEST_MODE && (
+          <div style={devBox}>
+            {!tester ? (
+              <Button full variant="quiet" onClick={() => setTester(true)}>
+                {t.testerCta}
+              </Button>
+            ) : (
+              <>
+                <Label>{t.testerTitle}</Label>
+                <p style={{ margin: 0, font: `400 13px/1.45 ${font.sans}`, color: c.ink }}>
+                  {t.testerNote}
+                </p>
+                <Button
+                  full
+                  variant="secondary"
+                  onClick={() => {
+                    actions.setProfile({ testerUnlocked: true });
+                    onClose();
+                  }}
+                >
+                  {t.testerSkip}
+                </Button>
+              </>
+            )}
+          </div>
+        )}
+
+        {!isRemote && !TEST_MODE && (
           <div style={devBox}>
             <Label>{t.devMode}</Label>
             <p style={{ margin: 0, font: `400 13px/1.45 ${font.sans}`, color: c.ink }}>

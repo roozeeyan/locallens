@@ -24,6 +24,7 @@ const empty = {
     lang: "ru", // ru | en
     consentAt: null, // когда принято соглашение
     later: [], // вопросы, отложенные «подумать и вернуться»
+    testerUnlocked: false, // тестировщик прошёл мимо оплаты; на сервер не уходит
   },
   answers: {}, // { [questionId]: { text, at } }
   connections: [], // до подключения Supabase живёт локально

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { c, font, palettes } from "../theme.js";
 import { deleteAccount, resetLogin, pullAll, shareAccess, lastSyncError } from "../sync.js";
 import { exportAnswers } from "../export.js";
-import { hasAccess, paidBy } from "../access.js";
+import { hasAccess, paidBy, TEST_MODE } from "../access.js";
 import { Screen, Card, Button, Label, Switch } from "../ui.jsx";
 import { useStore, actions, CATEGORIES, totalProgress, setTitle } from "../store.js";
 
@@ -47,6 +47,8 @@ const T = {
     premiumPair: (name) => `Доступ открыл ${name} — он действует на вас обоих.`,
     premiumShared: (name) => `Доступ открыт вам и ${name}.`,
     premiumChoose: "Покупка открывает доступ ещё одному человеку. Выберите, кому:",
+    testerOn: "Оплата пропущена в режиме теста. У обычного человека здесь было бы закрыто.",
+    testerBack: "Вернуть барьер оплаты",
     premiumOpenFor: (name) => `Открыть ${name}`,
     premiumShareConfirm: (name) =>
       `Открыть доступ для ${name}? Выбрать можно один раз — потом изменить нельзя.`,
@@ -103,6 +105,8 @@ const T = {
     premiumPair: (name) => `${name} unlocked access — it covers both of you.`,
     premiumShared: (name) => `Access is open for you and ${name}.`,
     premiumChoose: "Your purchase opens access for one more person. Choose who:",
+    testerOn: "Payment skipped in test mode. A normal user would be blocked here.",
+    testerBack: "Bring the paywall back",
     premiumOpenFor: (name) => `Open for ${name}`,
     premiumShareConfirm: (name) =>
       `Open access for ${name}? You can choose only once — it cannot be changed later.`,
@@ -186,6 +190,7 @@ export default function Profile({ onPaywall, onLegal }) {
   const open = hasAccess(profile, connections);
   const byPartner = paidBy(profile, connections);
   const sharedWith = connections.find((x) => x.userId === profile.premiumFor)?.name || "";
+  const tester = TEST_MODE && profile.testerUnlocked;
   const mine = totalProgress(answers);
   const lang = profile.lang === "en" ? "en" : "ru";
   const t = T[lang];
@@ -347,7 +352,9 @@ export default function Profile({ onPaywall, onLegal }) {
       <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <Label>{t.premiumTitle}</Label>
         <p style={{ margin: 0, font: `400 14px/1.45 ${font.sans}`, color: c.ink }}>
-          {byPartner
+          {tester
+            ? t.testerOn
+            : byPartner
             ? t.premiumPair(byPartner)
             : sharedWith
               ? t.premiumShared(sharedWith)
@@ -355,6 +362,18 @@ export default function Profile({ onPaywall, onLegal }) {
                 ? t.premiumOn
                 : t.premiumOff}
         </p>
+
+        {/* Барьер надо уметь вернуть: иначе посмотреть, где он встаёт,
+            можно ровно один раз. */}
+        {tester && (
+          <Button
+            full
+            variant="secondary"
+            onClick={() => actions.setProfile({ testerUnlocked: false })}
+          >
+            {t.testerBack}
+          </Button>
+        )}
 
         {/* Оплата открывает доступ ещё одному человеку — тому, с кем пара.
             Пока никто не выбран, предлагаем выбрать. */}
@@ -510,7 +529,7 @@ const swatch = {
 };
 // Метка версии: по ней сразу видно, доехала ли до телефона свежая сборка.
 // Обновляется вручную при выкатке — так надёжнее, чем подстановка при сборке.
-const BUILD = "27.08 · 17:30";
+const BUILD = "27.08 · 18:20";
 
 const errBox = {
   background: c.bg,
