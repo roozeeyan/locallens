@@ -271,7 +271,7 @@ export async function pullAll(localName) {
       .select("id, name, premium, premium_for")
       .in("id", otherIds);
     for (const p of people || []) {
-      names[p.id] = p.name;
+      names[p.id] = (p.name || "").trim();
       // Покупка открывает доступ ровно одному человеку. Чужая покупка
       // считается моей только если открыта именно мне.
       covers[p.id] = Boolean(p.premium) && p.premium_for === me;
@@ -438,8 +438,10 @@ export async function fetchVerdict(connectionId, lang, refresh = false) {
       return { ok: false, message: payload.error || "Разбор пока недоступен.", info: payload };
     }
     return { ok: true, body: payload.body, cached: payload.cached };
-  } catch (e) {
-    return { ok: false, message: e?.message || "Сервер не ответил." };
+  } catch {
+    // Функции разбора может просто не быть на сервере — до неё запрос
+    // не доходит вовсе. Показывать браузерное «Load failed» нельзя.
+    return { ok: false, offline: true };
   }
 }
 

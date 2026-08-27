@@ -59,6 +59,7 @@ const T = {
     verdictBody:
       "Разбор по всем открытым ответам: где вы сходитесь, что стоит обсудить и на что обратить внимание. Первый — бесплатно.",
     soon: "Пока недоступно",
+    verdictOffline: "Разбор ещё не подключён на сервере. Появится вместе с оплатой.",
     build: "Собрать разбор",
     again: "Собрать заново",
     thinking: "Читаю ваши ответы…",
@@ -98,6 +99,7 @@ const T = {
     verdictBody:
       "A read of every revealed answer: where you agree, what is worth discussing, and what to watch out for. The first one is free.",
     soon: "Not available yet",
+    verdictOffline: "The summary is not deployed on the server yet. It arrives with payments.",
     build: "Build the summary",
     again: "Build again",
     thinking: "Reading your answers…",
@@ -277,7 +279,7 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
               // к покупке — открываем её сразу, без промежуточных надписей.
               if (res.locked) onPaywall?.();
               else if (res.ok) setVerdict(res.body);
-              else setVerdictNote(res.message);
+              else setVerdictNote(res.offline ? t.verdictOffline : res.message);
             }}
           >
             {busy ? t.thinking : verdict ? t.again : t.build}
