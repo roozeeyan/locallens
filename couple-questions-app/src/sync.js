@@ -438,7 +438,7 @@ export async function pushReaction(connectionId, questionId, value) {
  * Разбор от ИИ. Считает его серверная функция: ключ модели не должен
  * попадать в приложение, а отбор ответов нельзя доверять клиенту.
  */
-export async function fetchVerdict(connectionId, lang, refresh = false) {
+export async function fetchVerdict(connectionId, lang, refresh = false, questions = {}) {
   if (!isRemote || !me) return { ok: false, message: "Нет связи с сервером." };
 
   const { data: session } = await supabase.auth.getSession();
@@ -453,7 +453,7 @@ export async function fetchVerdict(connectionId, lang, refresh = false) {
         apikey: anonKey,
         authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ connectionId, lang, refresh }),
+      body: JSON.stringify({ connectionId, lang, refresh, questions }),
     });
 
     const payload = await res.json().catch(() => ({}));

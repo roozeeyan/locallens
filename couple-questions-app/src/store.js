@@ -321,6 +321,19 @@ export function connBlockProgress(myAnswers, conn, catId) {
   };
 }
 
+/**
+ * Блоки, закрытые обоими целиком. Разбор собирается по ним: десяток
+ * ответов на связанные вопросы — это позиция, по которой видно человека.
+ * Пять ответов вразнобой давали обрывки, и модель на них путалась.
+ */
+export function blocksReadyForVerdict(myAnswers, conn, hiddenBlocks = []) {
+  return CATEGORIES.filter((cat) => {
+    if (hiddenBlocks.includes(cat.id)) return false;
+    const bp = connBlockProgress(myAnswers, conn, cat.id);
+    return bp.total > 0 && bp.mine === bp.total && bp.theirs === bp.total;
+  }).map((cat) => cat.id);
+}
+
 /** Сколько всего ответил партнёр — включая закрытые блоки. */
 export function partnerProgress(conn) {
   const counted = Object.values(conn.blockCounts || {}).reduce((sum, n) => sum + n, 0);

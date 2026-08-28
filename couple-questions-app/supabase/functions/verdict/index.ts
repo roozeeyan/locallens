@@ -41,7 +41,11 @@ const PROMPT = {
 3. На что обратить внимание — то, что может стать трудным. Мягко, без приговоров.
 4. Один вопрос на вечер — который стоит задать друг другу вслух.
 
-Правила: пиши на «вы», обращаясь к паре. Опирайся только на приведённые ответы, ничего не выдумывай. Не ставь диагнозов и не давай медицинских советов. Не советуй расстаться или пожениться — это их решение. Без вводных фраз вроде «на основе анализа».`,
+Правила: пиши на «вы», обращаясь к паре. Опирайся только на приведённые ответы, ничего не выдумывай. Не ставь диагнозов и не давай медицинских советов. Не советуй расстаться или пожениться — это их решение. Без вводных фраз вроде «на основе анализа».
+
+Про имена. Каждый ответ подписан именем того, кто его дал. Никогда не приписывай одному то, что сказал другой: прежде чем назвать имя, вернись к строке и сверь подпись. Приводя чужие слова, цитируй их дословно в кавычках.
+
+Про различия. Не выдавай разное за одинаковое. Если позиции отличаются хоть в чём-то — скажи об этом прямо и назови позицию каждого отдельно. «Вы оба считаете» пиши только тогда, когда оба сказали по сути одно и то же. Сглаженное согласие там, где на самом деле спор, вредит паре сильнее, чем прямо названное расхождение.`,
   en: `You are an attentive relationship counsellor. You are given two people's answers to the same relationship questions, plus their own marks: where they see a match, what they want to discuss, where they differ.
 
 Write an assessment in English, 250–400 words, in four parts with headings:
@@ -50,7 +54,11 @@ Write an assessment in English, 250–400 words, in four parts with headings:
 3. What to watch — what could become hard. Gently, no verdicts.
 4. One question for tonight — to ask each other out loud.
 
-Rules: address the couple directly. Rely only on the answers given, invent nothing. No diagnoses, no medical advice. Do not advise breaking up or getting married — that is their decision. No preambles like "based on the analysis".`,
+Rules: address the couple directly. Rely only on the answers given, invent nothing. No diagnoses, no medical advice. Do not advise breaking up or getting married — that is their decision. No preambles like "based on the analysis".
+
+On names. Every answer is labelled with the name of whoever gave it. Never attribute to one person what the other said: before you name someone, go back to the line and check the label. When you report someone's words, quote them verbatim.
+
+On differences. Do not pass difference off as agreement. If the positions differ at all, say so plainly and state each person's position separately. Write "you both think" only when both said substantially the same thing. Smoothed-over agreement where there is really a disagreement harms a couple more than a difference named out loud.`,
 };
 
 Deno.serve(async (req) => {
@@ -66,7 +74,7 @@ Deno.serve(async (req) => {
     const me = userData.user?.id;
     if (!me) return json({ error: "Нужен вход" }, 401);
 
-    const { connectionId, lang = "ru", refresh = false } = await req.json();
+    const { connectionId, lang = "ru", refresh = false, questions = {} } = await req.json();
     if (!connectionId) return json({ error: "Не указана связь" }, 400);
 
     const db = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -134,6 +142,7 @@ Deno.serve(async (req) => {
       .filter((r) => theirMap.has(r.question_id) && !hidden.has(r.block))
       .slice(0, MAX_PAIRS)
       .map((r) => ({
+        qid: r.question_id,
         block: r.block,
         mine: r.body,
         theirs: theirMap.get(r.question_id)!.body,
@@ -147,11 +156,21 @@ Deno.serve(async (req) => {
     const nameA = hiddenMine?.name || (lang === "en" ? "Person A" : "Первый");
     const nameB = hiddenTheirs?.name || (lang === "en" ? "Person B" : "Второй");
 
+    // Каждая реплика подписана в отдельной строке заглавным именем. Плоский
+    // список без подписей модель путала: на десятой паре она уже приписывала
+    // одному человеку сказанное другим.
     const material = pairs
-      .map(
-        (p) =>
-          `[${p.block}]${p.mark ? ` (отметка: ${p.mark})` : ""}\n${nameA}: ${p.mine}\n${nameB}: ${p.theirs}`
-      )
+      .map((p, i) => {
+        const q = questions[String(p.qid)];
+        return [
+          `### Вопрос ${i + 1} · блок «${p.block}»${p.mark ? ` · их общая отметка: ${p.mark}` : ""}`,
+          q ? `Спрашивали: ${q}` : null,
+          `ОТВЕТ — ${nameA.toUpperCase()}: ${p.mine}`,
+          `ОТВЕТ — ${nameB.toUpperCase()}: ${p.theirs}`,
+        ]
+          .filter(Boolean)
+          .join("\n");
+      })
       .join("\n\n");
 
     const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -159,7 +178,7 @@ Deno.serve(async (req) => {
       headers: { "content-type": "application/json", authorization: `Bearer ${GROQ_KEY}` },
       body: JSON.stringify({
         model: MODEL,
-        temperature: 0.6,
+        temperature: 0.2,
         max_tokens: 900,
         messages: [
           { role: "system", content: PROMPT[lang === "en" ? "en" : "ru"] },
