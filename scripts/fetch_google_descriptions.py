@@ -138,7 +138,7 @@ def groq_summarize(name: str, category: str, city_id: str, reviews: list) -> str
             resp = requests.post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"},
-                json={"model": "llama-3.3-70b-versatile", "max_tokens": 150, "temperature": 0.7,
+                json={"model": "openai/gpt-oss-120b", "max_tokens": 150, "temperature": 0.7,
                       "messages": [{"role": "user", "content": prompt}]},
                 timeout=30,
             )

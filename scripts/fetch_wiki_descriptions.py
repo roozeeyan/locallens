@@ -150,7 +150,7 @@ def groq_translate(text: str, name: str) -> str:
             resp = requests.post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"},
-                json={"model": "llama-3.3-70b-versatile", "max_tokens": 150, "temperature": 0.3,
+                json={"model": "openai/gpt-oss-120b", "max_tokens": 150, "temperature": 0.3,
                       "messages": [{"role": "user", "content": prompt}]},
                 timeout=30,
             )

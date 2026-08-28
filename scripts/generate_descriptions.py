@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate place descriptions using Groq AI (llama-3.3-70b-versatile).
+Generate place descriptions using Groq AI (openai/gpt-oss-120b).
 Free tier, no credit card required. Sign up at console.groq.com.
 ~925 places well within free daily limits (14,400 req/day).
 
@@ -95,7 +95,7 @@ def groq_describe(name: str, category: str, city_id: str, travel_around: bool = 
                     "Content-Type": "application/json",
                 },
                 json={
-                    "model": "llama-3.3-70b-versatile",
+                    "model": "openai/gpt-oss-120b",
                     "max_tokens": 150,
                     "temperature": 0.7,
                     "messages": [{"role": "user", "content": prompt}],

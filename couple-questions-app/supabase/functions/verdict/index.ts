@@ -15,7 +15,7 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GROQ_KEY = Deno.env.get("GROQ_API_KEY")!;
 
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = "openai/gpt-oss-120b";
 const MIN_PAIRS = 5;
 const MAX_PAIRS = 60;
 const FRESH_HOURS = 12;
