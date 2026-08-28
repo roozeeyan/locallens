@@ -250,6 +250,16 @@ export function setTitle(setId, lang = "ru") {
   return (cat[lang] || cat.ru).replace(/^(Блок|Block)\s*\d+\.\s*/, "");
 }
 
+/**
+ * Короткое имя блока — для карточки, где в ширину помещается два слова.
+ * Полное название остаётся там, где место есть.
+ */
+export function blockName(setId, lang = "ru") {
+  const cat = CATEGORIES.find((x) => x.id === setId);
+  const short = cat && (lang === "en" ? cat.shortEn : cat.shortRu);
+  return short || setTitle(setId, lang);
+}
+
 /** Текст вопроса на нужном языке. */
 export function qText(q, lang = "ru") {
   return (lang === "en" ? q.en : q.ru) || q.ru;

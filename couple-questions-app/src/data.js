@@ -1,15 +1,15 @@
 export const CATEGORIES = [
-  { id: "roots", ru: "Блок 1. Корни и семья", en: "Block 1. Roots & Family", emoji: "🌳" },
-  { id: "personality", ru: "Блок 2. Личность и ценности", en: "Block 2. Personality & Values", emoji: "🧭" },
-  { id: "love", ru: "Блок 3. Отношения и любовь", en: "Block 3. Relationships & Love", emoji: "💗" },
-  { id: "future", ru: "Блок 4. Жизнь и будущее", en: "Block 4. Life & Future", emoji: "🔭" },
-  { id: "spiritual", ru: "Блок 5. Духовное и глубинное", en: "Block 5. Spirituality & Depth", emoji: "✨" },
-  { id: "us", ru: "Блок 6. Про «нас»", en: "Block 6. About \"Us\"", emoji: "💑" },
-  { id: "finance", ru: "Блок 7. Финансы и материальная сторона отношений", en: "Block 7. Finances & the Material Side of the Relationship", emoji: "💰" },
-  { id: "kids", ru: "Блок 8. Дети и родительство", en: "Block 8. Children & Parenthood", emoji: "👶" },
-  { id: "conflict", ru: "Блок 9. Конфликты и разногласия", en: "Block 9. Conflicts & Disagreements", emoji: "⚡" },
-  { id: "stress", ru: "Блок 10. Стресс, кризисы", en: "Block 10. Stress & Crises", emoji: "🌪️" },
-  { id: "freedom", ru: "Блок 11. Свобода, границы и безопасность", en: "Block 11. Freedom, Boundaries & Safety", emoji: "🕊️" },
+  { id: "roots", ru: "Блок 1. Корни и семья", en: "Block 1. Roots & Family", emoji: "🌳" , shortRu: "Корни и семья", shortEn: "Roots & family" },
+  { id: "personality", ru: "Блок 2. Личность и ценности", en: "Block 2. Personality & Values", emoji: "🧭" , shortRu: "Личность и ценности", shortEn: "Personality & values" },
+  { id: "love", ru: "Блок 3. Отношения и любовь", en: "Block 3. Relationships & Love", emoji: "💗" , shortRu: "Отношения и любовь", shortEn: "Love & relationships" },
+  { id: "future", ru: "Блок 4. Жизнь и будущее", en: "Block 4. Life & Future", emoji: "🔭" , shortRu: "Жизнь и будущее", shortEn: "Life & future" },
+  { id: "spiritual", ru: "Блок 5. Духовное и глубинное", en: "Block 5. Spirituality & Depth", emoji: "✨" , shortRu: "Духовное и глубинное", shortEn: "Spirituality & depth" },
+  { id: "us", ru: "Блок 6. Про «нас»", en: "Block 6. About \"Us\"", emoji: "💑" , shortRu: "Про «нас»", shortEn: "About \"us\"" },
+  { id: "finance", ru: "Блок 7. Финансы и материальная сторона отношений", en: "Block 7. Finances & the Material Side of the Relationship", emoji: "💰" , shortRu: "Финансы", shortEn: "Finances" },
+  { id: "kids", ru: "Блок 8. Дети и родительство", en: "Block 8. Children & Parenthood", emoji: "👶" , shortRu: "Дети и родительство", shortEn: "Children" },
+  { id: "conflict", ru: "Блок 9. Конфликты и разногласия", en: "Block 9. Conflicts & Disagreements", emoji: "⚡" , shortRu: "Конфликты", shortEn: "Conflicts" },
+  { id: "stress", ru: "Блок 10. Стресс, кризисы", en: "Block 10. Stress & Crises", emoji: "🌪️" , shortRu: "Стресс и кризисы", shortEn: "Stress & crises" },
+  { id: "freedom", ru: "Блок 11. Свобода, границы и безопасность", en: "Block 11. Freedom, Boundaries & Safety", emoji: "🕊️" , shortRu: "Свобода и границы", shortEn: "Freedom & boundaries" },
 ];
 
 export const QUESTIONS = [

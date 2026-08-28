@@ -1,6 +1,7 @@
 import React from "react";
 import { c, font } from "../theme.js";
-import { Screen, Card, Progress, Label } from "../ui.jsx";
+import { Screen, Card, Progress, Label, Lock } from "../ui.jsx";
+import { BlockArt } from "../blockart.jsx";
 import {
   useStore,
   CATEGORIES,
@@ -9,6 +10,8 @@ import {
   blockProgress,
   totalProgress,
   setTitle,
+  blockName,
+  blocksReadyForVerdict,
 } from "../store.js";
 import { blockOrder, isBlockOpen, lockedQuestionCount } from "../limits.js";
 import { hasAccess, PAIR_ONLY } from "../access.js";
@@ -21,7 +24,7 @@ const T = {
     filled: "Заполнено",
     of: "из",
     openedWith: (name, n) => `Открыто с ${name}: ${n}`,
-    toVerdict: (n) => `Ещё ${n} общих ответов — и можно собрать разбор`,
+    toVerdict: "Закройте один блок вдвоём — и можно собрать разбор",
     verdictReady: "Разбор уже можно собрать",
     course: "Ваши темы",
     rest: "Остальные блоки",
@@ -42,7 +45,7 @@ const T = {
     filled: "Completed",
     of: "of",
     openedWith: (name, n) => `Open with ${name}: ${n}`,
-    toVerdict: (n) => `${n} more shared answers and the summary can be built`,
+    toVerdict: "Complete one whole block together and the summary can be built",
     verdictReady: "The summary can be built now",
     course: "Your topics",
     rest: "Other blocks",
@@ -83,7 +86,7 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
   const openedNow = partner
     ? QUESTIONS.filter((q) => answers[q.id] && partner.answers[q.id]).length
     : 0;
-  const toVerdict = Math.max(0, 5 - openedNow);
+  const verdictReady = partner ? blocksReadyForVerdict(answers, partner, profile.hiddenBlocks).length > 0 : false;
 
   const lockedNames = order
     .filter((cat) => !isBlockOpen(cat.id, profile, connections))
@@ -106,7 +109,7 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
               {t.openedWith(partner.name, openedNow)}
             </span>
             <span style={{ font: `400 12.5px ${font.sans}`, color: c.mute }}>
-              {toVerdict > 0 ? t.toVerdict(toVerdict) : t.verdictReady}
+              {verdictReady ? t.verdictReady : t.toVerdict}
             </span>
           </div>
         )}
@@ -127,9 +130,9 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
       )}
 
       <Label light>{t.course}</Label>
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <BlockGrid>
         {mineBlocks.map((cat) => (
-          <BlockRow
+          <BlockCard
             key={cat.id}
             cat={cat}
             t={t}
@@ -141,16 +144,16 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
             onPaywall={onPaywall}
           />
         ))}
-      </div>
+      </BlockGrid>
 
       {restBlocks.length > 0 && (
         <>
           <div style={{ marginTop: 8 }}>
             <Label light>{t.rest}</Label>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <BlockGrid>
             {restBlocks.map((cat) => (
-              <BlockRow
+              <BlockCard
                 key={cat.id}
                 cat={cat}
                 t={t}
@@ -160,10 +163,9 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
                 connections={connections}
                 onOpenBlock={onOpenBlock}
                 onPaywall={onPaywall}
-                quiet
               />
             ))}
-          </div>
+          </BlockGrid>
         </>
       )}
 
@@ -249,21 +251,72 @@ function partnerAhead(connections, catId) {
   return best;
 }
 
-function BlockRow({ cat, t, lang, answers, profile, connections, onOpenBlock, onPaywall, quiet }) {
+/**
+ * Карточка блока. Рисунок делает список узнаваемым: одиннадцать одинаковых
+ * строк с номерами человек глазами не различал и листал их насквозь.
+ */
+function BlockCard({ cat, t, lang, answers, profile, connections, onOpenBlock, onPaywall }) {
   const p = blockProgress(answers, cat.id);
   const open = isBlockOpen(cat.id, profile, connections);
   const ahead = open ? null : partnerAhead(connections, cat.id);
+  const done = p.done === p.total;
+
   return (
-    <Row
-      badge={CATEGORIES.findIndex((x) => x.id === cat.id) + 1}
-      title={setTitle(cat.id, lang)}
-      open={open}
-      done={p.done === p.total}
-      progress={p}
-      quiet={quiet}
-      waiting={ahead ? t.answered(ahead.name, ahead.n) : ""}
+    <Card
+      pad={12}
       onClick={() => (open ? onOpenBlock(cat.id) : onPaywall("blocks"))}
-    />
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        background: open ? c.paper : c.dim,
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "center", color: c.ink, opacity: open ? 1 : 0.45 }}>
+        <BlockArt id={cat.id} size={78} />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+        <span
+          style={{
+            flex: 1,
+            minWidth: 0,
+            font: `600 14px/1.3 ${font.sans}`,
+            color: c.ink,
+            opacity: open ? 1 : 0.75,
+          }}
+        >
+          {blockName(cat.id, lang)}
+        </span>
+        {/* Замок только там, где ждать нечего. Если партнёр в закрытом блоке
+            уже отвечал, показываем это: за замком лежит его ответ, и это
+            куда более веский повод открыть, чем сам замок. */}
+        {!open && !ahead && <Lock />}
+      </div>
+
+      {open ? (
+        <Progress value={p.pct} height={6} />
+      ) : ahead ? (
+        <span style={{ font: `600 12px ${font.sans}`, color: c.coral }}>
+          {t.answered(ahead.name, ahead.n)}
+        </span>
+      ) : (
+        <span style={{ font: `500 12px ${font.mono}`, color: c.mute }}>{p.total}</span>
+      )}
+
+      {open && (
+        <span style={{ font: `500 11.5px ${font.mono}`, color: done ? c.ink : c.mute }}>
+          {p.done} / {p.total}
+        </span>
+      )}
+    </Card>
+  );
+}
+
+/** Сетка в две колонки — как в референсе. */
+function BlockGrid({ children }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>{children}</div>
   );
 }
 
