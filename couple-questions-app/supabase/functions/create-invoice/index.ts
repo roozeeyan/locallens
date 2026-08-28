@@ -38,8 +38,9 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        title: "Relationship Game — полный доступ",
-        description: "Все 11 блоков, неограниченные связи и разбор от ИИ. Разовая покупка.",
+        title: "Relationship Game — доступ для двоих",
+        description:
+          "Все 11 блоков, сколько угодно связей и разбор от ИИ. Разовая покупка: открывается вам и вашему партнёру.",
         payload: JSON.stringify({ user_id: userId, product: "premium" }),
         currency: "XTR",
         prices: [{ label: "Полный доступ", amount: PRICE_STARS }],
