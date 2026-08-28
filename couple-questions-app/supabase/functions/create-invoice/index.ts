@@ -48,11 +48,15 @@ Deno.serve(async (req) => {
     });
 
     const data = await res.json();
-    if (!data.ok) return json({ error: "Telegram отказал в создании счёта" }, 502);
+    if (!data.ok) {
+      console.error("createInvoiceLink", res.status, JSON.stringify(data));
+      return json({ error: `Telegram: ${data.description || res.status}` }, 502);
+    }
 
     return json({ link: data.result });
-  } catch {
-    return json({ error: "Некорректный запрос" }, 400);
+  } catch (e) {
+    console.error("create-invoice", e);
+    return json({ error: `Сбой функции: ${e instanceof Error ? e.message : e}` }, 400);
   }
 });
 
