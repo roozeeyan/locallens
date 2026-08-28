@@ -36,7 +36,7 @@ const T = {
     opening: "Открываем оплату…",
     cancelled: "Покупка отменена",
     localPay: "Оплата включится, когда подключим сервер и бота.",
-    payFailed: "Не получилось открыть оплату. Попробуйте ещё раз.",
+    payFailed: (why) => `Не получилось открыть оплату. ${why || "Попробуйте ещё раз."}`,
     devMode: "Режим разработки",
     devNote:
       "Оплата подключается вместе с сервером. Чтобы посмотреть, как выглядит приложение с Premium, можно включить его вручную.",
@@ -74,7 +74,7 @@ const T = {
     opening: "Opening payment…",
     cancelled: "Purchase cancelled",
     localPay: "Payment turns on once the server and the bot are connected.",
-    payFailed: "Could not open payment. Please try again.",
+    payFailed: (why) => `Could not open payment. ${why || "Please try again."}`,
     devMode: "Development mode",
     devNote:
       "Payment arrives together with the server. To see how the app looks with Premium, you can switch it on manually.",
@@ -146,7 +146,7 @@ export default function Paywall({ onClose, reason }) {
     } else if (res.reason === "local") {
       setNote(t.localPay);
     } else {
-      setNote(t.payFailed);
+      setNote(t.payFailed(res.detail || res.reason));
     }
   };
 

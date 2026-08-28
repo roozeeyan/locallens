@@ -178,9 +178,14 @@ export async function buyPremium() {
     },
     body: JSON.stringify({ product: "premium" }),
   });
-  if (!res.ok) return { ok: false, reason: "invoice-failed" };
+  // Причину отказа тащим наружу: без неё на телефоне видно только
+  // «не получилось», и разбираться приходится по журналам сервера.
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok || !payload.link) {
+    return { ok: false, reason: "invoice-failed", detail: payload.error || `код ${res.status}` };
+  }
 
-  const { link } = await res.json();
+  const { link } = payload;
 
   return new Promise((resolve) => {
     tg.openInvoice(link, (status) => {
