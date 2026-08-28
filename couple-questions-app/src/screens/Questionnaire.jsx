@@ -254,6 +254,10 @@ function partnerAhead(connections, catId) {
 /**
  * Карточка блока. Рисунок делает список узнаваемым: одиннадцать одинаковых
  * строк с номерами человек глазами не различал и листал их насквозь.
+ *
+ * Рамки и тени тут нет намеренно. Обводка, которая держит форму у кнопок,
+ * на сетке из одиннадцати карточек превращается в решётку и забивает собой
+ * рисунки — а смотреть человек должен на них.
  */
 function BlockCard({ cat, t, lang, answers, profile, connections, onOpenBlock, onPaywall }) {
   const p = blockProgress(answers, cat.id);
@@ -262,28 +266,32 @@ function BlockCard({ cat, t, lang, answers, profile, connections, onOpenBlock, o
   const done = p.done === p.total;
 
   return (
-    <Card
-      pad={12}
+    <button
       onClick={() => (open ? onOpenBlock(cat.id) : onPaywall("blocks"))}
       style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
+        ...blockCard,
         background: open ? c.paper : c.dim,
       }}
     >
-      <div style={{ display: "flex", justifyContent: "center", color: c.ink, opacity: open ? 1 : 0.45 }}>
-        <BlockArt id={cat.id} size={78} />
-      </div>
+      <span
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          color: c.ink,
+          opacity: open ? 0.9 : 0.4,
+        }}
+      >
+        <BlockArt id={cat.id} size={104} />
+      </span>
 
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+      <span style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
         <span
           style={{
             flex: 1,
             minWidth: 0,
-            font: `600 14px/1.3 ${font.sans}`,
+            font: `600 14px/1.28 ${font.sans}`,
             color: c.ink,
-            opacity: open ? 1 : 0.75,
+            opacity: open ? 1 : 0.7,
           }}
         >
           {blockName(cat.id, lang)}
@@ -292,26 +300,43 @@ function BlockCard({ cat, t, lang, answers, profile, connections, onOpenBlock, o
             уже отвечал, показываем это: за замком лежит его ответ, и это
             куда более веский повод открыть, чем сам замок. */}
         {!open && !ahead && <Lock />}
-      </div>
+      </span>
 
       {open ? (
-        <Progress value={p.pct} height={6} />
+        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ flex: 1 }}>
+            <Progress value={p.pct} height={5} />
+          </span>
+          <span style={{ font: `500 11px ${font.mono}`, color: done ? c.ink : c.mute }}>
+            {p.done}/{p.total}
+          </span>
+        </span>
       ) : ahead ? (
         <span style={{ font: `600 12px ${font.sans}`, color: c.coral }}>
           {t.answered(ahead.name, ahead.n)}
         </span>
       ) : (
-        <span style={{ font: `500 12px ${font.mono}`, color: c.mute }}>{p.total}</span>
-      )}
-
-      {open && (
-        <span style={{ font: `500 11.5px ${font.mono}`, color: done ? c.ink : c.mute }}>
-          {p.done} / {p.total}
+        <span style={{ font: `500 11px ${font.mono}`, color: c.mute }}>
+          {p.total} {lang === "en" ? "questions" : "вопросов"}
         </span>
       )}
-    </Card>
+    </button>
   );
 }
+
+const blockCard = {
+  border: "none",
+  borderRadius: 26,
+  padding: "14px 14px 13px",
+  display: "flex",
+  flexDirection: "column",
+  gap: 9,
+  width: "100%",
+  textAlign: "left",
+  font: "inherit",
+  color: "inherit",
+  cursor: "pointer",
+};
 
 /** Сетка в две колонки — как в референсе. */
 function BlockGrid({ children }) {
