@@ -2,8 +2,8 @@
 // поэтому смена темы не требует перерисовки дерева.
 export const palettes = {
   cream: {
-    name: "Кремовая",
-    nameEn: "Cream",
+    name: "Базовая",
+    nameEn: "Basic",
     bg: "#EFEBE2",
     paper: "#FBFAF7",
     accent: "#B6CDDD",
@@ -37,8 +37,8 @@ export const palettes = {
     dim: "#2C3034",
   },
   rose: {
-    name: "Розовая",
-    nameEn: "Rose",
+    name: "Светлая",
+    nameEn: "Light",
     bg: "#F4E7E4",
     paper: "#FDF8F7",
     accent: "#E0A69C",
