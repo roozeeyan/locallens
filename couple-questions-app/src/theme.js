@@ -28,6 +28,9 @@ export const palettes = {
     onWarm: "#F6F2EA",
     ink: "#F0EDE7",
     mute: "#8E9490",
+    backdrop: "url('/backdrop-night.jpg')",
+    // Подложка тёплая и светлая сама по себе — вуаль гасит её почти до
+    // чёрного, оставляя только тёплый отсвет по краям.
     veil: "rgba(26, 28, 31, 0.86)",
     off: "#3B4147",
     dim: "#2C3034",
