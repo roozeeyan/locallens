@@ -46,6 +46,7 @@ export const palettes = {
     onWarm: "#F9F2EF",
     ink: "#2B1E1C",
     mute: "#9A8582",
+    backdrop: "url('/backdrop-rose.jpg')",
     veil: "rgba(244, 231, 228, 0.8)",
     off: "#E0CFCB",
     dim: "#F0E2DF",
