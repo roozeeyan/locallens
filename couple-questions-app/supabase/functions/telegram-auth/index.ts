@@ -14,7 +14,7 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Headers": "authorization, content-type, apikey",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -86,7 +86,11 @@ Deno.serve(async (req) => {
       // иначе человек с прежними ответами остался бы за дверью.
       const { data: who } = await admin.auth.admin.getUserById(userId);
       if (who.user && who.user.email !== email) {
-        await admin.auth.admin.updateUserById(userId, { email, email_confirm: true });
+        const { error: upErr } = await admin.auth.admin.updateUserById(userId, {
+          email,
+          email_confirm: true,
+        });
+        if (upErr) return json({ error: `Не удалось привязать вход: ${upErr.message}` }, 500);
       }
     } else {
       const { data: created, error } = await admin.auth.admin.createUser({
@@ -107,12 +111,12 @@ Deno.serve(async (req) => {
       email,
     });
     if (linkErr || !link?.properties?.hashed_token) {
-      return json({ error: "Не удалось выдать сессию" }, 500);
+      return json({ error: `Не удалось выдать сессию: ${linkErr?.message || ""}` }, 500);
     }
 
     return json({ token_hash: link.properties.hashed_token, email });
-  } catch {
-    return json({ error: "Некорректный запрос" }, 400);
+  } catch (e) {
+    return json({ error: `Сбой функции: ${e instanceof Error ? e.message : e}` }, 400);
   }
 });
 
