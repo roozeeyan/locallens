@@ -140,22 +140,28 @@ export async function ensureSession() {
         headers: { "content-type": "application/json", apikey: anonKey },
         body: JSON.stringify({ initData }),
       });
-      if (res.ok) {
-        const { token_hash, email } = await res.json();
+      const payload = await res.json().catch(() => ({}));
+      if (res.ok && payload.token_hash) {
+        // Только token_hash и тип. С почтой рядом клиент уходит в другую
+        // ветку — ту, что ждёт шестизначный код вместо хеша, — и вход
+        // разваливается уже после того, как сервер его выдал.
         const { error } = await supabase.auth.verifyOtp({
-          token_hash,
-          type: "magiclink",
-          email,
+          token_hash: payload.token_hash,
+          type: "email",
         });
         if (!error) {
           const { data } = await supabase.auth.getUser();
           me = data.user?.id || null;
+          await rememberId(me);
           await rememberSession();
           return me;
         }
+        lastError = `Telegram узнал вас, но вход не принялся: ${error.message}`;
+      } else if (payload.error) {
+        lastError = payload.error;
       }
-    } catch {
-      // функции нет или она недоступна — идём обычным путём
+    } catch (e) {
+      lastError = `Вход через Telegram не отвечает: ${e?.message || e}`;
     }
   }
 
