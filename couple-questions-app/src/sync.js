@@ -296,6 +296,7 @@ export async function pullAll(localName) {
   // Сколько партнёр ответил в каждом блоке. Тексты закрытых блоков сервер
   // не отдаёт — только число, чтобы было видно, что там есть что открывать.
   const counts = {};
+  const { data: tester } = await supabase.rpc("am_i_tester");
   const { data: countRows } = await supabase.rpc("partner_answer_counts");
   for (const r of countRows || []) {
     (counts[r.other_id] ||= {})[r.block] = r.n;
@@ -356,6 +357,10 @@ export async function pullAll(localName) {
       premiumFor: profile?.premium_for || null,
       reminder: profile?.reminder || "week",
       consentAt: profile?.consent_at ? Date.parse(profile.consent_at) : null,
+      // Отметку тестировщика держим на сервере: Telegram чистит хранилище
+      // телефона, когда мини-приложение закрывают, и код приходилось
+      // вводить заново после каждого закрытия.
+      testerUnlocked: Boolean(tester),
     },
     answers: mine,
     connections,

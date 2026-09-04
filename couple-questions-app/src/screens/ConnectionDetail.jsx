@@ -50,7 +50,7 @@ const T = {
     talk: "обсудить",
     differ: "расходимся",
     comparisons: (n) => `Сравнения (${n})`,
-    byBlocks: "По блокам",
+    byBlocks: "По темам",
     nothingYet: "Пока нечего сравнивать",
     nothingBody: "Ответ открывается, когда вы оба ответили на один и тот же вопрос.",
     theirTurn: (name, n) => ` ${name} уже ответил на ${n} — очередь за вами.`,
@@ -64,7 +64,7 @@ const T = {
     build: "Собрать разбор",
     again: "Собрать заново",
     thinking: "Читаю ваши ответы…",
-    needBlock: "Разбор собирается, когда вы оба закроете хотя бы один блок целиком.",
+    needBlock: "Разбор собирается, когда вы оба закроете хотя бы одну тему целиком.",
     blockReady: "Готово к разбору",
     remove: "Удалить связь",
     removeConfirm: (name) => `Удалить связь с ${name}? Вы перестанете видеть ответы друг друга.`,
@@ -503,7 +503,7 @@ const back = {
 };
 const body = {
   flex: 1,
-  padding: "8px 16px calc(24px + env(safe-area-inset-bottom))",
+  padding: "8px 16px calc(96px + env(safe-area-inset-bottom))",
   display: "flex",
   flexDirection: "column",
   gap: 12,

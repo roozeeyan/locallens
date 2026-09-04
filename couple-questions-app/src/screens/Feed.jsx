@@ -115,14 +115,6 @@ export default function Feed({ onOpenConn, onGoForm, onOpenBlock }) {
     }
   }
 
-  if (mine.done < mine.total) {
-    events.push({
-      id: "fill",
-      title: t.fill(mine.done, mine.total),
-      note: t.fillNote,
-      action: goTo(QUESTIONS.find((q) => !answers[q.id])),
-    });
-  }
 
   return (
     <Screen title={t.title} subtitle={t.subtitle}>

@@ -24,10 +24,10 @@ const T = {
     filled: "Заполнено",
     of: "из",
     openedWith: (name, n) => `Открыто с ${name}: ${n}`,
-    toVerdict: "Закройте один блок вдвоём — и можно собрать разбор",
+    toVerdict: "Закройте одну тему вдвоём — и можно собрать разбор",
     verdictReady: "Разбор уже можно собрать",
     course: "Ваши темы",
-    rest: "Остальные блоки",
+    rest: "Остальные темы",
     invite: "Пригласите партнёра",
     inviteBody:
       "Ответы открываются только когда вы оба ответили на один вопрос. Пока вы одни, сравнивать не с чем.",
@@ -95,26 +95,6 @@ export default function Questionnaire({ onOpenBlock, onPaywall, onInvite }) {
 
   return (
     <Screen title={t.title} subtitle={t.subtitle}>
-      <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-          <Label>{t.filled}</Label>
-          <span style={{ font: `700 17px ${font.serif}` }}>
-            {total.done} {t.of} {total.total}
-          </span>
-        </div>
-        <Progress value={total.pct} />
-        {partner && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ font: `600 13px ${font.sans}`, color: c.ink }}>
-              {t.openedWith(partner.name, openedNow)}
-            </span>
-            <span style={{ font: `400 12.5px ${font.sans}`, color: c.mute }}>
-              {verdictReady ? t.verdictReady : t.toVerdict}
-            </span>
-          </div>
-        )}
-      </Card>
-
       {connections.length === 0 && (
         <Card
           pad={16}

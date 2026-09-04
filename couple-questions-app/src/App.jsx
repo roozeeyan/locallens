@@ -190,8 +190,6 @@ export default function App() {
         )}
       </main>
 
-      <TabBar tabs={TABS[lang] || TABS.ru} active={tab} onChange={setTab} />
-
       {openBlock && <QuestionFlow catId={openBlock} onClose={() => setOpenBlock(null)} />}
       {openConn && (
         <ConnectionDetail
@@ -200,6 +198,13 @@ export default function App() {
           onPaywall={() => setPaywall("blocks")}
         />
       )}
+      {/* Меню рисуем после слоёв, чтобы оно оставалось видно и на экране
+          связи. В ответах на вопросы его нет намеренно: там свой нижний
+          ряд действий и клавиатура, третьему ряду места не остаётся. */}
+      {!openBlock && (
+        <TabBar tabs={TABS[lang] || TABS.ru} active={tab} onChange={setTab} />
+      )}
+
       {invite && (
         <InviteSheet
           onClose={() => setInvite(false)}

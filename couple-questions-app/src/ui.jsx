@@ -201,9 +201,36 @@ export function Iso({ size = 92, shape = "square" }) {
  * Позицию плашки берём измерением, а не расчётом по числу пунктов:
  * подписи разной длины, и на равные доли меню не делится.
  */
+/**
+ * Меню прячется, когда человек листает длинную страницу вниз, и
+ * возвращается на первое же движение вверх — как адресная строка в Safari.
+ * Событие прокрутки не всплывает, поэтому слушаем его на перехвате: так
+ * ловятся и главный экран, и любые внутренние прокручиваемые слои.
+ */
+function useHideOnScroll(threshold = 12) {
+  const [hidden, setHidden] = React.useState(false);
+  const last = React.useRef(0);
+
+  React.useEffect(() => {
+    const onScroll = (e) => {
+      const el = e.target === document ? document.scrollingElement : e.target;
+      const top = el?.scrollTop ?? 0;
+      const delta = top - last.current;
+      if (Math.abs(delta) < threshold) return;
+      last.current = top;
+      setHidden(delta > 0 && top > 40);
+    };
+    document.addEventListener("scroll", onScroll, true);
+    return () => document.removeEventListener("scroll", onScroll, true);
+  }, [threshold]);
+
+  return hidden;
+}
+
 export function TabBar({ tabs, active, onChange }) {
   const items = React.useRef([]);
   const [pill, setPill] = React.useState(null);
+  const hidden = useHideOnScroll();
 
   const measure = React.useCallback(() => {
     const el = items.current[tabs.findIndex((t) => t.id === active)];
@@ -219,7 +246,13 @@ export function TabBar({ tabs, active, onChange }) {
   }, [measure]);
 
   return (
-    <nav style={s.tabbar}>
+    <nav
+      style={{
+        ...s.tabbar,
+        transform: hidden ? "translateY(calc(100% + 12px))" : "none",
+        transition: "transform .22s ease",
+      }}
+    >
       {pill && <span style={{ ...s.tabPill, left: pill.left, width: pill.width }} aria-hidden="true" />}
       {tabs.map((t, i) => {
         const on = t.id === active;
@@ -427,7 +460,8 @@ export const s = {
     bottom: "calc(4px + env(safe-area-inset-bottom))",
     width: "min(100% - 24px, 536px)",
     margin: "0 auto",
-    zIndex: 20,
+    // Выше слоя связи: меню должно оставаться видно и там.
+    zIndex: 40,
     background: c.paper,
     border,
     borderRadius: r.pill,

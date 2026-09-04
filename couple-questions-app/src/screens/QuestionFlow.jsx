@@ -20,7 +20,7 @@ const T = {
     share: "Поделиться вопросом",
     next: "Сохранить и дальше",
     last: "Сохранить и закрыть",
-    listTitle: "Вопросы блока",
+    listTitle: "Вопросы темы",
     allQuestions: "Все вопросы",
     answered: "отвечен",
     skipped: "отложен",
