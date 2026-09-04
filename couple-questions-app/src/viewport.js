@@ -26,6 +26,13 @@ export function watchViewport() {
     // iOS при открытии клавиатуры прокручивает саму страницу, и слой,
     // прибитый к верху окна, уезжает за край видимой области.
     root.style.setProperty(TOP, `${Math.round(window.visualViewport?.offsetTop || 0)}px`);
+
+    // iOS прокручивает саму страницу под клавиатуру, и полноэкранный слой
+    // уезжает вверх вместе с ней. Пока слой открыт, возвращаем страницу
+    // на место: за высоту отвечает --rg-vh, прокрутке тут делать нечего.
+    if (document.body.style.overflow === "hidden" && window.scrollY !== 0) {
+      window.scrollTo(0, 0);
+    }
   };
 
   apply();

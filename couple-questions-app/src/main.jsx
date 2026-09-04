@@ -7,6 +7,9 @@ const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
   tg.expand();
+  // Без этого мини-приложение можно утянуть вниз пальцем, и оно уезжает
+  // вместе с клавиатурой, когда человек начинает печатать ответ.
+  tg.disableVerticalSwipes?.();
 }
 
 watchViewport();

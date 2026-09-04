@@ -153,7 +153,16 @@ export function Field({ value, onChange, placeholder, rows = 5, grow }) {
       // части экрана уже после того, как она заняла своё место.
       onFocus={(e) => {
         const el = e.target;
-        setTimeout(() => el.scrollIntoView({ block: "nearest", behavior: "smooth" }), 320);
+        // scrollIntoView на iOS двигает и саму страницу — вместе с ней
+        // уезжает слой. Прокручиваем только тот контейнер, в котором поле
+        // и лежит, и ровно настолько, насколько оно вышло за край.
+        setTimeout(() => {
+          let box = el.parentElement;
+          while (box && box.scrollHeight <= box.clientHeight) box = box.parentElement;
+          if (!box) return;
+          const gap = el.getBoundingClientRect().bottom - box.getBoundingClientRect().bottom;
+          if (gap > 0) box.scrollBy({ top: gap + 12, behavior: "smooth" });
+        }, 320);
       }}
       style={grow ? { ...s.field, flex: "1 1 auto" } : s.field}
     />
