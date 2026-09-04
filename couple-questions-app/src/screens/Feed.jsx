@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import { c, font } from "../theme.js";
 import { Screen, Card, Label, Progress } from "../ui.jsx";
-import { useStore, actions, revealed, pending, totalProgress, qText } from "../store.js";
+import { useStore, actions, revealed, pending, totalProgress, qText, QUESTIONS } from "../store.js";
+import { isBlockOpen } from "../limits.js";
 
 const T = {
   ru: {
@@ -46,7 +47,7 @@ const T = {
   },
 };
 
-export default function Feed({ onOpenConn, onGoForm }) {
+export default function Feed({ onOpenConn, onGoForm, onOpenBlock }) {
   const { answers, connections, profile, seen } = useStore();
   const t = T[profile.lang === "en" ? "en" : "ru"];
   const lang = profile.lang === "en" ? "en" : "ru";
@@ -72,6 +73,17 @@ export default function Feed({ onOpenConn, onGoForm }) {
   const mine = totalProgress(answers);
   const events = [];
 
+  /**
+   * Ведём не в раздел, а к самому вопросу. Карточка обещает конкретное —
+   * «девять вопросов, на которые он ответил», — и должна открывать именно
+   * их, а не оставлять человека искать нужный блок среди одиннадцати.
+   * Закрытый блок открыть нечем, поэтому туда ведём как раньше.
+   */
+  const goTo = (q) => {
+    if (q && isBlockOpen(q.cat, profile, connections)) return () => onOpenBlock(q.cat);
+    return onGoForm;
+  };
+
   for (const conn of connections) {
     const open = revealed(answers, conn, hiddenBlocks);
     const p = pending(answers, conn);
@@ -91,7 +103,7 @@ export default function Feed({ onOpenConn, onGoForm }) {
         id: `${conn.id}-waiting-me`,
         title: t.aheadOfYou(conn.name, p.waitingMe),
         note: t.aheadNote,
-        action: onGoForm,
+        action: goTo(QUESTIONS.find((q) => !answers[q.id] && conn.answers[q.id])),
       });
     }
     if (p.waitingThem > 0) {
@@ -108,7 +120,7 @@ export default function Feed({ onOpenConn, onGoForm }) {
       id: "fill",
       title: t.fill(mine.done, mine.total),
       note: t.fillNote,
-      action: onGoForm,
+      action: goTo(QUESTIONS.find((q) => !answers[q.id])),
     });
   }
 

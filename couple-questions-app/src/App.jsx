@@ -179,7 +179,11 @@ export default function App() {
           />
         )}
         {tab === "feed" && (
-          <Feed onOpenConn={setOpenConn} onGoForm={() => setTab("form")} />
+          <Feed
+            onOpenConn={setOpenConn}
+            onGoForm={() => setTab("form")}
+            onOpenBlock={setOpenBlock}
+          />
         )}
         {tab === "me" && (
           <Profile onPaywall={() => setPaywall("blocks")} onLegal={setLegal} />
