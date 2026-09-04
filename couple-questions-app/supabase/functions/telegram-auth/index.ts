@@ -80,7 +80,15 @@ Deno.serve(async (req) => {
 
     let userId = existing?.id as string | undefined;
 
-    if (!userId) {
+    if (userId) {
+      // Аккаунт мог быть заведён анонимно — тогда почты у него нет, и
+      // одноразовый вход по ней не выдать. Проставляем её задним числом,
+      // иначе человек с прежними ответами остался бы за дверью.
+      const { data: who } = await admin.auth.admin.getUserById(userId);
+      if (who.user && who.user.email !== email) {
+        await admin.auth.admin.updateUserById(userId, { email, email_confirm: true });
+      }
+    } else {
       const { data: created, error } = await admin.auth.admin.createUser({
         email,
         email_confirm: true,
