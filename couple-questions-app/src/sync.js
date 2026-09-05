@@ -457,7 +457,8 @@ export async function pushReaction(connectionId, questionId, value) {
  * Разбор от ИИ. Считает его серверная функция: ключ модели не должен
  * попадать в приложение, а отбор ответов нельзя доверять клиенту.
  */
-export async function fetchVerdict(connectionId, lang, refresh = false, questions = {}) {
+export async function fetchVerdict(connectionId, lang, opts = {}) {
+  const { refresh = false, questions = {}, block = "", blockTitle = "" } = opts;
   if (!isRemote || !me) return { ok: false, message: "Нет связи с сервером." };
 
   const { data: session } = await supabase.auth.getSession();
@@ -472,25 +473,27 @@ export async function fetchVerdict(connectionId, lang, refresh = false, question
         apikey: anonKey,
         authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ connectionId, lang, refresh, questions }),
+      body: JSON.stringify({ connectionId, lang, refresh, questions, block, blockTitle }),
     });
 
     const payload = await res.json().catch(() => ({}));
     if (res.status === 402) return { ok: false, locked: true };
-    // Предел разборов: у каждого свой на сутки, и есть общий на всех.
+    // Пределы. Про одну тему в сутки говорим не как про запрет, а как про
+    // то, чем он на самом деле является: разбор нужно успеть обсудить.
     if (res.status === 429) {
-      return {
-        ok: false,
-        message:
-          payload.error === "too-busy"
-            ? "Сегодня собрано слишком много разборов. Попробуйте завтра."
-            : `Разбор можно собирать ${payload.limit || 5} раза в сутки. Возвращайтесь завтра.`,
+      const messages = {
+        "one-topic-a-day":
+          "Одна тема в сутки. Прочитайте этот разбор вдвоём и проговорите его — " +
+          "следующая тема откроется завтра.",
+        "too-many-redos": `Эту тему можно пересобрать ${payload.limit || 3} раза в сутки.`,
+        "too-busy": "Сегодня собрано слишком много разборов. Попробуйте завтра.",
       };
+      return { ok: false, message: messages[payload.error] || messages["too-busy"] };
     }
     if (!res.ok) {
       return { ok: false, message: payload.error || "Разбор пока недоступен.", info: payload };
     }
-    return { ok: true, body: payload.body, cached: payload.cached };
+    return { ok: true, body: payload.body, cached: payload.cached, block: payload.block };
   } catch {
     // Функции разбора может просто не быть на сервере — до неё запрос
     // не доходит вовсе. Показывать браузерное «Load failed» нельзя.

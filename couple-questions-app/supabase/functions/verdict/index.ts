@@ -1,4 +1,9 @@
-// Разбор от ИИ: читает открытые пары ответов и отметки, возвращает текст.
+// Разбор от ИИ: читает ответы пары по ОДНОЙ теме и возвращает текст.
+//
+// Тема — единица разбора. Пятнадцать вопросов про деньги, прочитанных
+// подряд, дают связную картину; те же пятнадцать вперемешку с вопросами
+// про свадьбу и переезд дают перечисление. И читать разбор всех тем
+// сразу человек всё равно не станет — а обсудить с партнёром тем более.
 //
 // Ключ модели живёт только здесь. Клиент не может ни увидеть его, ни
 // попросить разбор по чужой связи: функция сама проверяет, что человек
@@ -23,17 +28,20 @@ const GROQ_KEY = Deno.env.get("GROQ_API_KEY") || "";
 
 const MODEL = "claude-opus-5";
 const GROQ_MODEL = "openai/gpt-oss-120b";
-// Разбор стоит настоящих денег: каждый вызов — обращение к Claude.
-// Кэш на двенадцать часов защищает от случайных повторов, но кнопка
-// «собрать заново» его обходит, а счёт один на всех. Отсюда два предела:
-// личный — чтобы никто не крутил разбор по кругу, и общий — чтобы даже
-// сговорившись, все вместе не выбрали месячный бюджет за вечер.
-const DAY_LIMIT_PERSON = 5;
+// Одна тема в сутки — это не экономия на модели, а замысел продукта.
+// Разбор нужно прочитать вдвоём и проговорить; две-три темы подряд
+// превращаются в поток, который пролистывают. Пересобрать уже открытую
+// тему можно несколько раз: первый ответ модели бывает мимо, и запирать
+// человека на сутки из-за этого нечестно.
+//
+// Общий предел — про деньги: даже если все сговорятся, месячный счёт за
+// модель не улетит за вечер.
+const TOPICS_PER_DAY = 1;
+const REDO_PER_DAY = 3;
 const DAY_LIMIT_ALL = 300;
 
-const MIN_PAIRS = 5;
+const MIN_PAIRS = 3;
 const MAX_PAIRS = 60;
-const FRESH_HOURS = 12;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -142,8 +150,16 @@ Deno.serve(async (req) => {
     const me = userData.user?.id;
     if (!me) return json({ error: "Нужен вход" }, 401);
 
-    const { connectionId, lang = "ru", refresh = false, questions = {} } = await req.json();
+    const {
+      connectionId,
+      lang = "ru",
+      refresh = false,
+      questions = {},
+      block = "",
+      blockTitle = "",
+    } = await req.json();
     if (!connectionId) return json({ error: "Не указана связь" }, 400);
+    if (!block) return json({ error: "Не указана тема" }, 400);
 
     const db = createClient(SUPABASE_URL, SERVICE_KEY);
 
@@ -159,21 +175,22 @@ Deno.serve(async (req) => {
     }
     const other = conn.a === me ? conn.b : conn.a;
 
-    // Свежий разбор переиспользуем: модель стоит денег и времени.
+    // Готовый разбор темы отдаём сразу и без срока годности: тема закрыта
+    // обоими, ответы больше не меняются, а вернуться к тексту через неделю
+    // человек должен без нового обращения к модели. Нужен свежий взгляд —
+    // есть «собрать заново», она кэш обходит.
     if (!refresh) {
       const { data: cached } = await db
         .from("verdicts")
-        .select("body, created_at")
+        .select("body")
         .eq("connection_id", connectionId)
         .eq("lang", lang)
+        .eq("block", block)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (cached) {
-        const age = Date.now() - Date.parse(cached.created_at);
-        if (age < FRESH_HOURS * 3600 * 1000) return json({ body: cached.body, cached: true });
-      }
+      if (cached) return json({ body: cached.body, cached: true, block });
     }
 
     // Первый разбор бесплатен — он и продаёт остальные. Дальше нужен
@@ -188,15 +205,24 @@ Deno.serve(async (req) => {
     }
 
     const since = new Date(Date.now() - 86400_000).toISOString();
-    const [{ count: mineToday }, { count: allToday }] = await Promise.all([
-      db.from("verdicts").select("id", { count: "exact", head: true })
+    const [{ data: mineToday }, { count: allToday }] = await Promise.all([
+      db.from("verdicts").select("block")
         .eq("made_by", me).gte("created_at", since),
       db.from("verdicts").select("id", { count: "exact", head: true })
         .gte("created_at", since),
     ]);
 
-    if ((mineToday || 0) >= DAY_LIMIT_PERSON) {
-      return json({ error: "too-often", limit: DAY_LIMIT_PERSON }, 429);
+    const rows = mineToday || [];
+    const topicsToday = new Set(rows.map((r) => r.block).filter(Boolean));
+    const redosOfThis = rows.filter((r) => r.block === block).length;
+
+    // Новая тема сверх дневной — отказ. Пересбор уже начатой — считаем
+    // отдельно, иначе одна неудачная попытка съедала бы весь день.
+    if (!topicsToday.has(block) && topicsToday.size >= TOPICS_PER_DAY) {
+      return json({ error: "one-topic-a-day", limit: TOPICS_PER_DAY }, 429);
+    }
+    if (redosOfThis >= REDO_PER_DAY) {
+      return json({ error: "too-many-redos", limit: REDO_PER_DAY }, 429);
     }
     if ((allToday || 0) >= DAY_LIMIT_ALL) {
       console.error("общий предел разборов исчерпан", allToday);
@@ -222,8 +248,10 @@ Deno.serve(async (req) => {
     const theirMap = new Map((theirRows || []).map((r) => [r.question_id, r]));
     const markMap = new Map((marks || []).map((r) => [r.question_id, r.value]));
 
+    if (hidden.has(block)) return json({ error: "Эта тема скрыта" }, 403);
+
     const pairs = (mineRows || [])
-      .filter((r) => theirMap.has(r.question_id) && !hidden.has(r.block))
+      .filter((r) => r.block === block && theirMap.has(r.question_id))
       .slice(0, MAX_PAIRS)
       .map((r) => ({
         qid: r.question_id,
@@ -234,27 +262,35 @@ Deno.serve(async (req) => {
       }));
 
     if (pairs.length < MIN_PAIRS) {
-      return json({ error: "Мало открытых ответов", need: MIN_PAIRS, have: pairs.length }, 422);
+      return json({ error: "Тема ещё не закрыта обоими", need: MIN_PAIRS, have: pairs.length }, 422);
     }
 
     const nameA = (hiddenMine?.name || (lang === "en" ? "Person A" : "Первый")).trim();
     const nameB = (hiddenTheirs?.name || (lang === "en" ? "Person B" : "Второй")).trim();
 
+    const topic = String(blockTitle || block).trim();
+    const head =
+      lang === "en"
+        ? `Topic: "${topic}". ${pairs.length} questions, both people answered every one.`
+        : `Тема: «${topic}». Вопросов ${pairs.length}, на каждый ответили оба.`;
+
     // Каждая реплика подписана в отдельной строке заглавным именем. Плоский
     // список без подписей модель путала: на десятой паре она уже приписывала
     // одному человеку сказанное другим.
-    const material = pairs
-      .map((p, i) => {
-        const q = questions[String(p.qid)];
-        return [
-          `### Вопрос ${i + 1} · тема «${p.block}»${p.mark ? ` · их общая отметка: ${p.mark}` : ""}`,
-          q ? `Спрашивали: ${q}` : null,
-          `ОТВЕТ — ${nameA.toUpperCase()}: ${p.mine}`,
-          `ОТВЕТ — ${nameB.toUpperCase()}: ${p.theirs}`,
-        ]
-          .filter(Boolean)
-          .join("\n");
-      })
+    const material = [head]
+      .concat(
+        pairs.map((p, i) => {
+          const q = questions[String(p.qid)];
+          return [
+            `### Вопрос ${i + 1}${p.mark ? ` · их общая отметка: ${p.mark}` : ""}`,
+            q ? `Спрашивали: ${q}` : null,
+            `ОТВЕТ — ${nameA.toUpperCase()}: ${p.mine}`,
+            `ОТВЕТ — ${nameB.toUpperCase()}: ${p.theirs}`,
+          ]
+            .filter(Boolean)
+            .join("\n");
+        })
+      )
       .join("\n\n");
 
     const system = await promptFor(db, lang);
@@ -283,10 +319,11 @@ Deno.serve(async (req) => {
       made_by: me,
       lang,
       body,
+      block,
       pairs_used: pairs.length,
     });
 
-    return json({ body, cached: false, pairs: pairs.length, fallback: usedFallback });
+    return json({ body, cached: false, block, pairs: pairs.length, fallback: usedFallback });
   } catch (e) {
     return json({ error: `Сбой функции: ${e instanceof Error ? e.message : e}` }, 500);
   }

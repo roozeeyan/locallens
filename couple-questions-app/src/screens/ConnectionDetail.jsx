@@ -60,14 +60,16 @@ const T = {
     hidden: "скрыт",
     verdict: "Заключение",
     verdictBody:
-      "Разбор по всем открытым ответам: где вы сходитесь, что стоит обсудить и на что обратить внимание. Первый — бесплатно.",
+      "Разбор одной темы: где вы сходитесь, где расходитесь принципиально и что стоит проговорить вслух. Первый — бесплатно.",
+    pickTopic: "Какую тему разобрать",
     soon: "Пока недоступно",
     verdictOffline: "Разбор ещё не подключён на сервере. Появится вместе с оплатой.",
-    build: "Собрать разбор",
+    build: (name) => `Разобрать «${name}»`,
     again: "Собрать заново",
     thinking: "Читаю ваши ответы…",
+    oneADay: "Одна тема в сутки: разбор стоит прочитать вдвоём и проговорить, прежде чем брать следующую.",
     needBlock: "Разбор собирается, когда вы оба закроете хотя бы одну тему целиком.",
-    blockReady: "Готово к разбору",
+    blockReady: "Разобрать эту тему",
     remove: "Удалить связь",
     removeConfirm: (name) => `Удалить связь с ${name}? Вы перестанете видеть ответы друг друга.`,
     failed: (msg) => `Не получилось: ${msg}`,
@@ -101,14 +103,16 @@ const T = {
     hidden: "hidden",
     verdict: "Summary",
     verdictBody:
-      "A read of every revealed answer: where you agree, what is worth discussing, and what to watch out for. The first one is free.",
+      "A read of one whole topic: where you agree, where you differ in principle, and what is worth saying out loud. The first one is free.",
+    pickTopic: "Which topic to read",
     soon: "Not available yet",
     verdictOffline: "The summary is not deployed on the server yet. It arrives with payments.",
-    build: "Build the summary",
+    build: (name) => `Read “${name}”`,
     again: "Build again",
     thinking: "Reading your answers…",
-    needBlock: "The summary arrives once you have both completed at least one whole block.",
-    blockReady: "Ready for the summary",
+    oneADay: "One topic a day: a summary is worth reading together and talking through before taking the next one.",
+    needBlock: "The summary arrives once you have both completed at least one whole topic.",
+    blockReady: "Read this topic",
     remove: "Remove connection",
     removeConfirm: (name) => `Remove your connection with ${name}? You will stop seeing each other's answers.`,
     failed: (msg) => `Did not work: ${msg}`,
@@ -136,7 +140,10 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
   const t = T[lang];
   const conn = connections.find((x) => x.id === connId);
   const [tab, setTab] = useState("open");
-  const [verdict, setVerdict] = useState("");
+  // Разбор теперь принадлежит теме, а не связи целиком: у каждой закрытой
+  // темы свой текст, и держать их надо порознь.
+  const [verdicts, setVerdicts] = useState({});
+  const [topic, setTopic] = useState("");
   const [verdictNote, setVerdictNote] = useState("");
   const [busy, setBusy] = useState(false);
   const bodyRef = useRef(null);
@@ -149,23 +156,39 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
   const p = pending(answers, conn);
   const m = matchStats(conn);
   const ready = blocksReadyForVerdict(answers, conn, hiddenBlocks);
+  const current = ready.includes(topic) ? topic : ready[0] || "";
+  const verdict = verdicts[current] || "";
+
+  function pickTopic(id) {
+    setTopic(id);
+    setVerdictNote("");
+    setTab("open");
+    bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   async function buildVerdict() {
+    if (!current) return;
     bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     setBusy(true);
     setVerdictNote("");
     // Тексты вопросов живут в приложении, а не в базе. Без них модель
     // разбирала ответы вслепую и додумывала, о чём вообще спрашивали.
     const asked = {};
-    for (const q of open) asked[q.id] = qText(q, lang);
-    track(STEP.verdictAsked, { pairs: open.length });
-    const res = await fetchVerdict(conn.id, lang, Boolean(verdict), asked);
+    for (const q of open) if (q.cat === current) asked[q.id] = qText(q, lang);
+    const size = Object.keys(asked).length;
+    track(STEP.verdictAsked, { block: current, pairs: size });
+    const res = await fetchVerdict(conn.id, lang, {
+      refresh: Boolean(verdict),
+      questions: asked,
+      block: current,
+      blockTitle: setTitle(current, lang),
+    });
     setBusy(false);
-    if (res.ok) track(STEP.verdictGot, { pairs: open.length });
+    if (res.ok) track(STEP.verdictGot, { block: current, pairs: size });
     // Первый разбор бесплатен; за следующим сервер отправляет
     // к покупке — открываем её сразу, без промежуточных надписей.
     if (res.locked) onPaywall?.();
-    else if (res.ok) setVerdict(res.body);
+    else if (res.ok) setVerdicts((prev) => ({ ...prev, [current]: res.body }));
     else setVerdictNote(res.offline ? t.verdictOffline : res.message);
   }
 
@@ -193,29 +216,48 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
             {t.verdictBody}
           </p>
 
-          {verdict && (
-            <div style={verdictBox}>
-              <RichText text={verdict} />
-            </div>
-          )}
+          {ready.length === 0 ? (
+            <span style={{ font: `400 12px/1.4 ${font.sans}`, color: c.mute }}>{t.needBlock}</span>
+          ) : (
+            <>
+              {/* Тем может быть закрыто несколько, а разбирается всегда одна.
+                  Выбор должен быть виден до нажатия, а не после. */}
+              {ready.length > 1 && (
+                <>
+                  <Label>{t.pickTopic}</Label>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                    {ready.map((id) => (
+                      <Chip key={id} active={id === current} onClick={() => pickTopic(id)}>
+                        {setTitle(id, lang)}
+                      </Chip>
+                    ))}
+                  </div>
+                </>
+              )}
 
-          {verdictNote && (
-            <span style={{ font: `500 12px/1.4 ${font.mono}`, color: c.mute }}>{verdictNote}</span>
-          )}
+              {verdict && (
+                <div style={verdictBox}>
+                  <RichText text={verdict} />
+                </div>
+              )}
 
-          <Button
-            full
-            variant={verdict ? "secondary" : "primary"}
-            disabled={busy || ready.length === 0}
-            onClick={buildVerdict}
-          >
-            {busy ? t.thinking : verdict ? t.again : t.build}
-          </Button>
+              {verdictNote && (
+                <span style={{ font: `500 12px/1.4 ${font.mono}`, color: c.mute }}>
+                  {verdictNote}
+                </span>
+              )}
 
-          {ready.length === 0 && (
-            <span style={{ font: `400 12px/1.4 ${font.sans}`, color: c.mute }}>
-              {t.needBlock}
-            </span>
+              <Button
+                full
+                variant={verdict ? "secondary" : "primary"}
+                disabled={busy}
+                onClick={buildVerdict}
+              >
+                {busy ? t.thinking : verdict ? t.again : t.build(setTitle(current, lang))}
+              </Button>
+
+              <span style={{ font: `400 12px/1.45 ${font.sans}`, color: c.mute }}>{t.oneADay}</span>
+            </>
           )}
         </Card>
 
@@ -288,8 +330,8 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
                   {/* Блок закрыт обоими — отсюда до разбора один шаг, и
                       незачем гнать человека обратно наверх руками. */}
                   {ready.includes(cat.id) && (
-                    <button onClick={buildVerdict} disabled={busy} style={blockVerdict}>
-                      {busy ? t.thinking : `${t.blockReady} →`}
+                    <button onClick={() => pickTopic(cat.id)} style={blockVerdict}>
+                      {`${t.blockReady} →`}
                     </button>
                   )}
                 </Card>
@@ -498,6 +540,26 @@ function Seg({ children, active, onClick }) {
         padding: "9px 8px",
         font: `700 13px ${font.sans}`,
         color: c.ink,
+        cursor: "pointer",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Выбор темы для разбора. Мелкая, но нажимаемая — по ней целятся пальцем. */
+function Chip({ active, onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        font: `600 12.5px ${font.sans}`,
+        background: active ? c.ink : "transparent",
+        color: active ? c.bg : c.ink,
+        border: `1.5px solid ${c.ink}`,
+        borderRadius: 999,
+        padding: "7px 12px",
         cursor: "pointer",
       }}
     >
