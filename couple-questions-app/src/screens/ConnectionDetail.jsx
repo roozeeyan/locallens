@@ -4,6 +4,7 @@ import { screenHeight, screenTop, lockScroll } from "../viewport.js";
 import { Card, Button, Progress, Label } from "../ui.jsx";
 import { dropConnection, setExportConsent, fetchVerdict } from "../sync.js";
 import { exportPair } from "../export.js";
+import { RichText } from "../richtext.jsx";
 import { track, STEP } from "../track.js";
 import {
   useStore,
@@ -194,13 +195,7 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
 
           {verdict && (
             <div style={verdictBox}>
-              {verdict.split("\n").map((line, i) =>
-                line.trim() ? (
-                  <p key={i} style={{ margin: 0, font: `400 13.5px/1.55 ${font.sans}` }}>
-                    {line}
-                  </p>
-                ) : null
-              )}
+              <RichText text={verdict} />
             </div>
           )}
 
