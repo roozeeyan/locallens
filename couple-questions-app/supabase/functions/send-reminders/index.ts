@@ -24,7 +24,9 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const BOT_NAME = "relationship_game_by_roo_bot";
 
-const DAYS: Record<string, number> = { week: 7, twoweeks: 14 };
+// «2 раза в неделю» — это раз в три-четыре дня. Без этой строки такой
+// выбор молча превращался в еженедельный: в списке его просто не было.
+const DAYS: Record<string, number> = { twice: 3, week: 7 };
 
 Deno.serve(async (req) => {
   if (req.headers.get("x-reminder-secret") !== SECRET) {
