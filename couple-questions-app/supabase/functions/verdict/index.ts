@@ -23,6 +23,14 @@ const GROQ_KEY = Deno.env.get("GROQ_API_KEY") || "";
 
 const MODEL = "claude-opus-5";
 const GROQ_MODEL = "openai/gpt-oss-120b";
+// Разбор стоит настоящих денег: каждый вызов — обращение к Claude.
+// Кэш на двенадцать часов защищает от случайных повторов, но кнопка
+// «собрать заново» его обходит, а счёт один на всех. Отсюда два предела:
+// личный — чтобы никто не крутил разбор по кругу, и общий — чтобы даже
+// сговорившись, все вместе не выбрали месячный бюджет за вечер.
+const DAY_LIMIT_PERSON = 5;
+const DAY_LIMIT_ALL = 300;
+
 const MIN_PAIRS = 5;
 const MAX_PAIRS = 60;
 const FRESH_HOURS = 12;
@@ -239,6 +247,22 @@ Deno.serve(async (req) => {
 
     if ((madeBefore || 0) > 0 && !(await hasAccess(db, me))) {
       return json({ error: "locked" }, 402);
+    }
+
+    const since = new Date(Date.now() - 86400_000).toISOString();
+    const [{ count: mineToday }, { count: allToday }] = await Promise.all([
+      db.from("verdicts").select("id", { count: "exact", head: true })
+        .eq("made_by", me).gte("created_at", since),
+      db.from("verdicts").select("id", { count: "exact", head: true })
+        .gte("created_at", since),
+    ]);
+
+    if ((mineToday || 0) >= DAY_LIMIT_PERSON) {
+      return json({ error: "too-often", limit: DAY_LIMIT_PERSON }, 429);
+    }
+    if ((allToday || 0) >= DAY_LIMIT_ALL) {
+      console.error("общий предел разборов исчерпан", allToday);
+      return json({ error: "too-busy" }, 429);
     }
 
     // Скрытые темы исключаем: разбор не должен обходить приватность.

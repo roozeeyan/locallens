@@ -477,6 +477,16 @@ export async function fetchVerdict(connectionId, lang, refresh = false, question
 
     const payload = await res.json().catch(() => ({}));
     if (res.status === 402) return { ok: false, locked: true };
+    // Предел разборов: у каждого свой на сутки, и есть общий на всех.
+    if (res.status === 429) {
+      return {
+        ok: false,
+        message:
+          payload.error === "too-busy"
+            ? "Сегодня собрано слишком много разборов. Попробуйте завтра."
+            : `Разбор можно собирать ${payload.limit || 5} раза в сутки. Возвращайтесь завтра.`,
+      };
+    }
     if (!res.ok) {
       return { ok: false, message: payload.error || "Разбор пока недоступен.", info: payload };
     }
