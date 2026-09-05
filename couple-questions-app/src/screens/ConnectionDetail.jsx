@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { c, font } from "../theme.js";
 import { screenHeight, screenTop, lockScroll } from "../viewport.js";
 import { Card, Button, Progress, Label } from "../ui.jsx";
-import { dropConnection, setExportConsent, fetchVerdict } from "../sync.js";
+import { dropConnection, setExportConsent, fetchVerdict, loadVerdicts } from "../sync.js";
 import { exportPair } from "../export.js";
 import { RichText } from "../richtext.jsx";
+import { BlockArt } from "../blockart.jsx";
 import { track, STEP } from "../track.js";
 import {
   useStore,
@@ -51,8 +52,17 @@ const T = {
     match: "совпадаем",
     talk: "обсудить",
     differ: "расходимся",
-    comparisons: (n) => `Сравнения (${n})`,
-    byBlocks: "По темам",
+    topics: "Темы",
+    topicsNote: "Внутри темы — ваши ответы рядом и разбор по ней.",
+    openedOf: (n, total) => `открыто ${n} из ${total}`,
+    waitingBoth: "ждём ответов",
+    verdictReady: "разбор готов",
+    verdictDone: "разбор собран",
+    verdictHere: (name) => `Разбор готов: ${name}`,
+    verdictGo: "Открыть",
+    verdictMade: "Разбор собран — нажмите, чтобы прочитать",
+    hide: "Свернуть",
+    emptyTopic: "В этой теме пока нет общих ответов.",
     nothingYet: "Пока нечего сравнивать",
     nothingBody: "Ответ открывается, когда вы оба ответили на один и тот же вопрос.",
     theirTurn: (name, n) => ` ${name} уже ответил на ${n} — очередь за вами.`,
@@ -61,7 +71,6 @@ const T = {
     verdict: "Заключение",
     verdictBody:
       "Разбор одной темы: где вы сходитесь, где расходитесь принципиально и что стоит проговорить вслух. Первый — бесплатно.",
-    pickTopic: "Какую тему разобрать",
     soon: "Пока недоступно",
     verdictOffline: "Разбор ещё не подключён на сервере. Появится вместе с оплатой.",
     build: (name) => `Разобрать «${name}»`,
@@ -70,7 +79,6 @@ const T = {
     oneADay: "Одна тема в сутки: разбор стоит прочитать вдвоём и проговорить, прежде чем брать следующую.",
     fallbackUsed: "Основная модель не ответила — разбор собрала запасная, она слабее. Попробуйте «Собрать заново».",
     needBlock: "Разбор собирается, когда вы оба закроете хотя бы одну тему целиком.",
-    blockReady: "Разобрать эту тему",
     remove: "Удалить связь",
     removeConfirm: (name) => `Удалить связь с ${name}? Вы перестанете видеть ответы друг друга.`,
     failed: (msg) => `Не получилось: ${msg}`,
@@ -95,8 +103,17 @@ const T = {
     match: "match",
     talk: "discuss",
     differ: "differ",
-    comparisons: (n) => `Comparisons (${n})`,
-    byBlocks: "By block",
+    topics: "Topics",
+    topicsNote: "Inside a topic: your answers side by side, and the summary for it.",
+    openedOf: (n, total) => `${n} of ${total} open`,
+    waitingBoth: "waiting for answers",
+    verdictReady: "summary ready",
+    verdictDone: "summary written",
+    verdictHere: (name) => `Summary ready: ${name}`,
+    verdictGo: "Open",
+    verdictMade: "Summary is ready — tap to read it",
+    hide: "Collapse",
+    emptyTopic: "No shared answers in this topic yet.",
     nothingYet: "Nothing to compare yet",
     nothingBody: "An answer opens when you have both answered the same question.",
     theirTurn: (name, n) => ` ${name} has already answered ${n} — your turn.`,
@@ -105,7 +122,6 @@ const T = {
     verdict: "Summary",
     verdictBody:
       "A read of one whole topic: where you agree, where you differ in principle, and what is worth saying out loud. The first one is free.",
-    pickTopic: "Which topic to read",
     soon: "Not available yet",
     verdictOffline: "The summary is not deployed on the server yet. It arrives with payments.",
     build: (name) => `Read “${name}”`,
@@ -114,7 +130,6 @@ const T = {
     oneADay: "One topic a day: a summary is worth reading together and talking through before taking the next one.",
     fallbackUsed: "The main model did not answer — a weaker backup wrote this. Try “Build again”.",
     needBlock: "The summary arrives once you have both completed at least one whole topic.",
-    blockReady: "Read this topic",
     remove: "Remove connection",
     removeConfirm: (name) => `Remove your connection with ${name}? You will stop seeing each other's answers.`,
     failed: (msg) => `Did not work: ${msg}`,
@@ -141,14 +156,30 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
   const lang = profile.lang === "en" ? "en" : "ru";
   const t = T[lang];
   const conn = connections.find((x) => x.id === connId);
-  const [tab, setTab] = useState("open");
+  // Экран связи двухуровневый. Наверху — сетка тем, внутри темы — ответы
+  // по ней и её разбор. Плоский список всех открытых вопросов работал,
+  // пока их было двенадцать; на ста девятнадцати это лента без дна.
+  const [openTopic, setOpenTopic] = useState(null);
   // Разбор теперь принадлежит теме, а не связи целиком: у каждой закрытой
   // темы свой текст, и держать их надо порознь.
   const [verdicts, setVerdicts] = useState({});
-  const [topic, setTopic] = useState("");
   const [verdictNote, setVerdictNote] = useState("");
+  const [verdictOpen, setVerdictOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const bodyRef = useRef(null);
+
+  // Разборы, собранные раньше, подтягиваем при открытии связи. Иначе тема
+  // с готовым разбором выглядит как тема без него, и человек жмёт
+  // «собрать» ради текста, который давно написан.
+  useEffect(() => {
+    let alive = true;
+    loadVerdicts(connId, lang).then((made) => {
+      if (alive) setVerdicts(made);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [connId, lang]);
 
   if (!conn) return null;
 
@@ -158,14 +189,27 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
   const p = pending(answers, conn);
   const m = matchStats(conn);
   const ready = blocksReadyForVerdict(answers, conn, hiddenBlocks);
-  const current = ready.includes(topic) ? topic : ready[0] || "";
+  const current = openTopic || "";
   const verdict = verdicts[current] || "";
 
-  function pickTopic(id) {
-    setTopic(id);
+  // Сколько вопросов темы открыто обоим — число, ради которого человек
+  // и заходит в связь.
+  const openBy = {};
+  for (const q of open) openBy[q.cat] = (openBy[q.cat] || 0) + 1;
+
+  function enterTopic(id) {
+    setOpenTopic(id);
     setVerdictNote("");
-    setTab("open");
-    bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    // Готовый разбор открываем свёрнутым: это простыня на два экрана, и
+    // разворачивать её человек должен сам, когда собрался читать.
+    setVerdictOpen(false);
+    bodyRef.current?.scrollTo({ top: 0 });
+  }
+
+  function leaveTopic() {
+    setOpenTopic(null);
+    setVerdictNote("");
+    bodyRef.current?.scrollTo({ top: 0 });
   }
 
   async function buildVerdict() {
@@ -192,6 +236,7 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
     if (res.locked) onPaywall?.();
     else if (res.ok) {
       setVerdicts((prev) => ({ ...prev, [current]: res.body }));
+      setVerdictOpen(true);
       // Запасная модель заметно слабее основной. Молчать об этом нечестно:
       // человек решит, что так продукт и работает.
       if (res.fallback) setVerdictNote(t.fallbackUsed);
@@ -199,97 +244,122 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
     else setVerdictNote(res.offline ? t.verdictOffline : res.message);
   }
 
+  const topicOpen = openTopic ? openBy[openTopic] || 0 : 0;
+  const bp = openTopic ? connBlockProgress(answers, conn, openTopic) : null;
+  const topicTotal = bp ? bp.total : 0;
+  const topicQuestions = openTopic ? open.filter((q) => q.cat === openTopic) : [];
+
   return (
     <div style={wrap}>
       <div style={top}>
-        <button onClick={onClose} style={back} aria-label={t.back}>
+        <button onClick={openTopic ? leaveTopic : onClose} style={back} aria-label={t.back}>
           ←
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ font: `700 19px ${font.serif}`, color: c.ink }}>{conn.name}</div>
+          <div style={{ font: `700 19px ${font.serif}`, color: c.ink }}>
+            {openTopic ? setTitle(openTopic, lang) : conn.name}
+          </div>
           <div style={{ font: `400 12px ${font.sans}`, color: c.mute }}>
-            {t.kinds[conn.kind] || t.kinds.other}
-            {t.opened(open.length)}
+            {openTopic
+              ? `${conn.name} · ${t.openedOf(topicOpen, topicTotal)}`
+              : `${t.kinds[conn.kind] || t.kinds.other}${t.opened(open.length)}`}
           </div>
         </div>
       </div>
 
       <div style={body} ref={bodyRef}>
-        {/* Разбор — то, ради чего человек сюда шёл, поэтому он стоит первым.
-            Внизу, за списком из сотни вопросов, его попросту не находили. */}
-        <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <Label>{t.verdict}</Label>
-          <p style={{ margin: 0, font: `400 15.5px/1.5 ${font.sans}`, color: c.ink }}>
-            {t.verdictBody}
-          </p>
-
-          {ready.length === 0 ? (
-            <span style={{ font: `400 12px/1.4 ${font.sans}`, color: c.mute }}>{t.needBlock}</span>
-          ) : (
-            <>
-              {/* Тем может быть закрыто несколько, а разбирается всегда одна.
-                  Выбор должен быть виден до нажатия, а не после. */}
-              {ready.length > 1 && (
-                <>
-                  <Label>{t.pickTopic}</Label>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                    {ready.map((id) => (
-                      <Chip key={id} active={id === current} onClick={() => pickTopic(id)}>
-                        {setTitle(id, lang)}
-                      </Chip>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {verdict && (
-                <div style={verdictBox}>
-                  <RichText text={verdict} />
-                </div>
-              )}
-
-              {verdictNote && (
-                <span style={{ font: `500 12px/1.4 ${font.mono}`, color: c.mute }}>
-                  {verdictNote}
-                </span>
-              )}
-
-              <Button
-                full
-                variant={verdict ? "secondary" : "primary"}
-                disabled={busy}
-                onClick={buildVerdict}
-              >
-                {busy ? t.thinking : verdict ? t.again : t.build(setTitle(current, lang))}
-              </Button>
-
-              <span style={{ font: `400 12px/1.45 ${font.sans}`, color: c.mute }}>{t.oneADay}</span>
-            </>
-          )}
-        </Card>
-
-        {m.rated > 0 && (
-          <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <Label>{t.marks}</Label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <Stat n={m.match} label={t.match} bg={c.sage} />
-              <Stat n={m.talk} label={t.talk} bg={c.paper} />
-              <Stat n={m.differ} label={t.differ} bg={c.coral} onBg={c.onCoral} />
-            </div>
-          </Card>
-        )}
-
-        <div style={{ display: "flex", gap: 8 }}>
-          <Seg active={tab === "open"} onClick={() => setTab("open")}>
-            {t.comparisons(open.length)}
-          </Seg>
-          <Seg active={tab === "blocks"} onClick={() => setTab("blocks")}>
-            {t.byBlocks}
-          </Seg>
-        </div>
-
-        {tab === "open" && (
+        {openTopic ? (
           <>
+            <VerdictCard
+              t={t}
+              lang={lang}
+              topic={openTopic}
+              ready={ready.includes(openTopic)}
+              verdict={verdict}
+              note={verdictNote}
+              busy={busy}
+              open={verdictOpen}
+              onToggle={() => setVerdictOpen((x) => !x)}
+              onBuild={buildVerdict}
+            />
+
+            {topicQuestions.length === 0 ? (
+              <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                <Label>{t.nothingYet}</Label>
+                <p style={{ margin: 0, font: `400 15.5px/1.5 ${font.sans}`, color: c.ink }}>
+                  {t.emptyTopic} {t.nothingBody}
+                </p>
+                <MiniRow label={t.you} pct={bp.minePct} n={bp.mine} total={topicTotal} />
+                <MiniRow label={conn.name} pct={bp.theirsPct} n={bp.theirs} total={topicTotal} />
+              </Card>
+            ) : (
+              topicQuestions.map((q) => (
+                <Comparison
+                  key={q.id}
+                  q={q}
+                  lang={lang}
+                  t={t}
+                  mine={answers[q.id].text}
+                  theirs={conn.answers[q.id].text}
+                  theirName={conn.name}
+                  mark={conn.reactions?.[q.id]}
+                  onMark={(value) => actions.setReaction(conn.id, q.id, value)}
+                />
+              ))
+            )}
+          </>
+        ) : (
+          <>
+            {/* Разбор — то, ради чего человек сюда шёл. Одна строка вместо
+                прежней карточки на пол-экрана: сам разбор живёт в теме. */}
+            {ready.length > 0 && (
+              <Card
+                pad={13}
+                onClick={() => enterTopic(ready[0])}
+                style={{ display: "flex", alignItems: "center", gap: 10, background: c.sage }}
+              >
+                <span style={{ flex: 1, font: `700 15px ${font.sans}`, color: c.ink }}>
+                  {t.verdictHere(setTitle(ready[0], lang))}
+                </span>
+                <span style={{ font: `600 18px ${font.sans}`, color: c.ink }}>›</span>
+              </Card>
+            )}
+
+            {m.rated > 0 && (
+              <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <Label>{t.marks}</Label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <Stat n={m.match} label={t.match} bg={c.sage} />
+                  <Stat n={m.talk} label={t.talk} bg={c.paper} />
+                  <Stat n={m.differ} label={t.differ} bg={c.coral} onBg={c.onCoral} />
+                </div>
+              </Card>
+            )}
+
+            <div>
+              <Label>{t.topics}</Label>
+              <p style={{ margin: "5px 0 0", font: `400 13.5px/1.45 ${font.sans}`, color: c.mute }}>
+                {t.topicsNote}
+              </p>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {CATEGORIES.map((x) => (
+                <TopicCard
+                  key={x.id}
+                  id={x.id}
+                  t={t}
+                  lang={lang}
+                  hidden={hiddenBlocks.includes(x.id)}
+                  opened={openBy[x.id] || 0}
+                  total={connBlockProgress(answers, conn, x.id).total}
+                  ready={ready.includes(x.id)}
+                  made={Boolean(verdicts[x.id])}
+                  onOpen={() => enterTopic(x.id)}
+                />
+              ))}
+            </div>
+
             {open.length === 0 && (
               <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                 <Label>{t.nothingYet}</Label>
@@ -299,54 +369,11 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
                 </p>
               </Card>
             )}
-
-            {open.map((q) => (
-              <Comparison
-                key={q.id}
-                q={q}
-                lang={lang}
-                t={t}
-                mine={answers[q.id].text}
-                theirs={conn.answers[q.id].text}
-                theirName={conn.name}
-                mark={conn.reactions?.[q.id]}
-                onMark={(value) => actions.setReaction(conn.id, q.id, value)}
-              />
-            ))}
           </>
         )}
 
-        {tab === "blocks" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {CATEGORIES.map((cat) => {
-              const bp = connBlockProgress(answers, conn, cat.id);
-              const hidden = hiddenBlocks.includes(cat.id);
-              return (
-                <Card key={cat.id} pad={13} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                    <span style={{ font: `700 15.5px ${font.sans}`, color: c.ink }}>
-                      {setTitle(cat.id, lang)}
-                    </span>
-                    {hidden && (
-                      <span style={{ font: `600 11px ${font.mono}`, color: c.mute }}>{t.hidden}</span>
-                    )}
-                  </div>
-                  <MiniRow label={t.you} pct={bp.minePct} n={bp.mine} total={bp.total} />
-                  <MiniRow label={conn.name} pct={bp.theirsPct} n={bp.theirs} total={bp.total} />
-
-                  {/* Блок закрыт обоими — отсюда до разбора один шаг, и
-                      незачем гнать человека обратно наверх руками. */}
-                  {ready.includes(cat.id) && (
-                    <button onClick={() => pickTopic(cat.id)} style={blockVerdict}>
-                      {`${t.blockReady} →`}
-                    </button>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        )}
-
+        {!openTopic && (
+        <>
         <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Label>{t.pairExport}</Label>
           <p style={{ margin: 0, font: `400 14.5px/1.55 ${font.sans}`, color: c.ink }}>{t.pairBody}</p>
@@ -403,10 +430,171 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
         >
           {t.remove}
         </Button>
+        </>
+        )}
       </div>
     </div>
   );
 }
+
+/**
+ * Тема внутри связи. Тот же язык, что и на главной анкете: человек уже
+ * научился узнавать темы по рисунку, и переучивать его на другом экране
+ * незачем.
+ *
+ * Число здесь одно и главное — сколько вопросов открыто обоим. Свой
+ * прогресс человек смотрит в анкете; сюда он приходит читать общее.
+ */
+function TopicCard({ id, t, lang, hidden, opened, total, ready, made, onOpen }) {
+  const alive = !hidden;
+
+  return (
+    <button
+      onClick={alive ? onOpen : undefined}
+      disabled={!alive}
+      style={{
+        ...topicCard,
+        background: opened > 0 ? c.paper : c.dim,
+        cursor: alive ? "pointer" : "default",
+      }}
+    >
+      <span
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          color: c.ink,
+          opacity: opened > 0 ? 0.9 : 0.45,
+        }}
+      >
+        <BlockArt id={id} size={92} />
+      </span>
+
+      <span
+        style={{
+          font: `600 14px/1.28 ${font.sans}`,
+          color: c.ink,
+          opacity: opened > 0 ? 1 : 0.75,
+        }}
+      >
+        {setTitle(id, lang)}
+      </span>
+
+      {hidden ? (
+        <span style={{ font: `500 11px ${font.mono}`, color: c.mute }}>{t.hidden}</span>
+      ) : opened > 0 ? (
+        <>
+          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ flex: 1 }}>
+              <Progress value={total ? (opened / total) * 100 : 0} height={5} />
+            </span>
+            <span style={{ font: `500 11px ${font.mono}`, color: c.ink }}>
+              {opened}/{total}
+            </span>
+          </span>
+          {(made || ready) && (
+            <span style={{ font: `600 11.5px ${font.sans}`, color: c.ink }}>
+              {made ? t.verdictDone : t.verdictReady} →
+            </span>
+          )}
+        </>
+      ) : (
+        <span style={{ font: `500 11px ${font.mono}`, color: c.mute }}>{t.waitingBoth}</span>
+      )}
+    </button>
+  );
+}
+
+const topicCard = {
+  border: "none",
+  borderRadius: 26,
+  padding: "13px 13px 12px",
+  display: "flex",
+  flexDirection: "column",
+  gap: 8,
+  width: "100%",
+  textAlign: "left",
+  font: "inherit",
+  color: "inherit",
+};
+
+/**
+ * Разбор темы. Свёрнут по умолчанию: это текст на два-три экрана, и пока
+ * он развёрнут, до самих ответов надо долистать. Заголовок — кнопка.
+ */
+function VerdictCard({ t, lang, topic, ready, verdict, note, busy, open, onToggle, onBuild }) {
+  return (
+    <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {verdict ? (
+        <button onClick={onToggle} style={verdictHead}>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", font: `600 11px ${font.mono}`, letterSpacing: "0.1em", textTransform: "uppercase", color: c.mute }}>
+              {t.verdict}
+            </span>
+            {!open && (
+              <span style={{ display: "block", marginTop: 3, font: `400 13.5px/1.4 ${font.sans}`, color: c.ink }}>
+                {t.verdictMade}
+              </span>
+            )}
+          </span>
+          <span
+            style={{
+              font: `600 15px ${font.sans}`,
+              color: c.ink,
+              transform: open ? "rotate(180deg)" : "none",
+              transition: "transform .15s",
+            }}
+          >
+            ⌄
+          </span>
+        </button>
+      ) : (
+        <>
+          <Label>{t.verdict}</Label>
+          <p style={{ margin: 0, font: `400 15.5px/1.5 ${font.sans}`, color: c.ink }}>
+            {t.verdictBody}
+          </p>
+        </>
+      )}
+
+      {verdict && open && (
+        <div style={verdictBox}>
+          <RichText text={verdict} />
+        </div>
+      )}
+
+      {note && (
+        <span style={{ font: `500 12px/1.4 ${font.mono}`, color: c.mute }}>{note}</span>
+      )}
+
+      {!ready ? (
+        !verdict && (
+          <span style={{ font: `400 12px/1.4 ${font.sans}`, color: c.mute }}>{t.needBlock}</span>
+        )
+      ) : (
+        <>
+          <Button full variant={verdict ? "secondary" : "primary"} disabled={busy} onClick={onBuild}>
+            {busy ? t.thinking : verdict ? t.again : t.build(setTitle(topic, lang))}
+          </Button>
+          <span style={{ font: `400 12px/1.45 ${font.sans}`, color: c.mute }}>{t.oneADay}</span>
+        </>
+      )}
+    </Card>
+  );
+}
+
+const verdictHead = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  background: "transparent",
+  border: "none",
+  padding: 0,
+  width: "100%",
+  textAlign: "left",
+  font: "inherit",
+  color: "inherit",
+  cursor: "pointer",
+};
 
 function Answer({ who, text, accent }) {
   return (
@@ -534,47 +722,6 @@ function Stat({ n, label, bg, onBg = c.ink }) {
   );
 }
 
-function Seg({ children, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        flex: 1,
-        background: active ? c.sage : c.paper,
-        border: `1.5px solid ${c.ink}`,
-        borderRadius: 999,
-        boxShadow: `0 2px 0 ${c.ink}`,
-        padding: "9px 8px",
-        font: `700 13px ${font.sans}`,
-        color: c.ink,
-        cursor: "pointer",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-/** Выбор темы для разбора. Мелкая, но нажимаемая — по ней целятся пальцем. */
-function Chip({ active, onClick, children }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        font: `600 12.5px ${font.sans}`,
-        background: active ? c.ink : "transparent",
-        color: active ? c.bg : c.ink,
-        border: `1.5px solid ${c.ink}`,
-        borderRadius: 999,
-        padding: "7px 12px",
-        cursor: "pointer",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
 const verdictBox = {
   minWidth: 0,
   maxWidth: "100%",
@@ -587,17 +734,6 @@ const verdictBox = {
   flexDirection: "column",
   gap: 8,
   color: c.ink,
-};
-const blockVerdict = {
-  alignSelf: "flex-start",
-  background: "transparent",
-  border: "none",
-  padding: "2px 0",
-  font: `600 12.5px ${font.sans}`,
-  color: c.ink,
-  textDecoration: "underline",
-  textUnderlineOffset: 3,
-  cursor: "pointer",
 };
 const wrap = {
   position: "fixed",

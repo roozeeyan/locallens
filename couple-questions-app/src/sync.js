@@ -457,6 +457,34 @@ export async function pushReaction(connectionId, questionId, value) {
  * Разбор от ИИ. Считает его серверная функция: ключ модели не должен
  * попадать в приложение, а отбор ответов нельзя доверять клиенту.
  */
+/**
+ * Готовые разборы связи — по одному на тему.
+ *
+ * Читаем напрямую из базы, а не через функцию: она на каждый вызов
+ * проверяет пределы и в отсутствие кэша пошла бы к модели. А здесь
+ * задача обратная — показать то, что уже написано, и ничего не тратить.
+ */
+export async function loadVerdicts(connectionId, lang) {
+  if (!isRemote || !me) return {};
+
+  const { data, error } = await supabase
+    .from("verdicts")
+    .select("block, body, created_at")
+    .eq("connection_id", connectionId)
+    .eq("lang", lang)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return {};
+
+  const byBlock = {};
+  for (const row of data) {
+    // Список идёт от свежих к старым, поэтому первый встреченный —
+    // последний собранный по этой теме.
+    if (row.block && !byBlock[row.block]) byBlock[row.block] = row.body;
+  }
+  return byBlock;
+}
+
 export async function fetchVerdict(connectionId, lang, opts = {}) {
   const { refresh = false, questions = {}, block = "", blockTitle = "" } = opts;
   if (!isRemote || !me) return { ok: false, message: "Нет связи с сервером." };
