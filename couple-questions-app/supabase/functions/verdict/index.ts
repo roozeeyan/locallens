@@ -9,14 +9,18 @@
 // попросить разбор по чужой связи: функция сама проверяет, что человек
 // участник этой связи, и сама отбирает вопросы, открытые обоим.
 //
-// Разбор пишет Claude. Прежняя модель на Groq путала, кто из двоих что
-// сказал, и сглаживала расхождения в согласие — для приложения про
-// отношения это не мелкая неточность, а прямой вред. Groq оставлен
-// запасным: если Claude не ответит, разбор соберётся, а не сломается.
+// Разбор пишет Gemini: у него есть бесплатный уровень, а разбор — одна
+// тема в сутки, в лимиты укладывается с запасом. Groq остаётся вторым,
+// Claude — третьим, на случай если на его счёте появятся деньги.
 //
-// Секреты:
-//   ANTHROPIC_API_KEY — основная модель
-//   GROQ_API_KEY      — запасная
+// Порядок именно такой, потому что важен не бренд, а то, что до модели
+// вообще доходит очередь: пока на счёте Anthropic был ноль, все разборы
+// молча писала самая слабая модель из трёх, и выглядело это позорно.
+//
+// Секреты (любого может не быть — тогда очередь идёт дальше):
+//   GEMINI_API_KEY    — основная модель
+//   GROQ_API_KEY      — вторая
+//   ANTHROPIC_API_KEY — третья
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.71.0";
 
@@ -25,9 +29,11 @@ const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
 const GROQ_KEY = Deno.env.get("GROQ_API_KEY") || "";
+const GEMINI_KEY = Deno.env.get("GEMINI_API_KEY") || "";
 
 const MODEL = "claude-opus-5";
 const GROQ_MODEL = "openai/gpt-oss-120b";
+const GEMINI_API = "https://generativelanguage.googleapis.com/v1beta";
 // Одна тема в сутки — это не экономия на модели, а замысел продукта.
 // Разбор нужно прочитать вдвоём и проговорить; две-три темы подряд
 // превращаются в поток, который пролистывают. Пересобрать уже открытую
@@ -81,6 +87,97 @@ async function promptFor(db: ReturnType<typeof createClient>, lang: string) {
     .eq("lang", lang === "en" ? "en" : "ru")
     .maybeSingle();
   return data?.body || FALLBACK_PROMPT;
+}
+
+/**
+ * Какие модели Gemini доступны этому ключу — спрашиваем у самого Gemini.
+ *
+ * Названия у Google меняются часто, а зашитое в код имя однажды просто
+ * перестанет существовать, и разбор молча уедет на запасную модель. Пусть
+ * список приходит с той стороны: мы только выбираем из него лучшую.
+ */
+let geminiChoices: string[] | null = null;
+
+async function geminiModels() {
+  if (geminiChoices) return geminiChoices;
+
+  const res = await fetch(`${GEMINI_API}/models?key=${GEMINI_KEY}`);
+  if (!res.ok) throw new Error((await res.text()).slice(0, 200));
+  const payload = await res.json();
+
+  const names: string[] = (payload.models || [])
+    .filter((m: { supportedGenerationMethods?: string[] }) =>
+      (m.supportedGenerationMethods || []).includes("generateContent")
+    )
+    .map((m: { name?: string }) => String(m.name || "").replace(/^models\//, ""))
+    .filter((n: string) => n.startsWith("gemini"))
+    // Отсекаем то, что для разбора не годится: эмбеддинги, картинки, речь,
+    // облегчённые версии.
+    .filter((n: string) => !/embedding|aqa|image|vision|tts|audio|live|lite/.test(n));
+
+  // Свежая версия важнее всего, следом — «pro» вместо «flash», следом —
+  // стабильная сборка вместо превью.
+  const rank = (n: string) => {
+    const ver = Number((n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
+    const tier = n.includes("pro") ? 2 : n.includes("flash") ? 1 : 0;
+    const stable = /preview|exp/.test(n) ? 0 : 1;
+    return ver * 100 + tier * 10 + stable;
+  };
+
+  geminiChoices = names.sort((a, b) => rank(b) - rank(a)).slice(0, 4);
+  if (!geminiChoices.length) throw new Error("ключу не доступна ни одна модель");
+  return geminiChoices;
+}
+
+/**
+ * Разбор от Gemini. Перебирает модели сверху вниз: лучшая может быть
+ * недоступна бесплатному ключу или упереться в дневной лимит, и тогда
+ * разбор должен собрать следующая, а не сорваться.
+ */
+async function askGemini(system: string, material: string) {
+  const models = await geminiModels();
+  let last = "";
+
+  for (const model of models) {
+    const res = await fetch(`${GEMINI_API}/models/${model}:generateContent?key=${GEMINI_KEY}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: material }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 16000 },
+      }),
+    });
+
+    if (!res.ok) {
+      last = `${model}: ${(await res.text()).slice(0, 200)}`;
+      console.error("gemini", last);
+      continue;
+    }
+
+    const payload = await res.json();
+    const blocked = payload.promptFeedback?.blockReason;
+    if (blocked) {
+      last = `${model}: материал отклонён (${blocked})`;
+      console.error("gemini", last);
+      continue;
+    }
+
+    const text = (payload.candidates?.[0]?.content?.parts || [])
+      .map((part: { text?: string }) => part.text || "")
+      .join("")
+      .trim();
+
+    if (text) {
+      console.log("разбор написал", model);
+      return text;
+    }
+
+    last = `${model}: пустой ответ (${payload.candidates?.[0]?.finishReason || "без причины"})`;
+    console.error("gemini", last);
+  }
+
+  throw new Error(last || "ни одна модель не ответила");
 }
 
 /** Разбор от Claude. Возвращает текст либо бросает — тогда пробуем запасную. */
@@ -295,24 +392,34 @@ Deno.serve(async (req) => {
 
     const system = await promptFor(db, lang);
 
+    // Очередь моделей. Первая, что ответит, и пишет разбор; остальные —
+    // страховка. Если сработала не первая, приложение об этом скажет: у
+    // запасных качество заметно ниже, и выдавать их за основное нечестно.
+    const queue: { name: string; key: string; run: () => Promise<string> }[] = [
+      { name: "gemini", key: GEMINI_KEY, run: () => askGemini(system, material) },
+      { name: "groq", key: GROQ_KEY, run: () => askGroq(system, material) },
+      { name: "claude", key: ANTHROPIC_KEY, run: () => askClaude(system, material) },
+    ].filter((m) => m.key);
+
+    if (!queue.length) return json({ error: "Ни одна модель не подключена" }, 502);
+
     let body = "";
     let usedFallback = false;
-    try {
-      if (!ANTHROPIC_KEY) throw new Error("ключ Claude не задан");
-      body = await askClaude(system, material);
-    } catch (e) {
-      console.error("claude", e instanceof Error ? e.message : e);
-      if (!GROQ_KEY) {
-        return json({ error: `Модель не ответила: ${e instanceof Error ? e.message : e}` }, 502);
-      }
+    const failures: string[] = [];
+
+    for (const [i, model] of queue.entries()) {
       try {
-        body = await askGroq(system, material);
-        usedFallback = true;
-      } catch (e2) {
-        console.error("groq", e2 instanceof Error ? e2.message : e2);
-        return json({ error: `Модель не ответила: ${e2 instanceof Error ? e2.message : e2}` }, 502);
+        body = await model.run();
+        usedFallback = i > 0;
+        break;
+      } catch (e) {
+        const why = e instanceof Error ? e.message : String(e);
+        console.error(model.name, why);
+        failures.push(`${model.name}: ${why}`);
       }
     }
+
+    if (!body) return json({ error: `Модель не ответила. ${failures.join(" · ")}` }, 502);
 
     await db.from("verdicts").insert({
       connection_id: connectionId,
