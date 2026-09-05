@@ -39,9 +39,20 @@ function inline(text, keyBase) {
 
 const BULLET = /^\s*([-*•–—]|\d+[.)])\s+/;
 
+// Модель разделяет слова узкими неразрывными пробелами — их в тексте
+// оказалось больше половины. Браузеру запрещено переносить по такому
+// пробелу, поэтому полстроки склеивается в одно «слово», не помещается
+// в экран и утаскивает вбок всю страницу. Приводим к обычным пробелам
+// до разбора: приложение не должно ломаться от того, как модель набрала
+// текст.
+const NO_BREAK = /[\u00A0\u2007\u202F\u2060\uFEFF]/g;
+
 /** Строки → блоки. Соседние обычные строки склеиваются в один абзац. */
 function parse(text) {
-  const lines = String(text || "").replace(/\r/g, "").split("\n");
+  const lines = String(text || "")
+    .replace(/\r/g, "")
+    .replace(NO_BREAK, " ")
+    .split("\n");
   const blocks = [];
   let para = [];
 
@@ -112,7 +123,7 @@ export function RichText({ text, size = 14 }) {
   const blocks = parse(text);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 7, minWidth: 0, overflowWrap: "anywhere" }}>
       {blocks.map((b, i) => {
         if (b.kind === "hr") {
           return (

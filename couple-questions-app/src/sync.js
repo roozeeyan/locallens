@@ -493,7 +493,13 @@ export async function fetchVerdict(connectionId, lang, opts = {}) {
     if (!res.ok) {
       return { ok: false, message: payload.error || "Разбор пока недоступен.", info: payload };
     }
-    return { ok: true, body: payload.body, cached: payload.cached, block: payload.block };
+    return {
+      ok: true,
+      body: payload.body,
+      cached: payload.cached,
+      block: payload.block,
+      fallback: Boolean(payload.fallback),
+    };
   } catch {
     // Функции разбора может просто не быть на сервере — до неё запрос
     // не доходит вовсе. Показывать браузерное «Load failed» нельзя.

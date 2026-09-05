@@ -68,6 +68,7 @@ const T = {
     again: "Собрать заново",
     thinking: "Читаю ваши ответы…",
     oneADay: "Одна тема в сутки: разбор стоит прочитать вдвоём и проговорить, прежде чем брать следующую.",
+    fallbackUsed: "Основная модель не ответила — разбор собрала запасная, она слабее. Попробуйте «Собрать заново».",
     needBlock: "Разбор собирается, когда вы оба закроете хотя бы одну тему целиком.",
     blockReady: "Разобрать эту тему",
     remove: "Удалить связь",
@@ -111,6 +112,7 @@ const T = {
     again: "Build again",
     thinking: "Reading your answers…",
     oneADay: "One topic a day: a summary is worth reading together and talking through before taking the next one.",
+    fallbackUsed: "The main model did not answer — a weaker backup wrote this. Try “Build again”.",
     needBlock: "The summary arrives once you have both completed at least one whole topic.",
     blockReady: "Read this topic",
     remove: "Remove connection",
@@ -188,7 +190,12 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
     // Первый разбор бесплатен; за следующим сервер отправляет
     // к покупке — открываем её сразу, без промежуточных надписей.
     if (res.locked) onPaywall?.();
-    else if (res.ok) setVerdicts((prev) => ({ ...prev, [current]: res.body }));
+    else if (res.ok) {
+      setVerdicts((prev) => ({ ...prev, [current]: res.body }));
+      // Запасная модель заметно слабее основной. Молчать об этом нечестно:
+      // человек решит, что так продукт и работает.
+      if (res.fallback) setVerdictNote(t.fallbackUsed);
+    }
     else setVerdictNote(res.offline ? t.verdictOffline : res.message);
   }
 
@@ -569,6 +576,9 @@ function Chip({ active, onClick, children }) {
 }
 
 const verdictBox = {
+  minWidth: 0,
+  maxWidth: "100%",
+  overflowWrap: "anywhere",
   background: c.bg,
   border: `1.5px solid ${c.ink}`,
   borderRadius: 24,
@@ -622,6 +632,9 @@ const body = {
   flexDirection: "column",
   gap: 12,
   overflowY: "auto",
+  // Ничто внутри не должно уметь утащить страницу вбок: один разъехавшийся
+  // блок превращал весь экран в горизонтально прокручиваемый.
+  overflowX: "hidden",
   maxWidth: 560,
   width: "100%",
   margin: "0 auto",
