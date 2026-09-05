@@ -47,99 +47,33 @@ const json = (body: unknown, status = 200) =>
     headers: { ...CORS, "content-type": "application/json" },
   });
 
-const PROMPT = {
-  ru: `Ты читаешь ответы двух людей на одни и те же вопросы об отношениях.
-Твоя работа — увидеть, что там на самом деле, и сказать это прямо.
+/**
+ * Задание для модели лежит в базе, в таблице prompts.
+ *
+ * Это главный текст продукта: от него напрямую зависит, стоит ли разбор
+ * своих денег, и переписываться он будет ещё много раз. В коде он
+ * означал бы разворачивание функции ради правки одной фразы.
+ *
+ * Здесь остаётся только запасной вариант — на случай, если база почему-то
+ * не отдала текст. Он нарочно короткий: подробный дубль разошёлся бы с
+ * настоящим заданием на второй же правке.
+ */
+const FALLBACK_PROMPT =
+  "Ты читаешь ответы двух людей на одни и те же вопросы об отношениях. " +
+  "Покажи, где их картины совпадают, где расходятся принципиально, а где " +
+  "только на словах. Каждое утверждение подкрепляй дословной цитатой того, " +
+  "кто это сказал, и никогда не приписывай одному сказанное другим. " +
+  "Не выдавай разное за одинаковое. Пиши столько, сколько требует материал.";
 
-ЧТО НАПИСАТЬ
-
-1. В чём вы сходитесь
-   Только то, где оба сказали по сути одно и то же. Назови тему и
-   приведи слова обоих в кавычках.
-
-2. О чём стоит поговорить
-   Различия. Назови позицию каждого отдельно, обе — цитатами.
-   Не объясняй, кто прав.
-
-3. На что обратить внимание
-   То, что может стать трудным позже. Мягко, но не расплывчато:
-   назови конкретное место в ответах, откуда это видно.
-
-4. Один вопрос на вечер
-   Который стоит задать друг другу вслух. Он должен вырастать из
-   пункта 2 или 3, а не быть общим.
-
-ПРАВИЛА
-
-Имена. Каждый ответ подписан именем того, кто его дал. Прежде чем
-назвать имя, вернись к строке и сверь подпись. Приписать одному
-сказанное другим — худшая ошибка, которую здесь можно совершить.
-
-Цитаты. Любое утверждение о человеке подкрепляй его словами в
-кавычках. Нет подходящей цитаты — не пиши утверждение.
-
-Различия. Не выдавай разное за одинаковое. «Вы оба считаете» пиши
-только когда оба сказали одно и то же. Сглаженное согласие там, где
-на самом деле спор, вредит паре сильнее, чем прямо названное
-расхождение.
-
-Проверка на пустоту. Перечитай каждую фразу и спроси: подошла бы она
-любой другой паре? Если да — выбрось. Тексту место в этом разборе
-только если он про этих двоих.
-
-Границы. Не ставь диагнозов, не давай медицинских советов, не
-советуй расстаться или пожениться. Обращайся к паре на «вы».
-Без вступлений вроде «на основе анализа». Начинай сразу с пункта 1.
-
-Объём. От 300 до 600 слов — сколько нужно материалу, не больше.`,
-
-  en: `You are reading two people's answers to the same relationship questions.
-Your job is to see what is actually there and say it plainly.
-
-WHAT TO WRITE
-
-1. Where you agree
-   Only where both said substantially the same thing. Name the theme
-   and quote both of them.
-
-2. What is worth talking about
-   Differences. State each person's position separately, both as
-   quotes. Do not explain who is right.
-
-3. What to watch
-   What could become hard later. Gently, but not vaguely: point to the
-   specific place in the answers where you see it.
-
-4. One question for tonight
-   To ask each other out loud. It must grow out of part 2 or 3, not be
-   a generic question.
-
-RULES
-
-Names. Every answer is labelled with the name of whoever gave it.
-Before you name someone, go back to the line and check the label.
-Attributing to one person what the other said is the worst mistake
-possible here.
-
-Quotes. Back every claim about a person with their own words in
-quotation marks. No suitable quote means no claim.
-
-Differences. Do not pass difference off as agreement. Write "you both
-think" only when both said the same thing. Smoothed-over agreement
-where there is really a disagreement harms a couple more than a
-difference named out loud.
-
-The emptiness test. Reread every sentence and ask: would it fit any
-other couple? If yes, cut it. Text belongs in this summary only if it
-is about these two.
-
-Boundaries. No diagnoses, no medical advice, no advice to break up or
-get married. Address the couple directly. No preambles like "based on
-the analysis". Start straight at part 1.
-
-Length. Between 300 and 600 words — as much as the material needs, no
-more.`,
-};
+async function promptFor(db: ReturnType<typeof createClient>, lang: string) {
+  const { data } = await db
+    .from("prompts")
+    .select("body")
+    .eq("key", "verdict")
+    .eq("lang", lang === "en" ? "en" : "ru")
+    .maybeSingle();
+  return data?.body || FALLBACK_PROMPT;
+}
 
 /** Разбор от Claude. Возвращает текст либо бросает — тогда пробуем запасную. */
 async function askClaude(system: string, material: string) {
@@ -147,7 +81,11 @@ async function askClaude(system: string, material: string) {
 
   const res = await client.beta.messages.create({
     model: MODEL,
-    max_tokens: 4000,
+    // Прежние четыре тысячи вместе с «300–600 слов» в задании и давали ту
+    // самую поверхностность: модель физически не могла написать разбор,
+    // который стоит читать.
+    max_tokens: 16000,
+    output_config: { effort: "xhigh" },
     // Материал откровенный, и модель может отказаться его разбирать.
     // Тогда тот же запрос доигрывает соседняя модель — вместо пустоты.
     betas: ["server-side-fallback-2026-06-01"],
@@ -176,7 +114,7 @@ async function askGroq(system: string, material: string) {
     body: JSON.stringify({
       model: GROQ_MODEL,
       temperature: 0.2,
-      max_tokens: 1600,
+      max_tokens: 8000,
       messages: [
         { role: "system", content: system },
         { role: "user", content: material },
@@ -319,7 +257,7 @@ Deno.serve(async (req) => {
       })
       .join("\n\n");
 
-    const system = PROMPT[lang === "en" ? "en" : "ru"];
+    const system = await promptFor(db, lang);
 
     let body = "";
     let usedFallback = false;
