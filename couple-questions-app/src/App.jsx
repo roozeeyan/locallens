@@ -203,7 +203,18 @@ export default function App() {
           связи. В ответах на вопросы его нет намеренно: там свой нижний
           ряд действий и клавиатура, третьему ряду места не остаётся. */}
       {!openBlock && (
-        <TabBar tabs={TABS[lang] || TABS.ru} active={tab} onChange={setTab} />
+        <TabBar
+          tabs={TABS[lang] || TABS.ru}
+          active={tab}
+          onChange={(id) => {
+            // Меню лежит поверх слоёв, поэтому нажатие на него должно их
+            // закрывать. Иначе раздел меняется под полупрозрачной подложкой,
+            // а человек остаётся заперт на прежнем экране.
+            setOpenConn(null);
+            setOpenBlock(null);
+            setTab(id);
+          }}
+        />
       )}
 
       {invite && (

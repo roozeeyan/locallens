@@ -257,31 +257,17 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
             )}
 
             {open.map((q) => (
-              <Card key={q.id} pad={14} style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-                <p style={{ margin: 0, font: `600 17px/1.25 ${font.serif}`, color: c.ink }}>{qText(q, lang)}</p>
-
-                <Answer who={t.you} text={answers[q.id].text} accent={c.sage} />
-                <Answer who={conn.name} text={conn.answers[q.id].text} accent={c.coral} />
-
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {REACTIONS.map((rx) => {
-                    const on = conn.reactions?.[q.id] === rx.id;
-                    return (
-                      <button
-                        key={rx.id}
-                        onClick={() => actions.setReaction(conn.id, q.id, rx.id)}
-                        style={{
-                          ...reactBtn,
-                          background: on ? c.sage : c.bg,
-                        }}
-                        aria-pressed={on}
-                      >
-                        {rx[lang]}
-                      </button>
-                    );
-                  })}
-                </div>
-              </Card>
+              <Comparison
+                key={q.id}
+                q={q}
+                lang={lang}
+                t={t}
+                mine={answers[q.id].text}
+                theirs={conn.answers[q.id].text}
+                theirName={conn.name}
+                mark={conn.reactions?.[q.id]}
+                onMark={(value) => actions.setReaction(conn.id, q.id, value)}
+              />
             ))}
           </>
         )}
@@ -417,6 +403,74 @@ function MiniRow({ label, pct, n, total }) {
     </div>
   );
 }
+
+/**
+ * Одно сравнение. Свёрнуто по умолчанию: сотня раскрытых пар ответов —
+ * это простыня, по которой невозможно двигаться, и она же тормозит экран.
+ * Виден вопрос и отметка; ответы открываются нажатием.
+ */
+function Comparison({ q, lang, t, mine, theirs, theirName, mark, onMark }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: open ? 11 : 8 }}>
+      <button onClick={() => setOpen((x) => !x)} style={head}>
+        <span style={{ flex: 1, font: `600 17px/1.25 ${font.serif}`, color: c.ink }}>
+          {qText(q, lang)}
+        </span>
+        <span
+          style={{
+            font: `600 15px ${font.sans}`,
+            color: c.mute,
+            transform: open ? "rotate(180deg)" : "none",
+            transition: "transform .18s ease",
+          }}
+          aria-hidden="true"
+        >
+          ⌄
+        </span>
+      </button>
+
+      {!open && mark && (
+        <span style={{ font: `600 12px ${font.sans}`, color: c.mute }}>{t[mark]}</span>
+      )}
+
+      {open && (
+        <>
+          <Answer who={t.you} text={mine} accent={c.sage} />
+          <Answer who={theirName} text={theirs} accent={c.coral} />
+
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {REACTIONS.map((rx) => (
+              <button
+                key={rx.id}
+                onClick={() => onMark(rx.id)}
+                style={{ ...reactBtn, background: mark === rx.id ? c.sage : c.bg }}
+                aria-pressed={mark === rx.id}
+              >
+                {rx[lang]}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </Card>
+  );
+}
+
+const head = {
+  display: "flex",
+  alignItems: "flex-start",
+  gap: 10,
+  background: "none",
+  border: "none",
+  padding: 0,
+  width: "100%",
+  textAlign: "left",
+  font: "inherit",
+  color: "inherit",
+  cursor: "pointer",
+};
 
 function Stat({ n, label, bg, onBg = c.ink }) {
   return (

@@ -354,8 +354,22 @@ Deno.serve(async (req) => {
   }
 });
 
-/** Доступ открыт, если купил я сам или кто-то, с кем я связана. */
+/**
+ * Доступ открыт, если купил я сам, купил кто-то, с кем я связана, — или
+ * я тестировщик.
+ *
+ * Про тестировщика здесь пришлось вспомнить отдельно. Код открывал путь
+ * только в приложении, а сервер про него не знал и отвечал «нужна оплата».
+ * Получался замкнутый круг: человек вводит код, приложение его пускает,
+ * сервер отказывает, приложение снова показывает экран оплаты.
+ */
 async function hasAccess(db: ReturnType<typeof createClient>, me: string) {
+  const { count: tester } = await db
+    .from("tester_codes")
+    .select("code", { count: "exact", head: true })
+    .eq("used_by", me);
+  if ((tester || 0) > 0) return true;
+
   const { data: links } = await db
     .from("connections")
     .select("a, b")
