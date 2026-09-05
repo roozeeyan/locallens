@@ -7,6 +7,7 @@ import { PRICE_STARS, lockedQuestionCount } from "../limits.js";
 import { buyPremium, isRemote } from "../backend.js";
 import { TEST_MODE } from "../access.js";
 import { redeemTesterCode } from "../sync.js";
+import { track, STEP } from "../track.js";
 
 const T = {
   ru: {
@@ -132,7 +133,12 @@ export default function Paywall({ onClose, reason }) {
   // чьи ответы уже написаны и лежат за закрытой дверью.
   const waiting = mostAnswers(connections);
 
+  useEffect(() => {
+    track(STEP.paywall, { reason: reason || "" });
+  }, [reason]);
+
   const buy = async () => {
+    track(STEP.payStarted);
     setBusy(true);
     setNote("");
     const res = await buyPremium();

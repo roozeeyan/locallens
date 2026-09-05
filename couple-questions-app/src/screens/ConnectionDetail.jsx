@@ -4,6 +4,7 @@ import { screenHeight, screenTop, lockScroll } from "../viewport.js";
 import { Card, Button, Progress, Label } from "../ui.jsx";
 import { dropConnection, setExportConsent, fetchVerdict } from "../sync.js";
 import { exportPair } from "../export.js";
+import { track, STEP } from "../track.js";
 import {
   useStore,
   actions,
@@ -156,8 +157,10 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
     // разбирала ответы вслепую и додумывала, о чём вообще спрашивали.
     const asked = {};
     for (const q of open) asked[q.id] = qText(q, lang);
+    track(STEP.verdictAsked, { pairs: open.length });
     const res = await fetchVerdict(conn.id, lang, Boolean(verdict), asked);
     setBusy(false);
+    if (res.ok) track(STEP.verdictGot, { pairs: open.length });
     // Первый разбор бесплатен; за следующим сервер отправляет
     // к покупке — открываем её сразу, без промежуточных надписей.
     if (res.locked) onPaywall?.();

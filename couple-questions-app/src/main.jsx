@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { watchViewport } from "./viewport.js";
 import { watchErrors } from "./errors.js";
+import { track, STEP } from "./track.js";
 
 const tg = window.Telegram?.WebApp;
 if (tg) {
@@ -15,6 +16,12 @@ if (tg) {
 
 watchViewport();
 watchErrors();
+
+// Первый шаг воронки. Отдельно помечаем приход по ссылке-приглашению:
+// это совсем другой человек и совсем другой путь.
+track(location.search.includes("tgWebAppStartParam") || location.hash.includes("start")
+  ? STEP.invitedOpen
+  : STEP.open);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

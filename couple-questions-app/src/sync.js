@@ -6,6 +6,7 @@
 import { isRemote, supabase, makeInviteCode, serverUrl, anonKey } from "./backend.js";
 import { hasCloud, cloudGet, cloudGetSure, cloudSet } from "./cloud.js";
 import { reportError } from "./errors.js";
+import { track, STEP } from "./track.js";
 import { QUESTIONS } from "./data.js";
 import { DECK_QUESTIONS } from "./decks.js";
 
@@ -226,6 +227,7 @@ export async function createInviteRemote(kind, localName) {
     .select()
     .single();
 
+  if (!error) track(STEP.inviteMade, { kind });
   return error ? { ok: false, message: error.message } : { ok: true, code: data.invite_code };
 }
 
@@ -245,6 +247,8 @@ export async function joinByCode(code, localName) {
 
   await ensureProfile(localName);
   const { data, error } = await supabase.rpc("accept_invite", { code });
+  // Самый важный шаг воронки: без пары у продукта нет смысла.
+  if (!error) track(STEP.paired);
   return error ? { ok: false, message: error.message } : { ok: true, connection: data };
 }
 

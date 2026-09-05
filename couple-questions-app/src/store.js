@@ -3,7 +3,12 @@ import { CATEGORIES, QUESTIONS } from "./data.js";
 import { DEFAULT_PALETTE } from "./theme.js";
 import { DECKS, DECK_QUESTIONS, findDeck } from "./decks.js";
 import { pushAnswer, pushProfile, pushReaction } from "./sync.js";
+import { track, STEP } from "./track.js";
 import { cloudSet, hasCloud } from "./cloud.js";
+
+/** Тема, к которой относится вопрос. */
+const blockOf = (qid) =>
+  [...QUESTIONS, ...DECK_QUESTIONS].find((q) => q.id === qid)?.cat || "unknown";
 
 const KEY = "rg_state_v2";
 const CLOUD_KEY = "rgstate";
@@ -104,6 +109,11 @@ export const actions = {
     const later = (state.profile.later || []).filter((x) => x !== questionId);
     commit({ ...state, answers, profile: { ...state.profile, later } });
     pushAnswer(questionId, t);
+    // Шаг воронки: сам текст никуда не уходит, только тема вопроса.
+    const block = blockOf(questionId);
+    track(STEP.answered, { block });
+    const bp = blockProgress(answers, block);
+    if (t && bp.done === bp.total) track(STEP.blockDone, { block });
   },
 
   /**
@@ -124,6 +134,7 @@ export const actions = {
   },
 
   completeOnboarding(data) {
+    track(STEP.onboarded, { topics: (data.topics || []).length });
     commit({ ...state, profile: { ...state.profile, ...data, onboarded: true } });
     pushProfile(data);
   },
