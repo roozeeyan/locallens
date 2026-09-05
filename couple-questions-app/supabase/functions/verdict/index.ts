@@ -4,18 +4,25 @@
 // попросить разбор по чужой связи: функция сама проверяет, что человек
 // участник этой связи, и сама отбирает вопросы, открытые обоим.
 //
+// Разбор пишет Claude. Прежняя модель на Groq путала, кто из двоих что
+// сказал, и сглаживала расхождения в согласие — для приложения про
+// отношения это не мелкая неточность, а прямой вред. Groq оставлен
+// запасным: если Claude не ответит, разбор соберётся, а не сломается.
+//
 // Секреты:
-//   supabase secrets set GROQ_API_KEY=...
-// Деплой:
-//   supabase functions deploy verdict
+//   ANTHROPIC_API_KEY — основная модель
+//   GROQ_API_KEY      — запасная
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Anthropic from "https://esm.sh/@anthropic-ai/sdk@0.71.0";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const GROQ_KEY = Deno.env.get("GROQ_API_KEY")!;
+const ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") || "";
+const GROQ_KEY = Deno.env.get("GROQ_API_KEY") || "";
 
-const MODEL = "openai/gpt-oss-120b";
+const MODEL = "claude-opus-5";
+const GROQ_MODEL = "openai/gpt-oss-120b";
 const MIN_PAIRS = 5;
 const MAX_PAIRS = 60;
 const FRESH_HOURS = 12;
@@ -33,33 +40,148 @@ const json = (body: unknown, status = 200) =>
   });
 
 const PROMPT = {
-  ru: `Ты — внимательный семейный консультант. Тебе дали ответы двух людей на одни и те же вопросы об отношениях, а также их собственные отметки: где они видят совпадение, что хотят обсудить, где расходятся.
+  ru: `Ты читаешь ответы двух людей на одни и те же вопросы об отношениях.
+Твоя работа — увидеть, что там на самом деле, и сказать это прямо.
 
-Напиши разбор по-русски, 250–400 слов, в четырёх частях с подзаголовками:
-1. В чём вы совпадаете — назови конкретные темы, опираясь на их слова.
-2. О чём стоит поговорить — различия, которые обычно всплывают позже.
-3. На что обратить внимание — то, что может стать трудным. Мягко, без приговоров.
-4. Один вопрос на вечер — который стоит задать друг другу вслух.
+ЧТО НАПИСАТЬ
 
-Правила: пиши на «вы», обращаясь к паре. Опирайся только на приведённые ответы, ничего не выдумывай. Не ставь диагнозов и не давай медицинских советов. Не советуй расстаться или пожениться — это их решение. Без вводных фраз вроде «на основе анализа».
+1. В чём вы сходитесь
+   Только то, где оба сказали по сути одно и то же. Назови тему и
+   приведи слова обоих в кавычках.
 
-Про имена. Каждый ответ подписан именем того, кто его дал. Никогда не приписывай одному то, что сказал другой: прежде чем назвать имя, вернись к строке и сверь подпись. Приводя чужие слова, цитируй их дословно в кавычках.
+2. О чём стоит поговорить
+   Различия. Назови позицию каждого отдельно, обе — цитатами.
+   Не объясняй, кто прав.
 
-Про различия. Не выдавай разное за одинаковое. Если позиции отличаются хоть в чём-то — скажи об этом прямо и назови позицию каждого отдельно. «Вы оба считаете» пиши только тогда, когда оба сказали по сути одно и то же. Сглаженное согласие там, где на самом деле спор, вредит паре сильнее, чем прямо названное расхождение.`,
-  en: `You are an attentive relationship counsellor. You are given two people's answers to the same relationship questions, plus their own marks: where they see a match, what they want to discuss, where they differ.
+3. На что обратить внимание
+   То, что может стать трудным позже. Мягко, но не расплывчато:
+   назови конкретное место в ответах, откуда это видно.
 
-Write an assessment in English, 250–400 words, in four parts with headings:
-1. Where you agree — name concrete themes, grounded in their words.
-2. What is worth talking about — differences that usually surface later.
-3. What to watch — what could become hard. Gently, no verdicts.
-4. One question for tonight — to ask each other out loud.
+4. Один вопрос на вечер
+   Который стоит задать друг другу вслух. Он должен вырастать из
+   пункта 2 или 3, а не быть общим.
 
-Rules: address the couple directly. Rely only on the answers given, invent nothing. No diagnoses, no medical advice. Do not advise breaking up or getting married — that is their decision. No preambles like "based on the analysis".
+ПРАВИЛА
 
-On names. Every answer is labelled with the name of whoever gave it. Never attribute to one person what the other said: before you name someone, go back to the line and check the label. When you report someone's words, quote them verbatim.
+Имена. Каждый ответ подписан именем того, кто его дал. Прежде чем
+назвать имя, вернись к строке и сверь подпись. Приписать одному
+сказанное другим — худшая ошибка, которую здесь можно совершить.
 
-On differences. Do not pass difference off as agreement. If the positions differ at all, say so plainly and state each person's position separately. Write "you both think" only when both said substantially the same thing. Smoothed-over agreement where there is really a disagreement harms a couple more than a difference named out loud.`,
+Цитаты. Любое утверждение о человеке подкрепляй его словами в
+кавычках. Нет подходящей цитаты — не пиши утверждение.
+
+Различия. Не выдавай разное за одинаковое. «Вы оба считаете» пиши
+только когда оба сказали одно и то же. Сглаженное согласие там, где
+на самом деле спор, вредит паре сильнее, чем прямо названное
+расхождение.
+
+Проверка на пустоту. Перечитай каждую фразу и спроси: подошла бы она
+любой другой паре? Если да — выбрось. Тексту место в этом разборе
+только если он про этих двоих.
+
+Границы. Не ставь диагнозов, не давай медицинских советов, не
+советуй расстаться или пожениться. Обращайся к паре на «вы».
+Без вступлений вроде «на основе анализа». Начинай сразу с пункта 1.
+
+Объём. От 300 до 600 слов — сколько нужно материалу, не больше.`,
+
+  en: `You are reading two people's answers to the same relationship questions.
+Your job is to see what is actually there and say it plainly.
+
+WHAT TO WRITE
+
+1. Where you agree
+   Only where both said substantially the same thing. Name the theme
+   and quote both of them.
+
+2. What is worth talking about
+   Differences. State each person's position separately, both as
+   quotes. Do not explain who is right.
+
+3. What to watch
+   What could become hard later. Gently, but not vaguely: point to the
+   specific place in the answers where you see it.
+
+4. One question for tonight
+   To ask each other out loud. It must grow out of part 2 or 3, not be
+   a generic question.
+
+RULES
+
+Names. Every answer is labelled with the name of whoever gave it.
+Before you name someone, go back to the line and check the label.
+Attributing to one person what the other said is the worst mistake
+possible here.
+
+Quotes. Back every claim about a person with their own words in
+quotation marks. No suitable quote means no claim.
+
+Differences. Do not pass difference off as agreement. Write "you both
+think" only when both said the same thing. Smoothed-over agreement
+where there is really a disagreement harms a couple more than a
+difference named out loud.
+
+The emptiness test. Reread every sentence and ask: would it fit any
+other couple? If yes, cut it. Text belongs in this summary only if it
+is about these two.
+
+Boundaries. No diagnoses, no medical advice, no advice to break up or
+get married. Address the couple directly. No preambles like "based on
+the analysis". Start straight at part 1.
+
+Length. Between 300 and 600 words — as much as the material needs, no
+more.`,
 };
+
+/** Разбор от Claude. Возвращает текст либо бросает — тогда пробуем запасную. */
+async function askClaude(system: string, material: string) {
+  const client = new Anthropic({ apiKey: ANTHROPIC_KEY });
+
+  const res = await client.beta.messages.create({
+    model: MODEL,
+    max_tokens: 4000,
+    // Материал откровенный, и модель может отказаться его разбирать.
+    // Тогда тот же запрос доигрывает соседняя модель — вместо пустоты.
+    betas: ["server-side-fallback-2026-06-01"],
+    fallbacks: [{ model: "claude-opus-4-8" }],
+    system,
+    messages: [{ role: "user", content: material }],
+  });
+
+  if (res.stop_reason === "refusal") throw new Error("модель отказалась разбирать материал");
+
+  const text = res.content
+    .filter((b: { type: string }) => b.type === "text")
+    .map((b: { text: string }) => b.text)
+    .join("\n")
+    .trim();
+
+  if (!text) throw new Error("пустой ответ");
+  return text;
+}
+
+/** Запасная модель. Хуже, но лучше, чем «разбор не собрался». */
+async function askGroq(system: string, material: string) {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${GROQ_KEY}` },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      temperature: 0.2,
+      max_tokens: 1600,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: material },
+      ],
+    }),
+  });
+
+  if (!res.ok) throw new Error((await res.text()).slice(0, 200));
+  const payload = await res.json();
+  const text = payload.choices?.[0]?.message?.content?.trim();
+  if (!text) throw new Error("пустой ответ");
+  return text;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -119,7 +241,7 @@ Deno.serve(async (req) => {
       return json({ error: "locked" }, 402);
     }
 
-    // Скрытые блоки исключаем: разбор не должен обходить приватность.
+    // Скрытые темы исключаем: разбор не должен обходить приватность.
     const [{ data: hiddenMine }, { data: hiddenTheirs }] = await Promise.all([
       db.from("profiles").select("hidden_blocks, name").eq("id", me).maybeSingle(),
       db.from("profiles").select("hidden_blocks, name").eq("id", other).maybeSingle(),
@@ -153,8 +275,8 @@ Deno.serve(async (req) => {
       return json({ error: "Мало открытых ответов", need: MIN_PAIRS, have: pairs.length }, 422);
     }
 
-    const nameA = hiddenMine?.name || (lang === "en" ? "Person A" : "Первый");
-    const nameB = hiddenTheirs?.name || (lang === "en" ? "Person B" : "Второй");
+    const nameA = (hiddenMine?.name || (lang === "en" ? "Person A" : "Первый")).trim();
+    const nameB = (hiddenTheirs?.name || (lang === "en" ? "Person B" : "Второй")).trim();
 
     // Каждая реплика подписана в отдельной строке заглавным именем. Плоский
     // список без подписей модель путала: на десятой паре она уже приписывала
@@ -163,7 +285,7 @@ Deno.serve(async (req) => {
       .map((p, i) => {
         const q = questions[String(p.qid)];
         return [
-          `### Вопрос ${i + 1} · блок «${p.block}»${p.mark ? ` · их общая отметка: ${p.mark}` : ""}`,
+          `### Вопрос ${i + 1} · тема «${p.block}»${p.mark ? ` · их общая отметка: ${p.mark}` : ""}`,
           q ? `Спрашивали: ${q}` : null,
           `ОТВЕТ — ${nameA.toUpperCase()}: ${p.mine}`,
           `ОТВЕТ — ${nameB.toUpperCase()}: ${p.theirs}`,
@@ -173,28 +295,26 @@ Deno.serve(async (req) => {
       })
       .join("\n\n");
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${GROQ_KEY}` },
-      body: JSON.stringify({
-        model: MODEL,
-        temperature: 0.2,
-        max_tokens: 900,
-        messages: [
-          { role: "system", content: PROMPT[lang === "en" ? "en" : "ru"] },
-          { role: "user", content: material },
-        ],
-      }),
-    });
+    const system = PROMPT[lang === "en" ? "en" : "ru"];
 
-    if (!res.ok) {
-      const detail = await res.text();
-      return json({ error: "Модель не ответила", detail: detail.slice(0, 300) }, 502);
+    let body = "";
+    let usedFallback = false;
+    try {
+      if (!ANTHROPIC_KEY) throw new Error("ключ Claude не задан");
+      body = await askClaude(system, material);
+    } catch (e) {
+      console.error("claude", e instanceof Error ? e.message : e);
+      if (!GROQ_KEY) {
+        return json({ error: `Модель не ответила: ${e instanceof Error ? e.message : e}` }, 502);
+      }
+      try {
+        body = await askGroq(system, material);
+        usedFallback = true;
+      } catch (e2) {
+        console.error("groq", e2 instanceof Error ? e2.message : e2);
+        return json({ error: `Модель не ответила: ${e2 instanceof Error ? e2.message : e2}` }, 502);
+      }
     }
-
-    const payload = await res.json();
-    const body = payload.choices?.[0]?.message?.content?.trim();
-    if (!body) return json({ error: "Пустой ответ модели" }, 502);
 
     await db.from("verdicts").insert({
       connection_id: connectionId,
@@ -204,9 +324,9 @@ Deno.serve(async (req) => {
       pairs_used: pairs.length,
     });
 
-    return json({ body, cached: false, pairs: pairs.length });
+    return json({ body, cached: false, pairs: pairs.length, fallback: usedFallback });
   } catch (e) {
-    return json({ error: String(e?.message || e) }, 500);
+    return json({ error: `Сбой функции: ${e instanceof Error ? e.message : e}` }, 500);
   }
 });
 
