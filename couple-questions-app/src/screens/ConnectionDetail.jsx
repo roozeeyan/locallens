@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { c, font } from "../theme.js";
 import { screenHeight, screenTop, lockScroll } from "../viewport.js";
-import { Card, Button, Progress, Label } from "../ui.jsx";
+import { Card, Button, Label } from "../ui.jsx";
 import { dropConnection, setExportConsent, fetchVerdict, loadVerdicts } from "../sync.js";
 import { exportPair } from "../export.js";
 import { RichText } from "../richtext.jsx";
@@ -14,7 +14,7 @@ import {
   revealed,
   pending,
   matchStats,
-  connBlockProgress,
+  questionsOf,
   blocksReadyForVerdict,
   setTitle,
   qText,
@@ -58,11 +58,13 @@ const T = {
     waitingBoth: "ждём ответов",
     verdictReady: "разбор готов",
     verdictDone: "разбор собран",
+    waitingThem: (name) => `ждём ${name}`,
+    waitingYou: (name) => `${name} ответил — ваша очередь`,
+    waitingNobody: "никто ещё не ответил",
     verdictHere: (name) => `Разбор готов: ${name}`,
     verdictGo: "Открыть",
     verdictMade: "Разбор собран — нажмите, чтобы прочитать",
     hide: "Свернуть",
-    emptyTopic: "В этой теме пока нет общих ответов.",
     nothingYet: "Пока нечего сравнивать",
     nothingBody: "Ответ открывается, когда вы оба ответили на один и тот же вопрос.",
     theirTurn: (name, n) => ` ${name} уже ответил на ${n} — очередь за вами.`,
@@ -109,11 +111,13 @@ const T = {
     waitingBoth: "waiting for answers",
     verdictReady: "summary ready",
     verdictDone: "summary written",
+    waitingThem: (name) => `waiting for ${name}`,
+    waitingYou: (name) => `${name} answered — your turn`,
+    waitingNobody: "nobody has answered yet",
     verdictHere: (name) => `Summary ready: ${name}`,
     verdictGo: "Open",
     verdictMade: "Summary is ready — tap to read it",
     hide: "Collapse",
-    emptyTopic: "No shared answers in this topic yet.",
     nothingYet: "Nothing to compare yet",
     nothingBody: "An answer opens when you have both answered the same question.",
     theirTurn: (name, n) => ` ${name} has already answered ${n} — your turn.`,
@@ -166,7 +170,9 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
   const [verdictNote, setVerdictNote] = useState("");
   const [verdictOpen, setVerdictOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [scrollTo, setScrollTo] = useState(null);
   const bodyRef = useRef(null);
+  const rows = useRef({});
 
   // Разборы, собранные раньше, подтягиваем при открытии связи. Иначе тема
   // с готовым разбором выглядит как тема без него, и человек жмёт
@@ -180,6 +186,19 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
       alive = false;
     };
   }, [connId, lang]);
+
+  // Раскрытая тема должна оказаться под пальцем, а не уехать за нижний
+  // край: строка может стоять восьмой в списке.
+  useEffect(() => {
+    if (!scrollTo) return;
+    const el = rows.current[scrollTo];
+    const box = bodyRef.current;
+    if (el && box) {
+      const shift = el.getBoundingClientRect().top - box.getBoundingClientRect().top;
+      box.scrollTo({ top: box.scrollTop + shift - 8, behavior: "smooth" });
+    }
+    setScrollTo(null);
+  }, [scrollTo]);
 
   if (!conn) return null;
 
@@ -197,19 +216,16 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
   const openBy = {};
   for (const q of open) openBy[q.cat] = (openBy[q.cat] || 0) + 1;
 
-  function enterTopic(id) {
-    setOpenTopic(id);
+  // Раскрыта всегда одна тема. Две раскрытые сразу возвращают ту самую
+  // ленту без дна, от которой мы и уходим.
+  function toggleTopic(id, force = false) {
+    const next = !force && openTopic === id ? null : id;
+    setOpenTopic(next);
     setVerdictNote("");
     // Готовый разбор открываем свёрнутым: это простыня на два экрана, и
     // разворачивать её человек должен сам, когда собрался читать.
     setVerdictOpen(false);
-    bodyRef.current?.scrollTo({ top: 0 });
-  }
-
-  function leaveTopic() {
-    setOpenTopic(null);
-    setVerdictNote("");
-    bodyRef.current?.scrollTo({ top: 0 });
+    if (next) setScrollTo(next);
   }
 
   async function buildVerdict() {
@@ -244,136 +260,137 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
     else setVerdictNote(res.offline ? t.verdictOffline : res.message);
   }
 
-  const topicOpen = openTopic ? openBy[openTopic] || 0 : 0;
-  const bp = openTopic ? connBlockProgress(answers, conn, openTopic) : null;
-  const topicTotal = bp ? bp.total : 0;
-  const topicQuestions = openTopic ? open.filter((q) => q.cat === openTopic) : [];
-
   return (
     <div style={wrap}>
       <div style={top}>
-        <button onClick={openTopic ? leaveTopic : onClose} style={back} aria-label={t.back}>
+        <button onClick={onClose} style={back} aria-label={t.back}>
           ←
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ font: `700 19px ${font.serif}`, color: c.ink }}>
-            {openTopic ? setTitle(openTopic, lang) : conn.name}
-          </div>
+          <div style={{ font: `700 19px ${font.serif}`, color: c.ink }}>{conn.name}</div>
           <div style={{ font: `400 12px ${font.sans}`, color: c.mute }}>
-            {openTopic
-              ? `${conn.name} · ${t.openedOf(topicOpen, topicTotal)}`
-              : `${t.kinds[conn.kind] || t.kinds.other}${t.opened(open.length)}`}
+            {t.kinds[conn.kind] || t.kinds.other}
+            {t.opened(open.length)}
           </div>
         </div>
       </div>
 
       <div style={body} ref={bodyRef}>
-        {openTopic ? (
-          <>
-            <VerdictCard
-              t={t}
-              lang={lang}
-              topic={openTopic}
-              ready={ready.includes(openTopic)}
-              verdict={verdict}
-              note={verdictNote}
-              busy={busy}
-              open={verdictOpen}
-              onToggle={() => setVerdictOpen((x) => !x)}
-              onBuild={buildVerdict}
-            />
-
-            {topicQuestions.length === 0 ? (
-              <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-                <Label>{t.nothingYet}</Label>
-                <p style={{ margin: 0, font: `400 15.5px/1.5 ${font.sans}`, color: c.ink }}>
-                  {t.emptyTopic} {t.nothingBody}
-                </p>
-                <MiniRow label={t.you} pct={bp.minePct} n={bp.mine} total={topicTotal} />
-                <MiniRow label={conn.name} pct={bp.theirsPct} n={bp.theirs} total={topicTotal} />
-              </Card>
-            ) : (
-              topicQuestions.map((q) => (
-                <Comparison
-                  key={q.id}
-                  q={q}
-                  lang={lang}
-                  t={t}
-                  mine={answers[q.id].text}
-                  theirs={conn.answers[q.id].text}
-                  theirName={conn.name}
-                  mark={conn.reactions?.[q.id]}
-                  onMark={(value) => actions.setReaction(conn.id, q.id, value)}
-                />
-              ))
-            )}
-          </>
-        ) : (
-          <>
-            {/* Разбор — то, ради чего человек сюда шёл. Одна строка вместо
-                прежней карточки на пол-экрана: сам разбор живёт в теме. */}
-            {ready.length > 0 && (
-              <Card
-                pad={13}
-                onClick={() => enterTopic(ready[0])}
-                style={{ display: "flex", alignItems: "center", gap: 10, background: c.sage }}
-              >
-                <span style={{ flex: 1, font: `700 15px ${font.sans}`, color: c.ink }}>
-                  {t.verdictHere(setTitle(ready[0], lang))}
-                </span>
-                <span style={{ font: `600 18px ${font.sans}`, color: c.ink }}>›</span>
-              </Card>
-            )}
-
-            {m.rated > 0 && (
-              <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <Label>{t.marks}</Label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Stat n={m.match} label={t.match} bg={c.sage} />
-                  <Stat n={m.talk} label={t.talk} bg={c.paper} />
-                  <Stat n={m.differ} label={t.differ} bg={c.coral} onBg={c.onCoral} />
-                </div>
-              </Card>
-            )}
-
-            <div>
-              <Label>{t.topics}</Label>
-              <p style={{ margin: "5px 0 0", font: `400 13.5px/1.45 ${font.sans}`, color: c.mute }}>
-                {t.topicsNote}
-              </p>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              {CATEGORIES.map((x) => (
-                <TopicCard
-                  key={x.id}
-                  id={x.id}
-                  t={t}
-                  lang={lang}
-                  hidden={hiddenBlocks.includes(x.id)}
-                  opened={openBy[x.id] || 0}
-                  total={connBlockProgress(answers, conn, x.id).total}
-                  ready={ready.includes(x.id)}
-                  made={Boolean(verdicts[x.id])}
-                  onOpen={() => enterTopic(x.id)}
-                />
-              ))}
-            </div>
-
-            {open.length === 0 && (
-              <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
-                <Label>{t.nothingYet}</Label>
-                <p style={{ margin: 0, font: `400 15.5px/1.5 ${font.sans}`, color: c.ink }}>
-                  {t.nothingBody}
-                  {p.waitingMe > 0 && t.theirTurn(conn.name, p.waitingMe)}
-                </p>
-              </Card>
-            )}
-          </>
+        {/* Разбор — то, ради чего человек сюда шёл. Одна строка вместо
+            прежней карточки на пол-экрана: сам разбор живёт в теме. */}
+        {ready.length > 0 && (
+          <Card
+            pad={13}
+            onClick={() => toggleTopic(ready[0], true)}
+            style={{ display: "flex", alignItems: "center", gap: 10, background: c.sage }}
+          >
+            <span style={{ flex: 1, font: `700 15px ${font.sans}`, color: c.ink }}>
+              {t.verdictHere(setTitle(ready[0], lang))}
+            </span>
+            <span style={{ font: `600 18px ${font.sans}`, color: c.ink }}>›</span>
+          </Card>
         )}
 
-        {!openTopic && (
-        <>
+        {m.rated > 0 && (
+          <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <Label>{t.marks}</Label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <Stat n={m.match} label={t.match} bg={c.sage} />
+              <Stat n={m.talk} label={t.talk} bg={c.paper} />
+              <Stat n={m.differ} label={t.differ} bg={c.coral} onBg={c.onCoral} />
+            </div>
+          </Card>
+        )}
+
+        <div>
+          <Label>{t.topics}</Label>
+          <p style={{ margin: "5px 0 0", font: `400 13.5px/1.45 ${font.sans}`, color: c.mute }}>
+            {t.topicsNote}
+          </p>
+        </div>
+
+        {CATEGORIES.map((x) => {
+          const hidden = hiddenBlocks.includes(x.id);
+          const qs = questionsOf(x.id);
+          const opened = openBy[x.id] || 0;
+          const expanded = openTopic === x.id;
+
+          return (
+            <TopicRow
+              key={x.id}
+              id={x.id}
+              t={t}
+              lang={lang}
+              hidden={hidden}
+              opened={opened}
+              total={qs.length}
+              made={Boolean(verdicts[x.id])}
+              ready={ready.includes(x.id)}
+              expanded={expanded}
+              anchor={(el) => (rows.current[x.id] = el)}
+              onToggle={() => toggleTopic(x.id)}
+            >
+              {(ready.includes(x.id) || verdicts[x.id]) && (
+                <VerdictCard
+                  t={t}
+                  lang={lang}
+                  topic={x.id}
+                  ready={ready.includes(x.id)}
+                  verdict={verdicts[x.id] || ""}
+                  note={verdictNote}
+                  busy={busy}
+                  open={verdictOpen}
+                  onToggle={() => setVerdictOpen((v) => !v)}
+                  onBuild={buildVerdict}
+                />
+              )}
+
+              {qs.map((q) => {
+                const mine = answers[q.id];
+                const theirs = conn.answers[q.id];
+                if (mine && theirs) {
+                  return (
+                    <Comparison
+                      key={q.id}
+                      q={q}
+                      lang={lang}
+                      t={t}
+                      mine={mine.text}
+                      theirs={theirs.text}
+                      theirName={conn.name}
+                      mark={conn.reactions?.[q.id]}
+                      onMark={(value) => actions.setReaction(conn.id, q.id, value)}
+                    />
+                  );
+                }
+                return (
+                  <Waiting
+                    key={q.id}
+                    text={qText(q, lang)}
+                    note={
+                      mine
+                        ? t.waitingThem(conn.name)
+                        : theirs
+                          ? t.waitingYou(conn.name)
+                          : t.waitingNobody
+                    }
+                  />
+                );
+              })}
+            </TopicRow>
+          );
+        })}
+
+        {open.length === 0 && (
+          <Card pad={16} style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+            <Label>{t.nothingYet}</Label>
+            <p style={{ margin: 0, font: `400 15.5px/1.5 ${font.sans}`, color: c.ink }}>
+              {t.nothingBody}
+              {p.waitingMe > 0 && t.theirTurn(conn.name, p.waitingMe)}
+            </p>
+          </Card>
+        )}
+
         <Card pad={14} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <Label>{t.pairExport}</Label>
           <p style={{ margin: 0, font: `400 14.5px/1.55 ${font.sans}`, color: c.ink }}>{t.pairBody}</p>
@@ -430,92 +447,124 @@ export default function ConnectionDetail({ connId, onClose, onPaywall }) {
         >
           {t.remove}
         </Button>
-        </>
-        )}
       </div>
     </div>
   );
 }
 
 /**
- * Тема внутри связи. Тот же язык, что и на главной анкете: человек уже
- * научился узнавать темы по рисунку, и переучивать его на другом экране
- * незачем.
+ * Тема внутри связи — горизонтальная строка, которая раскрывается на
+ * месте. Рисунок тот же, что в анкете, только мелкий: человек узнаёт тему
+ * по картинке быстрее, чем читает название, а места строка занимает
+ * столько же, сколько обычный пункт списка.
  *
- * Число здесь одно и главное — сколько вопросов открыто обоим. Свой
- * прогресс человек смотрит в анкете; сюда он приходит читать общее.
+ * Раскрытие на месте, а не переход на отдельный экран: тем одиннадцать, и
+ * ходить туда-обратно за каждой — дороже, чем развернуть нужную.
  */
-function TopicCard({ id, t, lang, hidden, opened, total, ready, made, onOpen }) {
-  const alive = !hidden;
-
+function TopicRow({
+  id,
+  t,
+  lang,
+  hidden,
+  opened,
+  total,
+  made,
+  ready,
+  expanded,
+  anchor,
+  onToggle,
+  children,
+}) {
   return (
-    <button
-      onClick={alive ? onOpen : undefined}
-      disabled={!alive}
-      style={{
-        ...topicCard,
-        background: opened > 0 ? c.paper : c.dim,
-        cursor: alive ? "pointer" : "default",
-      }}
-    >
-      <span
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          color: c.ink,
-          opacity: opened > 0 ? 0.9 : 0.45,
-        }}
-      >
-        <BlockArt id={id} size={92} />
-      </span>
+    <div ref={anchor}>
+      <Card pad={0} style={{ background: hidden ? c.dim : c.paper, overflow: "hidden" }}>
+        <button onClick={hidden ? undefined : onToggle} disabled={hidden} style={topicHead}>
+          <span
+            style={{
+              width: 40,
+              height: 40,
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: c.ink,
+              opacity: opened > 0 ? 0.9 : 0.4,
+            }}
+          >
+            <BlockArt id={id} size={38} />
+          </span>
 
-      <span
-        style={{
-          font: `600 14px/1.28 ${font.sans}`,
-          color: c.ink,
-          opacity: opened > 0 ? 1 : 0.75,
-        }}
-      >
-        {setTitle(id, lang)}
-      </span>
-
-      {hidden ? (
-        <span style={{ font: `500 11px ${font.mono}`, color: c.mute }}>{t.hidden}</span>
-      ) : opened > 0 ? (
-        <>
-          <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ flex: 1 }}>
-              <Progress value={total ? (opened / total) * 100 : 0} height={5} />
+          <span style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ font: `700 15.5px ${font.sans}`, color: c.ink }}>
+              {setTitle(id, lang)}
             </span>
-            <span style={{ font: `500 11px ${font.mono}`, color: c.ink }}>
-              {opened}/{total}
+            <span style={{ font: `500 12.5px ${font.sans}`, color: c.mute }}>
+              {hidden
+                ? t.hidden
+                : opened > 0
+                  ? `${t.openedOf(opened, total)}${made ? ` · ${t.verdictDone}` : ready ? ` · ${t.verdictReady}` : ""}`
+                  : t.waitingBoth}
             </span>
           </span>
-          {(made || ready) && (
-            <span style={{ font: `600 11.5px ${font.sans}`, color: c.ink }}>
-              {made ? t.verdictDone : t.verdictReady} →
+
+          {!hidden && (
+            <span
+              style={{
+                font: `600 15px ${font.sans}`,
+                color: c.ink,
+                transform: expanded ? "rotate(180deg)" : "none",
+                transition: "transform .15s",
+              }}
+            >
+              ⌄
             </span>
           )}
-        </>
-      ) : (
-        <span style={{ font: `500 11px ${font.mono}`, color: c.mute }}>{t.waitingBoth}</span>
-      )}
-    </button>
+        </button>
+
+        {expanded && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 11px 12px" }}>
+            {children}
+          </div>
+        )}
+      </Card>
+    </div>
   );
 }
 
-const topicCard = {
-  border: "none",
-  borderRadius: 26,
-  padding: "13px 13px 12px",
+const topicHead = {
   display: "flex",
-  flexDirection: "column",
-  gap: 8,
+  alignItems: "center",
+  gap: 11,
   width: "100%",
+  padding: "11px 13px",
+  background: "transparent",
+  border: "none",
   textAlign: "left",
   font: "inherit",
   color: "inherit",
+  cursor: "pointer",
 };
+
+/** Вопрос, который ещё не открыт обоим. Виден, но читать в нём нечего. */
+function Waiting({ text, note }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+        padding: "9px 12px",
+        borderRadius: 18,
+        background: c.dim,
+      }}
+    >
+      <span style={{ font: `400 13.5px/1.4 ${font.sans}`, color: c.ink, opacity: 0.6 }}>
+        {text}
+      </span>
+      <span style={{ font: `600 11px ${font.mono}`, color: c.mute }}>{note}</span>
+    </div>
+  );
+}
 
 /**
  * Разбор темы. Свёрнут по умолчанию: это текст на два-три экрана, и пока
@@ -606,32 +655,6 @@ function Answer({ who, text, accent }) {
         </div>
         <p style={{ margin: "3px 0 0", font: `400 14px/1.45 ${font.sans}`, color: c.ink }}>{text}</p>
       </div>
-    </div>
-  );
-}
-
-function MiniRow({ label, pct, n, total }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-      <span
-        style={{
-          font: `600 11.5px ${font.sans}`,
-          color: c.mute,
-          width: 62,
-          flexShrink: 0,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {label}
-      </span>
-      <div style={{ flex: 1 }}>
-        <Progress value={pct} height={7} />
-      </div>
-      <span style={{ font: `600 11.5px ${font.mono}`, color: c.mute }}>
-        {n}/{total}
-      </span>
     </div>
   );
 }
