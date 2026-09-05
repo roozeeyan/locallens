@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import { watchViewport } from "./viewport.js";
+import { watchErrors } from "./errors.js";
 
 const tg = window.Telegram?.WebApp;
 if (tg) {
@@ -13,6 +14,7 @@ if (tg) {
 }
 
 watchViewport();
+watchErrors();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

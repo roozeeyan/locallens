@@ -5,6 +5,7 @@
 // с сервера и каждое изменение уходит туда же.
 import { isRemote, supabase, makeInviteCode, serverUrl, anonKey } from "./backend.js";
 import { hasCloud, cloudGet, cloudGetSure, cloudSet } from "./cloud.js";
+import { reportError } from "./errors.js";
 import { QUESTIONS } from "./data.js";
 import { DECK_QUESTIONS } from "./decks.js";
 
@@ -157,11 +158,13 @@ export async function ensureSession() {
           return me;
         }
         lastError = `Telegram узнал вас, но вход не принялся: ${error.message}`;
+        reportError("вход/verifyOtp", error);
       } else if (payload.error) {
         lastError = payload.error;
       }
     } catch (e) {
       lastError = `Вход через Telegram не отвечает: ${e?.message || e}`;
+      reportError("вход/telegram-auth", e);
     }
   }
 
@@ -170,6 +173,7 @@ export async function ensureSession() {
     // ответы и связи остались бы на сервере без хозяина.
     lastError =
       "Ключ входа устарел. Откройте приложение заново — если не поможет, напишите в поддержку, доступ вернём.";
+    reportError("вход/ключ устарел", new Error(restored.reason || "не восстановился"));
     return null;
   }
 
