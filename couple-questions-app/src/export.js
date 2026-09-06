@@ -96,18 +96,25 @@ export function pairToText(answers, conn, profile) {
   return lines.join("\n");
 }
 
-/** Копирует текст и, где это разрешено, сохраняет его файлом. */
+/**
+ * Отдаёт текст человеку: буфер обмена, а файл — только если буфер не дался.
+ *
+ * Раньше делали и то и другое сразу. Внутри Telegram скачивание не падает
+ * молча, как мы рассчитывали: оно превращается в предложение открыть
+ * blob-ссылку, а дальше — в поиск приложения в App Store. Человек видел
+ * «ответы скопированы», жал ОК и попадал в три чужих окна подряд.
+ *
+ * Скопировано — значит, дело сделано, и больше ничего происходить не
+ * должно. Файл остаётся запасным путём там, где буфер недоступен.
+ */
 export async function handOver(text, filename = "my-answers.txt") {
-
-  let copied = false;
   try {
     await navigator.clipboard.writeText(text);
-    copied = true;
+    return { copied: true, saved: false, text };
   } catch {
     // буфер недоступен — остаётся файл
   }
 
-  let saved = false;
   try {
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -118,12 +125,10 @@ export async function handOver(text, filename = "my-answers.txt") {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    saved = true;
+    return { copied: false, saved: true, text };
   } catch {
-    // внутри Telegram скачивание блокируется — это ожидаемо
+    return { copied: false, saved: false, text };
   }
-
-  return { copied, saved, text };
 }
 
 /** Выгрузка своих ответов. */
