@@ -115,17 +115,22 @@ async function geminiModels() {
     // облегчённые версии.
     .filter((n: string) => !/embedding|aqa|image|vision|tts|audio|live|lite/.test(n));
 
-  // Свежая версия важнее всего, следом — «pro» вместо «flash», следом —
-  // стабильная сборка вместо превью.
+  // «pro» важнее всего: разбор — главный текст продукта, и глубина здесь
+  // дороже свежести. Внутри уровня побеждает версия поновее, а при равной
+  // версии — стабильная сборка, а не превью.
+  //
+  // Если pro бесплатному ключу не досталась или упёрлась в дневной лимит,
+  // очередь сама дойдёт до flash — поэтому список берём с запасом.
   const rank = (n: string) => {
     const ver = Number((n.match(/gemini-(\d+(?:\.\d+)?)/) || [])[1] || 0);
     const tier = n.includes("pro") ? 2 : n.includes("flash") ? 1 : 0;
     const stable = /preview|exp/.test(n) ? 0 : 1;
-    return ver * 100 + tier * 10 + stable;
+    return tier * 1000 + ver * 10 + stable;
   };
 
-  geminiChoices = names.sort((a, b) => rank(b) - rank(a)).slice(0, 4);
+  geminiChoices = names.sort((a, b) => rank(b) - rank(a)).slice(0, 6);
   if (!geminiChoices.length) throw new Error("ключу не доступна ни одна модель");
+  console.log("модели Gemini по порядку:", geminiChoices.join(", "));
   return geminiChoices;
 }
 
