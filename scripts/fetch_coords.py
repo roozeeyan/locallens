@@ -18,6 +18,7 @@ import requests
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY", "roozeeyan/locallens")
+GITHUB_BRANCH = os.environ.get("GITHUB_REF_NAME", "")
 COORDS_FILE = "src/coords.json"
 DATA_FILE = "src/data.js"
 
@@ -117,17 +118,21 @@ def github_commit(coords_db: dict, city: str, filled: int) -> None:
     label = f"city={city}" if city else "all cities"
     message = f"Add real coordinates for {filled} places ({label})"
 
+    params = {"ref": GITHUB_BRANCH} if GITHUB_BRANCH else None
+
     for attempt in range(1, 4):
-        resp = requests.get(api, headers=headers, timeout=30)
+        resp = requests.get(api, headers=headers, params=params, timeout=30)
         sha = resp.json().get("sha", "") if resp.status_code == 200 else ""
 
         payload = {"message": message, "content": content_b64}
+        if GITHUB_BRANCH:
+            payload["branch"] = GITHUB_BRANCH
         if sha:
             payload["sha"] = sha
 
         put = requests.put(api, headers=headers, json=payload, timeout=90)
         if put.status_code in (200, 201):
-            print(f"  coords.json committed. ({filled} places geocoded)")
+            print(f"  coords.json committed to {GITHUB_BRANCH or 'default branch'}. ({filled} places geocoded)")
             return
         if put.status_code == 409 and attempt < 3:
             print(f"  SHA conflict attempt {attempt}, retrying...")
