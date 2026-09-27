@@ -18,6 +18,7 @@ import requests
 SERPER_KEY = os.environ.get("SERPER_KEY", "")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY", "roozeeyan/locallens")
+GITHUB_BRANCH = os.environ.get("GITHUB_REF_NAME", "")
 DESC_FILE = "src/descriptions.json"
 DATA_FILE = "src/data.js"
 
@@ -188,10 +189,14 @@ def github_commit(desc_db: dict, city: str, filled: int) -> None:
     message = f"Add descriptions for {filled} places ({label})"
 
     for attempt in range(1, 4):
-        resp = requests.get(api, headers=headers, timeout=30)
+        resp = requests.get(api, headers=headers, params=({"ref": GITHUB_BRANCH} if GITHUB_BRANCH else None), timeout=30)
         sha = resp.json().get("sha", "") if resp.status_code == 200 else ""
 
         payload = {"message": message, "content": content_b64}
+
+        if GITHUB_BRANCH:
+
+            payload["branch"] = GITHUB_BRANCH
         if sha:
             payload["sha"] = sha
 

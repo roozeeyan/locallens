@@ -14,6 +14,7 @@ import requests
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_REPO  = os.environ.get("GITHUB_REPOSITORY", "roozeeyan/locallens")
+GITHUB_BRANCH = os.environ.get("GITHUB_REF_NAME", "")
 CULTURE_FILE = "src/culture.json"
 
 WIKI_API = "https://en.wikipedia.org/w/api.php"
@@ -102,9 +103,11 @@ def github_commit(data: dict) -> None:
         json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
     ).decode("ascii")
 
-    resp = requests.get(api, headers=headers, timeout=30)
+    resp = requests.get(api, headers=headers, params=({"ref": GITHUB_BRANCH} if GITHUB_BRANCH else None), timeout=30)
     sha = resp.json().get("sha", "") if resp.status_code == 200 else ""
     payload = {"message": "Add Wikipedia images to culture.json", "content": content_b64}
+    if GITHUB_BRANCH:
+        payload["branch"] = GITHUB_BRANCH
     if sha:
         payload["sha"] = sha
     put = requests.put(api, headers=headers, json=payload, timeout=60)

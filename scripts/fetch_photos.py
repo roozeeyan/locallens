@@ -18,6 +18,7 @@ SERPER_KEY = os.environ.get("SERPER_KEY", "")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 # GITHUB_REPOSITORY is auto-set by GitHub Actions to "owner/repo"
 GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY", "roozeeyan/locallens")
+GITHUB_BRANCH = os.environ.get("GITHUB_REF_NAME", "")
 PHOTOS_FILE = "src/photos.json"
 DATA_FILE = "src/data.js"
 
@@ -168,7 +169,7 @@ def github_commit(photos_db: dict, city: str, filled: int) -> None:
 
     # Retry up to 3 times to handle rare SHA conflicts (409 Conflict)
     for attempt in range(1, 4):
-        resp = requests.get(api, headers=headers, timeout=30)
+        resp = requests.get(api, headers=headers, params=({"ref": GITHUB_BRANCH} if GITHUB_BRANCH else None), timeout=30)
         if resp.status_code == 200:
             sha = resp.json().get("sha", "")
         elif resp.status_code == 404:
@@ -178,6 +179,10 @@ def github_commit(photos_db: dict, city: str, filled: int) -> None:
             sys.exit(1)
 
         payload = {"message": message, "content": content_b64}
+
+        if GITHUB_BRANCH:
+
+            payload["branch"] = GITHUB_BRANCH
         if sha:
             payload["sha"] = sha
 

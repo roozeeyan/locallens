@@ -18,6 +18,7 @@ import requests
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_REPO = os.environ.get("GITHUB_REPOSITORY", "roozeeyan/locallens")
+GITHUB_BRANCH = os.environ.get("GITHUB_REF_NAME", "")
 DESC_FILE   = "src/descriptions.json"
 COORDS_FILE = "src/coords.json"
 DATA_FILE   = "src/data.js"
